@@ -1,0 +1,150 @@
+{% spaceless %}
+{# -----------------------------------------------------------------------------
+   List of variables:
+   - pagecontenttype   : contenttype of pages
+   - homeUrl           : Url to homepage
+   - language          : language
+   
+   -------------------------------------------------------------------------- #}
+
+{% if app.request.get('_route') == 'nlbinding' or app.request.get('_route') == 'homepage' %}
+    {#--- NEDERLANDS ---#}
+    {% set pagecontenttype      = 'pages1' %}
+    {% set homeUrl              = '/' %}
+    {% set contactUrl           = '/contact' %}
+    {% set language             = 'nl' %}
+    {% set isnederlands         = true %}
+
+{% else %}
+    {#--- ENGELS ---#}
+    {% set pagecontenttype      = 'pages2' %}
+    {% set homeUrl              = '/en/homepage' %}
+    {% set contactUrl           = '/en/contact' %}
+    {% set language             = 'en' %}
+    {% set isengels             = true %}
+    
+{% endif %}
+
+{% endspaceless %}
+
+<!doctype html>
+<!--[if IE]><![endif]-->
+<!--[if IE 7]><html xml:lang="{{ htmllang }}" lang="{{ htmllang }}" class="ie ie7"><![endif]-->
+<!--[if IE 8]><html xml:lang="{{ htmllang }}" lang="{{ htmllang }}" class="ie ie8"><![endif]-->
+<!--[if (lt IE 7)|(gt IE 8)|!(IE)]><!-->
+<html xml:lang="{{ language }}" lang="{{ language }}">
+<!--<![endif]-->
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>
+{%- block title %}
+{% set seotitle = record.seotitle|default(record.title) %}
+{{ seotitle }}
+{%- if app.request.get('_route') != "homepage" %} | {{ app.config.get('general/sitename') }}{% endif -%}
+{% endblock title -%}
+    </title>
+    {% spaceless %}
+    {% set description = record.metadescription|default(record.teaser|excerpt(250)) %}
+    {% if description is not empty %}
+    <meta name="description" content="{{ description|trim }}" />
+    {% endif %}
+    
+    {% endspaceless %}
+    <meta name="DCTERMS.title" content="AuditZie"/>
+    <meta name="robots" content="noydir, noodp"/>
+        
+    <link rel="stylesheet" href="{{ paths.theme }}styles/auditzie.css" type="text/css" media="all" />
+    <script src="{{ paths.theme }}scripts/modernizr.js"></script>
+    
+    <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.6.2/html5shiv.js"></script>
+    <script src="//s3.amazonaws.com/nwapi/nwmatcher/nwmatcher-1.2.5-min.js"></script>
+    <script src="//html5base.googlecode.com/svn-history/r38/trunk/js/selectivizr-1.0.3b.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/respond.js/1.1.0/respond.min.js"></script>
+    <![endif]-->
+
+    {% block header_extra_scripts %}
+    {% endblock %}
+</head>
+
+<body class="{%- block bodyclass -%}{%- endblock -%}">
+    
+    <header>
+    {% block header %}
+        <div class="inner">
+            <nav>
+                <ul class="language-nav">
+                    {% set otherlangpages = record.related() %}
+                    {% if isnederlands %}
+                        {% for otherlangpage in otherlangpages %}
+                        <li class="en"><a href="{{ otherlangpage.link }}">English</a></li>
+                        {% else %}
+                        <li class="en"><a href="/en/homepage">English</a></li>
+                        {% endfor %}
+                    {% else %}
+                        {% for otherlangpage in otherlangpages %}
+                        <li class="nl"><a href="{{ otherlangpage.link }}">Nederlands</a></li>
+                        {% else %}
+                        <li class="nl"><a href="/">Nederlands</a></li>
+                        {% endfor %}
+                    {% endif %}
+
+                </ul>
+                <ul class="simple-nav">
+                    {% if record.slug != 'homepage' %}<li><a href="{{homeUrl}}">home</a></li>{% endif %}
+                    <li><a href="{{contactUrl}}">contact</a></li>
+                </ul>
+                
+                <div class="menu-toggle"><span></span>menu</div>
+                <ul class="full-nav expanded">
+                    {{ menu('main-'~language, '_sub_menu.twig') }}
+                </ul>
+            </nav>
+            {% block logo %}
+            <div id="logo"><a href="{{ homeUrl }}">
+                <img class="retina" src="{{paths.theme}}images/logo_auditzie.png" width='270' height='84' alt="{{ app.config.get('general/sitename') }}" />
+                <img class="non-retina" src="{{paths.theme}}images/logo_auditzie_ie.png" width='270' height='84' alt="{{ app.config.get('general/sitename') }}" /></a>
+            </div>
+            {% endblock logo %}
+        </div>
+    {% endblock header %}
+    </header>
+   
+    {% block content %}
+    If you see this, something is very, very wrong....
+    {% endblock content %}
+    
+    <footer>
+        {% block footer %}
+        <div class="inner">
+            {% setcontent naarboven = 'blocks/naarboven' %}
+            <a class="backlink" href="#">{%if isnederlands %} {{ naarboven.text_nl }} {% else %} {{ naarboven.text_en }} {% endif %}</a>
+            <div class="balls">
+                {% spaceless %}
+                <span class="ball ball-1">&#149;</span>
+                <span class="ball ball-2">&#149;</span>
+                <span class="ball ball-3">&#149;</span>
+                <span class="ball ball-4">&#149;</span>
+                <span class="ball ball-5">&#149;</span>
+                <span class="ball ball-6">&#149;</span>
+                <span class="ball ball-7">&#149;</span>
+                <span class="ball ball-8">&#149;</span>
+                <span class="ball ball-9">&#149;</span>
+                <span class="ball ball-10">&#149;</span>
+                {% endspaceless %}
+            </div>
+        </div>
+        {% endblock footer %}
+    </footer>
+
+
+<script src="{{ paths.theme }}scripts/jquery-1.10.2.min.js"></script>
+<script src="{{ paths.theme }}scripts/rem.min.js" type="text/javascript"></script>
+<script src="{{ paths.theme }}scripts/auditzie.js"></script>
+
+{% block footer_extra_scripts %}
+{% endblock %}
+
+</body>
+</html>

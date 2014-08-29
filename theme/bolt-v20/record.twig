@@ -1,0 +1,58 @@
+{% extends "master.twig" %}
+
+{% block bodyclass %}body-page{% endblock %}
+
+{% block content %}
+    <div class="container content-row">
+        <div class="main">
+            <h1>{{ record.title }}</h1>
+            {% if record.image is not empty %}
+                <img class="mainimg" src="{{record.image|thumbnail(800,400,'c')}}" alt="{{record.title}}" />
+            {% endif %}
+            <div class="intro">
+                {{ record.introduction }}
+            </div>
+            {{ record.body }}
+            
+            {% if 'contact' in record.slug and isnederlands=='true' %}
+                {{ simpleform('contact') }}
+            {% elseif 'contact' in record.slug and isengels=='true' %}
+                {{ simpleform('contact-en') }}
+            {% endif %}
+            
+        </div>
+        <aside>
+            <h2>
+                {% setcontent diensten = 'blocks/dienstenkopje' %}   
+                {%if isnederlands %} {{ diensten.text_nl }} {% else %} {{ diensten.text_en }} {% endif %}
+            </h2>
+            <ul class="subnav">
+                {% setcontent diensten = pagecontenttype where {'chapters' : 'diensten' } %}
+                {% for page in diensten %}
+                    {% if record.slug == page.slug %}
+                        {% set activelink = 'active' %}
+                    {% endif %}
+                <li class="{{activelink}} clickable"><a href="{{ page.link }}">{{ page.title }}</a></li>
+                    {% set activelink = '' %}
+                {% endfor %}
+            </ul>  
+        </aside>
+    </div>
+    {% if 'contact' not in record.slug %}
+    <div class="container">
+        <div class="inner">
+            <div class="block">
+                <h2>{% setcontent meerinfo = 'blocks/meerinfo' %}
+                    {%if isnederlands %} {{ meerinfo.text_nl }} {% else %} {{ meerinfo.text_en }} {% endif %}
+                </h2>
+                <p>{{ record.calltoaction }}</p>
+                <a class="button" href="{{ contactUrl }}?over={{ record.title }}">
+                    {% setcontent contactknop = 'blocks/contactknop' %}   
+                    {%if isnederlands %} {{ contactknop.text_nl }} {% else %} {{ contactknop.text_en }} {% endif %}
+                </a>
+             </div>
+        </div> 
+    </div>
+    {% endif %}
+ 
+{% endblock content %}
