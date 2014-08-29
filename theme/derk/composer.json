@@ -1,0 +1,16 @@
+{
+    "name": "bolt/simple",
+    "description": "",
+    "type": "bolt-theme",
+    "keywords": ["theme", "foundation", "sass"],
+    "require": {
+        "bolt/bolt": ">=2.0.0,<3.0.0"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Derk Duit",
+            "email": "derk@twokings.nl"
+        }
+    ]
+}

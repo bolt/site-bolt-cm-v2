@@ -1,0 +1,12 @@
+{% macro files_path(pathsegments, namespace, pathopts) %}
+    {% set namespace_path = path('files', pathopts) %}
+    <p>
+        {{ __('Path:') }}
+        <a href="{{ namespace_path }}">{{ namespace }}</a>
+
+        {% for path, segment in pathsegments %}
+            /
+            <a href="{{ path('files', { 'path': path, 'namespace': namespace }) }}">{{ segment }}</a>
+        {% endfor %}
+    </p>
+{% endmacro %}

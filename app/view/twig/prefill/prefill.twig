@@ -1,0 +1,61 @@
+{# Page: NavSecondary > Configuration > Check database > Records with... #}
+
+{% extends '_base/_page-nav.twig' %}
+
+{% block page_nav 'Settings/Configuration' %}
+
+{% block page_title __('Fill the database with Dummy Content') %}
+
+{% block page_main %}
+
+    <div class="row">
+        <div class="col-xs-12">
+            <form method="post" id="prefill" class="form-horizontal">
+                <div id="form">
+                    <div class="control-group">
+                        <div class="info">
+                            {{ app.translator.trans('prefill.short_help', {}, 'infos')|raw }}
+                        </div>
+
+                        <div id="form_contenttypes" style="border-bottom: 1px solid #eee; margin-bottom: 10px; width: 50%">
+                            {% for key,ctype in context.contenttypes %}
+                                <div>
+                                    <label>
+                                        <input type="checkbox"
+                                               id="form_contenttypes_{{ loop.index0 }}"
+                                               name="form[contenttypes][]"
+                                               value="{{ key }}">{{ ctype }}
+                                    </label>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                {{ form_widget(context.form._token) }}
+
+                <div>
+                <button type="button" class="btn" id="check-all"><i class="fa fa-check"></i> {{ __('Select all') }}</button>
+                <button type="button" class="btn" id="uncheck-all"><i class="fa fa-check-empty"></i> {{ __('Deselect all') }}</button> &nbsp;
+                <button type="submit" class="btn btn-primary"><i class="fa fa-wrench"></i> {{ __('Prefill database') }}</button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+
+{% endblock page_main %}
+
+{% block page_script %}
+    <script>
+        $(function() {
+            $('#check-all').on('click', function() {
+                // because jQuery is being retarded. See: http://stackoverflow.com/questions/5907645/jquery-chrome-and-checkboxes-strange-behavior
+                $("#form_contenttypes :checkbox").removeAttr('checked').trigger('click')
+            });
+            $('#uncheck-all').on('click', function() {
+                $("#form_contenttypes :checkbox").removeAttr('checked');
+            });
+        });
+    </script>
+{% endblock page_script %}

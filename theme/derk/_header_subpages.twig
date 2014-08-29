@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]> <html class="no-js lt-ie9 lt-ie8 lt-ie7" lang="{{ htmllang() }}"> <![endif]-->
+<!--[if IE 7]>    <html class="no-js lt-ie9 lt-ie8" lang="{{ htmllang() }}"> <![endif]-->
+<!--[if IE 8]>    <html class="no-js lt-ie9" lang="{{ htmllang() }}"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="{{ htmllang() }}"> <!--<![endif]-->
+<head>
+    <meta charset="utf-8" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    {# make sure we always display a proper title: The record's title if there is one, appended with the
+       sitename. If there is no title, we append the sitename with the payoff, if there is one. #}
+    <title>
+      {% if record.title is defined %}{{ record.title|striptags }} | {% endif %}
+      {{ app.config.get('general/sitename') }}
+      {% if record.title is not defined and app.config.get('general/payoff') %} | {{ app.config.get('general/payoff') }}{% endif %}
+    </title>
+
+    {# paths.theme is always a correct path to the current theme. Even if you rename the theme-folder,
+       this will keep working. See the documentation on paths: http://docs.bolt.cm/internals#paths #}
+    
+    <script src="{{ paths.theme }}bower_components/modernizr/modernizr.js"></script>   
+       
+    <link href='http://fonts.googleapis.com/css?family=Fjalla+One|Playball' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="{{ paths.theme }}css/app.css">
+
+    {#<!-- A variable from the theme's config: {{ theme.foo }} -->#}
+
+</head>
+<body>
+
+{# Note: If you plan to modify this theme, be sure to make a _copy_ first. If you don't,
+   this theme will be overwritten when you update Bolt in the future. Just copy the 'base-2014'
+   folder to a new folder inside the 'theme/' folder, update the 'theme:' setting in
+   config.yml, and you're good to go. Happy tweaking! :-) #}
+
+<section class="top-entry">
+<div class="sticky">
+    <nav class="top-bar" data-topbar data-options="sticky_on: large">
+            <ul class="title-area">
+                <li class="name"><h1>{#<a href="{{ paths.root }}">{{ app.config.get('general/sitename') }}</a>#}</h1></li>
+                <li class="toggle-topbar menu-icon"><a href="#"><span></span></a></li>
+            </ul>
+
+            <section class="top-bar-section">
+                <!-- Right Nav Section -->
+                <ul class="right">
+                    {# Include the menu, as defined in config/menu.yml. Note that this theme comes with it's own _sub_menu.twig. If this file wasn't included in the current theme, the default menu template in app/theme_defaults/_sub_menu.twig would be used. #}
+                    {{ menu('main', '_sub_menu.twig') }}
+
+                    {# Include the '_sub_searchbox.twig' template, for the searchbox. If this file wasn't included in the theme, the default searchbox template in app/theme_defaults/_sub_searchbox.twig would be used. #}
+                    {% include '_sub_searchbox.twig' %}
+                </ul>
+            </section>
+        </nav>
+</div>
+    <header>
+        <!-- Header image -->
+            {% if record.image!="" %}
+                <img src="{{ image(record.image) }}">
+            {% else %}    
+                <img src="{{ paths.theme }}img/beach.jpg">
+            {% endif %}
+        
+        <!-- End header image -->
+        
+            <div class="introduction">
+            
+                <h1>{{record.title}}</h1>
+            
+                {# display something introduction-like.. #}
+                {% if record.introduction %}
+                {{ record.introduction }}
+                {% elseif record.teaser %}
+                    {{ record.teaser }}
+                {% else %}
+                    <p>{{ record.excerpt(1000) }}</p>
+                {% endif %}
+            </div>
+        
+
+    </header>
+
+</section>
+
+<section class="content">
+    <div class="container">
