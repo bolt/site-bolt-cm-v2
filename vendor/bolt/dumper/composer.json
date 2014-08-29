@@ -1,0 +1,32 @@
+{
+    "name": "bobdenotter/dumper",
+    "type": "library",
+    "description": "Dumper - a print_r and var_dump replacement",
+    "license": "LGPL",
+    "keywords": ["dumper", "debug", "debugging", "pretty", "print", "print_r", "var_dump", "krumo"],
+    "authors": [
+        {
+            "name": "Bob den Otter",
+            "email": "bob@twokings.nl"
+        },        
+        {
+    	    "name": "Kaloyan K. Tsvetkov",
+    	    "email": "kaloyan@kaloyan.info"
+    	},
+    	{
+    	    "name": "Matthew J. Mucklo",
+    	    "email": "mmucklo@corp.oodle.com"
+    	},
+    	{
+    	    "name": "Stefan Thomas",
+    	    "email": "moon@justmoon.de"
+        }
+    ],
+    "require": {
+        "php": ">=5.3.2"
+    },
+    "autoload": {
+        "files": ["class.dumper.php"]
+    }
+}
+
