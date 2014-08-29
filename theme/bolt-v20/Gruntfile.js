@@ -11,7 +11,7 @@ module.exports = function(grunt) {
           outputStyle: 'compressed'
         },
         files: {
-          'styles/auditzie.css': 'scss/auditzie.scss'
+          'styles/bolt-v20.css': 'scss/bolt-v20.scss'
         }        
       }
     },
