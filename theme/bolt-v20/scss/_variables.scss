@@ -1,15 +1,10 @@
 $white          : #ffffff;
 $lightgrey      : #f5f5f5;
-$mediumgrey     : #D2D2D2;
-$darkgrey       : #2E3C3D;
-$red            : #E73F24;
+$mediumblue     : #366A88;
+$darkblue       : #152833;
+$red            : #FF4934;
 $black          : #000;
-$sans-serif     : 'proxima_nova', arial, sans-serif;
 
-//overrides voor kleiner font op kleine schermen - Overrides: Foundation _type.scss
-$h1-font-reduction: rem-calc(10);
-$h2-font-reduction: rem-calc(2);
-$h3-font-reduction: rem-calc(0);
-$h4-font-reduction: rem-calc(0);
-$h5-font-reduction: rem-calc(0);
+$sans-serif     : 'fira_sans', arial, sans-serif;
+
 

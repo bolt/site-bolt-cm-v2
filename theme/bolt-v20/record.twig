@@ -14,11 +14,7 @@
             </div>
             {{ record.body }}
             
-            {% if 'contact' in record.slug and isnederlands=='true' %}
-                {{ simpleform('contact') }}
-            {% elseif 'contact' in record.slug and isengels=='true' %}
-                {{ simpleform('contact-en') }}
-            {% endif %}
+            
             
         </div>
         <aside>

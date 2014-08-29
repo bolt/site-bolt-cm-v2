@@ -2,72 +2,68 @@
 
 {% block bodyclass %}body-home{% endblock %}
 
-{% block logo %}
-            <h1 id="logo"><img src="{{paths.theme}}/images/logo_auditzie.png" width='270' height='84' alt="{{ app.config.get('general/sitename') }}" /></h1>
-{% endblock logo %}
-            
-            
+           
 {% block content %}
-    <div class="container fullwidth image-container">
-        <div class="homeimg">
-            <span data-picture data-alt="De skyline van rotterdam">
-            <span data-src="{{ thumbnail(record.image, 640, 400,"c") }}"></span>
-            <span data-src="{{ thumbnail(record.image, 800, 350,"c") }}" data-media="(min-width: 640px)"></span>
-            <span data-src="{{ thumbnail(record.image, 1024, 430,"c") }}"  data-media="(min-width: 800px)"></span>
-            <!-- Fallback content for non-JS browsers. Same img src as the initial, unqualified source element. -->
-            <!--[if (lte IE 9) & (!IEMobile)]>
-                <span data-src="{{ thumbnail(record.image, 1400, 430,"c") }}"></span>
-            <![endif]-->
-            <noscript>
-               <img src="{{ thumbnail(record.image, 1024, 430,"c") }}" alt="De skyline van rotterdam">
-            </noscript>
-            </span>
-            {% setcontent payoff = 'blocks/payoff' %}
-            <h2 class="pay-off">
-                {%if isnederlands %} {{ payoff.text_nl }} {% else %} {{ payoff.text_en }} {% endif %}
-            </h2>
-            
-        </div>
+
+<section class="maininfo">
+    <div class="column">
+        <h2>About Bolt</h2>
+        <h3 class="subheader">Easy to learn, to use and adapt</h3>
+        <p>Bolt allows editors to easily manage content.  The straight forward interface is easy to get used to.</p>
+        <p>Bolt is an open source Content Management Tool, which strives to be as simple and straightforward as possible. It is quick to set up, easy to configure, uses elegant templates, and above all: It’s a joy to use. Bolt is created using modern open source libraries, and is best suited to build sites in HTML5 with modern markup.</p>
+        <p>From a technical perspective: Bolt is written in PHP, and uses either SQLite, MySQL or PostgreSQL as a database. It’s built upon the Silex framework together with a number of Symfony components and other libraries. Bolt is released under the open source MIT-license.</p>
+        <a class="button">Learn More</a>               
     </div>
-    <div class="container content-row">
-        <div class="main">
-            <div class="intro">
-                {{ record.introduction }}
-            </div>
-        </div>
-        <aside>
-            <div class="block">
-                <p>{{ record.calltoaction }}</p>
-                {% setcontent contactknop = 'blocks/contactknop' %}
-                <a class="button" href="{{contactUrl}}">
-                    {%if isnederlands %} {{ contactknop.text_nl }} {% else %} {{ contactknop.text_en }} {% endif %}
-                </a>
-            </div>   
-        </aside>
+    
+    <div class="column">
+        <h2>Who needs Bolt?</h2>
+        <h3 class="subheader">Easy to learn, to use and adapt</h3>
+        <p>Bolt allows editors to easily manage content.  The straight forward interface is easy to get used to.</p>
+        <p>Bolt is an open source Content Management Tool, which strives to be as simple and straightforward as possible. It is quick to set up, easy to configure, uses elegant templates, and above all: It’s a joy to use. Bolt is created using modern open source libraries, and is best suited to build sites in HTML5 with modern markup.</p>
+        <p>From a technical perspective: Bolt is written in PHP, and uses either SQLite, MySQL or PostgreSQL as a database. It’s built upon the Silex framework together with a number of Symfony components and other libraries. Bolt is released under the open source MIT-license.</p>
+        <a class="button">Read more</a>               
     </div>
-    <div class="container">
-        <div class="inner">
-            <h2 class="sectionheader">
-                {% setcontent onzedienstverlening = 'blocks/headerhome' %}
-                {%if isnederlands %} {{ onzedienstverlening.text_nl }} {% else %} {{ onzedienstverlening.text_en }} {% endif %}
-            </h2>
-            <ul class="content-list">
-                {% setcontent diensten = pagecontenttype where {'chapters' : 'diensten' } %}
-                {% for page in diensten %}
-                <li class="clickable">
-                    <a href="{{ page.link }}"><h3>{{ page.title }}</h3></a>
-                    {{ page.teaser }}
-                    <a class="readmore" href="{{ page.link }}">
-                        {% setcontent leesmeer = 'blocks/leesmeer' %}
-                        {%if isnederlands %} {{ leesmeer.text_nl }} {% else %} {{ leesmeer.text_en }} {% endif %}
-                    </a>
-                </li>
-                {% endfor %}
-            </ul>
-        </div>
-        <a id="asidemoved"></a>
+    
+    <div class="column">
+        <h2>Features</h2>
+        <h3 class="subheader">Easy to learn, to use and adapt</h3>
+        <p>Bolt allows editors to easily manage content.  The straight forward interface is easy to get used to.</p>
+        <p>Bolt is an open source Content Management Tool, which strives to be as simple and straightforward as possible. It is quick to set up, easy to configure, uses elegant templates, and above all: It’s a joy to use. Bolt is created using modern open source libraries, and is best suited to build sites in HTML5 with modern markup.</p>
+        <p>From a technical perspective: Bolt is written in PHP, and uses either SQLite, MySQL or PostgreSQL as a database. It’s built upon the Silex framework together with a number of Symfony components and other libraries. Bolt is released under the open source MIT-license.</p>
+        <a class="button">More features</a>               
     </div>
-    {% endblock content %}
+</section>
+
+<section class="slider">
+
+</section>
+
+<section class="secinfo">
+    <div class="column">
+        <h2>About Bolt</h2>
+        <h3 class="subheader">Easy to learn, to use and adapt</h3>
+        <p>Bolt is an open source Content Management Tool, which strives to be as simple and straightforward as possible. It is quick to set up, easy to configure, uses elegant templates, and above all: It’s a joy to use. Bolt is created using modern open source libraries, and is best suited to build sites in HTML5 with modern markup.</p>
+        <a class="button">Learn More</a>               
+    </div>
+    
+    <div class="column">
+        <h2>Who needs Bolt?</h2>
+        <h3 class="subheader">Easy to learn, to use and adapt</h3>
+        <p>Bolt is an open source Content Management Tool, which strives to be as simple and straightforward as possible. It is quick to set up, easy to configure, uses elegant templates, and above all: It’s a joy to use. Bolt is created using modern open source libraries, and is best suited to build sites in HTML5 with modern markup.</p>
+        <a class="button">Read more</a>               
+    </div>
+    
+    <div class="column">
+        <h2>Features</h2>
+        <h3 class="subheader">Easy to learn, to use and adapt</h3>
+        <p>Bolt is an open source Content Management Tool, which strives to be as simple and straightforward as possible. It is quick to set up, easy to configure, uses elegant templates, and above all: It’s a joy to use. Bolt is created using modern open source libraries, and is best suited to build sites in HTML5 with modern markup.</p>
+        <a class="button">More features</a>               
+    </div>
+</section>
+
+
+
+{% endblock content %}
 
 {% block footer_extra_scripts %}
     <script src="{{paths.theme}}scripts/picturefill.js"></script>

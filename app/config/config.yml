@@ -46,7 +46,7 @@ cron_hour: 3
 #favicon: images/favicon-bolt.ico
 
 # The default content to use for the homepage, and the template to render it with.
-homepage: page/1
+homepage: page/homepage
 homepage_template: index.twig
 
 # The default content for the 404 page. Uses the 'record_template' template by default.
