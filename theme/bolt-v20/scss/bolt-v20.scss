@@ -91,5 +91,142 @@ header, footer, section, container {
     }
 }
 
+.inner {
+    @extend .columns;
+}
 
 
+nav {
+    ul {
+        @extend .inline-list;
+        padding-right: 1rem;
+        > li {
+            display: block;
+            float: left;
+            list-style: none outside none;
+            margin-left: 1rem;    
+        }
+    }
+}
+
+/* ------------ STUFF -------------- */
+
+span.desktop {
+    display: none;
+    // MEDIUM //
+    @media #{$medium-up} {
+    display: inline;
+    }
+}
+
+span.mobile {
+    // MEDIUM //
+    @media #{$medium-up} {
+    display: none;
+    }
+}
+
+/* ------------ HEADER -------------- */
+
+header {
+    height: 260px;
+    position: relative;
+    background-size: cover;
+    // MEDIUM //
+        @media #{$medium-up} {
+        height: 450px;
+        }
+    h1 {
+        color: $white;
+    }
+    h2 {
+        color: $white;
+    }
+    .download {
+       width: 100%;
+       font-size: 1.25rem;
+       // MEDIUM //
+       @media #{$medium-up} {
+       position: absolute;
+       width: 12rem;
+       right: 6rem;
+       }
+    }
+}
+
+.headerimg {
+    position: absolute;
+    z-index: 0;
+}
+
+.meta-nav {
+    position: absolute;
+    right: 6rem;
+    top: 180px;
+    background: rgba($black,0.7);
+    color:#fff;
+    // MEDIUM //
+    @media #{$medium-up} { 
+        bottom: auto;
+        top: 0;
+        width: 12rem;
+    }
+    ul {
+        margin: 0;
+        a {
+            color:$white;
+            text-decoration: none;
+            font-size: 0.6875rem;
+            &:hover {
+                color: $red;    
+            }
+        }
+        i {
+        margin-right: 5px;
+        }
+        li.fork {
+            display: none;
+            // MEDIUM //
+            @media #{$medium-up} { 
+                display: inline-block;
+            }
+        }
+        
+    }
+}
+
+.menu-toggle {
+    display: block;
+    background: $white;
+    // MEDIUM //
+    @media #{$medium-up} { 
+        display: none;
+    }
+}
+
+.main-nav {
+    position: absolute;
+    bottom: 0;
+    background: rgba($black,0.2);
+    // MEDIUM  //
+        @media #{$medium-up} { 
+            display: inline-block;
+        }
+    ul{
+        >li{
+            
+        }
+        a{
+            color: $black;
+        }
+    }
+}
+
+/* -------------- BUTTONS --------------- */
+
+button span.sub, .button span.sub {
+    color: #000000;
+    display: block;
+    font-size: 65%;
+    margin: .5rem 0 0;
+}

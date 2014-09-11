@@ -41,44 +41,49 @@
 
 <body class="{%- block bodyclass -%}{%- endblock -%}">
     
-    <header>
-    {% block header %}
-    <span data-picture data-alt="An awesome bolt image">
-        <span data-src="{{ thumbnail(record.image, 640, 400,"c") }}"></span>
-        <span data-src="{{ thumbnail(record.image, 800, 350,"c") }}" data-media="(min-width: 640px)"></span>
-        <span data-src="{{ thumbnail(record.image, 1024, 430,"c") }}"  data-media="(min-width: 800px)"></span>
-        <span data-src="{{ thumbnail(record.image, 1200, 450,"c") }}"  data-media="(min-width: 1000px)"></span>
-        <!-- Fallback content for non-JS browsers. Same img src as the initial, unqualified source element. -->
-        <!--[if (lte IE 9) & (!IEMobile)]>
-            <span data-src="{{ thumbnail(record.image, 1400, 430,"c") }}"></span>
-        <![endif]-->
-        <noscript>
-           <img src="{{ thumbnail(record.image, 1024, 430,"c") }}" alt="De skyline van rotterdam">
-        </noscript>
-    </span>
-
-    <nav class="meta-mav">
-        <ul>
-            <li><a href="#"><i class="fa fa-lg fa-github"></i>836</a></li>
-            <li><a href="#">Fork bolt on github</a></li>
-        </ul>
-    </nav>
-    <h1 id="logo"><img src="{{paths.theme}}/images/logo_bolt.png" width='xx' height='x' alt="{{ app.config.get('general/sitename') }}" /></h1>
-    <h2 class="payoff">{{ app.config.get('general/payoff') }}</h2>
-    <a class="button">
-        Download Bolt
-        <span>Current version v 2.0</span>
-    </a>
-    <nav class="main-nav">
-        <ul>
-            <li class="active"><a href="#">Home</a></li>
-            <li><a href="#">Features</a></li>
-            <li><a href="#">Documentation</a></li>
-            <li><a href="#">News</a></li>
-            <li><a href="#">Download</a></li>
-        </ul>
-    </nav>
-    {% endblock header %}
+    <header style="background-image: url({{ thumbnail(record.image, 1200, 450,"c") }});">
+        <div class="inner">
+        {% block header %}
+        <!--
+        <span data-picture data-alt="An awesome bolt image">
+                <span data-src="{{ thumbnail(record.image, 640, 400,"c") }}"></span>
+                <span data-src="{{ thumbnail(record.image, 800, 350,"c") }}" data-media="(min-width: 640px)"></span>
+                <span data-src="{{ thumbnail(record.image, 1024, 430,"c") }}"  data-media="(min-width: 800px)"></span>
+                <span data-src="{{ thumbnail(record.image, 1200, 450,"c") }}"  data-media="(min-width: 1000px)"></span>
+                <!-- Fallback content for non-JS browsers. Same img src as the initial, unqualified source element. -->
+                <!--[if (lte IE 9) & (!IEMobile)]>
+                    <span data-src="{{ thumbnail(record.image, 1400, 430,"c") }}"></span>
+                <![endif]-->
+        <!--        <noscript>
+                   <img src="{{ thumbnail(record.image, 1024, 430,"c") }}" alt="De skyline van rotterdam">
+                </noscript>
+            </span>
+        -->
+        
+            <nav class="meta-nav">
+                <ul>
+                    <li class="counter"><a href="#" title="octocat"><i class="fa fa-lg fa-github"></i>836</a></li>
+                    <li class="fork"><a href="#" title="To Bolt on Github">Fork bolt on github</a></li>
+                </ul>
+            </nav>
+            <h1 id="logo"><img src="{{paths.theme}}/images/logo_bolt.png" width='xx' height='x' alt="{{ app.config.get('general/sitename') }}" /></h1>
+            <h2 class="payoff">{{ app.config.get('general/payoff') }}</h2>
+            <a class="button download">
+                <span class="desktop">Download Bolt</span><span class="mobile">View download options</span>
+                <span class="sub">Current version v 2.0</span>
+            </a>
+            <a class="menu-toggle"><span></span>menu</a>
+            <nav class="main-nav">
+                <ul>
+                    <li class="active"><a href="#">Home</a></li>
+                    <li><a href="#">Features</a></li>
+                    <li><a href="#">Documentation</a></li>
+                    <li><a href="#">News</a></li>
+                    <li><a href="#">Download</a></li>
+                </ul>
+            </nav>
+        {% endblock header %}
+        </div>
     </header>
    
     <main>
