@@ -114,7 +114,7 @@ header {
        // MEDIUM //
        @media #{$medium-up} {
        position: absolute;
-       width: 12rem;
+       width: 16rem;
        right: 6rem;
        }
        &:before {
@@ -140,7 +140,7 @@ header {
     @media #{$medium-up} { 
         bottom: auto;
         top: 0;
-        width: 12rem;
+        width: 16rem;
         right: 6rem;
     }
     ul {
@@ -223,7 +223,7 @@ header {
             display: inline-block;
             padding: .4rem;
             color: $white;
-            border-bottom: 2px solid $darkblue; //to prevent skipping when hovered
+            border-bottom: 2px solid transparent; //to prevent skipping when hovered
             // LARGE  //
             @media #{$large-up} {
                 font-size: 1.125rem;
@@ -284,11 +284,13 @@ header {
          padding-left: 10%;
          padding-right: 10%;       
     }
+    
     // LARGE  //
     @media #{$large-up} {
          padding-left: 2.5em;
          padding-right: 2.5em;       
     }
+    
     // XLARGE  //
     @media #{$xlarge-up} {
          padding-left: 3.5em;
@@ -298,6 +300,14 @@ header {
     .pager {
         margin-bottom: 2em;
         text-align: center;
+        width: 1000px;
+        overflow: hidden;
+        // LARGE //
+        @media #{$large-up}{
+        width: auto;
+        overflow: visible;   
+        }
+        
         a{
             display: inline-block;
             color: $mediumblue;
@@ -318,11 +328,33 @@ header {
         @extend .medium-8;
         float: left;
     }
+    
+    .slideimg.large {
+        display:none;
+        // LARGE //
+        @media #{$large-up}{
+            display: block;
+        }
+    }
+    
+    .slideimg.mobile {
+        // LARGE //
+        @media #{$large-up}{
+            display: none;
+        }
+    }
     ul.highlights {
+        display: none;
         @extend .column;
         @extend .medium-4;
         margin: 2em 0 0 0;
         padding-left: 2em;
+        
+        // LARGE //
+        @media #{$large-up}{
+            display: block;
+        }
+        
         li {
             color: $white;
             font-size: 1.25rem;
