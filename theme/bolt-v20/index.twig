@@ -34,6 +34,44 @@
     </div>
 </section>
 
+<section class="slider">
+    <div class="inner">
+    
+    <div class='pager'></div>
+    
+    <div class="cycle-slideshow"
+        data-cycle-swipe='true'
+        data-cycle-fx='scrollHorz'
+        data-cycle-timeout='0'
+        data-cycle-pager=".pager"
+        data-cycle-slides="> div"
+        >
+        <div class="slide" data-cycle-pager-template="<a href=#>Content editor</a> ">
+            <img class="slideimg" src="http://malsup.github.io/images/p1.jpg">
+            <ul class="highlights">
+                <li>Clear user interface</li>
+                <li>Insert images easily with stack</li>
+                <li>Preview your work quickly</li>
+                <li>Save your work as a draft, publish at a future date or immediately</li>
+            </ul>
+        </div>
+        <div class="slide" data-cycle-pager-template="<a href=#>User roles</a> ">
+            <img class="slideimg" src="http://malsup.github.io/images/p2.jpg">
+            <ul class="highlights">
+                <li>Clear user interface</li>
+                <li>Insert images easily with stack</li>
+                <li>Preview your work quickly</li>
+                <li>Save your work as a draft, publish at a future date or immediately</li>
+            </ul>
+        </div>
+        <div class="slide" data-cycle-pager-template="<a href=#>Contenttypes</a> "> <img src="http://malsup.github.io/images/p3.jpg"></div>
+        <div class="slide" data-cycle-pager-template="<a href=#>Twig templates</a> "> <img src="http://malsup.github.io/images/p1.jpg"></div>
+        <div class="slide" data-cycle-pager-template="<a href=#>The Stack</a> "> <img src="http://malsup.github.io/images/p2.jpg"></div>
+        <div class="slide" data-cycle-pager-template="<a href=#>Relations &amp; Taxonomies</a> "> <img src="http://malsup.github.io/images/p3.jpg"></div>
+    </div>
+    
+    </div>
+</section>
 
 <section class="secinfo">
     <div class="column">
@@ -65,4 +103,5 @@
 {% block footer_extra_scripts %}
     <script src="{{paths.theme}}scripts/picturefill.js"></script>
     <script src="{{ paths.theme }}scripts/cycle2.min.js"></script>
+    <script src="{{ paths.theme }}scripts/cycle2.swipe.min.js"></script>
 {% endblock %}

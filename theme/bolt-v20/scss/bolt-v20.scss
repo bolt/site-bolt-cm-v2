@@ -239,17 +239,19 @@ header {
 
 /* -------------- MAIN --------------- */
 
-.maininfo, .secinfo {
+.maininfo, .secinfo{
     padding-top: 3em;
-    // XLARGE  //
+    // MEDIUM  //
     @media #{$medium-up} {
          padding-left: 10%;
          padding-right: 10%;       
     }
+    // LARGE  //
     @media #{$large-up} {
          padding-left: 2.5em;
          padding-right: 2.5em;       
     }
+    // XLARGE  //
     @media #{$xlarge-up} {
          padding-left: 3.5em;
          padding-right: 3.5em;       
@@ -260,10 +262,6 @@ header {
 .maininfo .column,
 .secinfo .column {
     margin-bottom: 2em;
-    // MEDIUM  //
-    @media #{$medium-only} {
-    
-    }
     @media #{$large-up} {
         @extend .large-4;
     }
@@ -274,6 +272,74 @@ header {
     }
     
 }
+
+/* -------------- SLIDER SECTION--------------- */
+
+.slider{
+    background: $darkblue;
+    padding-top: 2em;
+    padding-bottom: 4em;
+    // MEDIUM  //
+    @media #{$medium-up} {
+         padding-left: 10%;
+         padding-right: 10%;       
+    }
+    // LARGE  //
+    @media #{$large-up} {
+         padding-left: 2.5em;
+         padding-right: 2.5em;       
+    }
+    // XLARGE  //
+    @media #{$xlarge-up} {
+         padding-left: 3.5em;
+         padding-right: 3.5em;       
+    }
+    
+    .pager {
+        margin-bottom: 2em;
+        text-align: center;
+        a{
+            display: inline-block;
+            color: $mediumblue;
+            margin-right: 2em;
+            font-size: 1.25rem;
+            line-height: 2;
+        }
+        a:hover, a.cycle-pager-active {
+            color: $white;
+        }
+    }
+    .slide{
+        margin-bottom: 2;
+        width:100%;
+    }
+    .slideimg {
+        @extend .column;
+        @extend .medium-8;
+        float: left;
+    }
+    ul.highlights {
+        @extend .column;
+        @extend .medium-4;
+        margin: 2em 0 0 0;
+        padding-left: 2em;
+        li {
+            color: $white;
+            font-size: 1.25rem;
+            margin-bottom: 1em;
+            list-style-type: none;   
+            &:before {
+                content: '\2022\a0';
+                color: $red;
+                font-size: 2.3rem;
+                line-height: 0;
+                vertical-align: -4px;  
+            }
+        }
+    }
+}
+
+
 
 
 /* -------------- TYPOGRAPHY --------------- */
