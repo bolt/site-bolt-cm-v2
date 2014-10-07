@@ -10,7 +10,7 @@ database:
 
 # The name of the website
 sitename: BoltCM
-payoff: The amazingest CMS EVER!
+payoff: Sophisticated, Lightweight and Simple
 
 # The theme to use. Be sure to copy the {theme_path}/base-2013 folder, and change the
 # name here accordingly. Don't edit the templates in theme/base-2013, because
