@@ -25,6 +25,7 @@
     <meta name="DCTERMS.title" content="Bolt CMS"/>
     <meta name="robots" content="noydir, noodp"/>
         
+    <link href='http://fonts.googleapis.com/css?family=Source+Sans+Pro:400,600,600italic,400italic' rel='stylesheet' type='text/css'>
     <link rel="stylesheet" href="{{ paths.theme }}styles/bolt-v20.css" type="text/css" media="all" />
     <script src="{{ paths.theme }}scripts/modernizr.js"></script>
     
@@ -72,20 +73,20 @@
                 <span class="desktop">Download Bolt</span><span class="mobile">View download options</span>
                 <span class="sub">Current version v 2.0</span>
             </a>
-            <a class="menu-toggle"><span></span>menu</a>
-            <nav class="main-nav">
-                <ul>
-                    <li class="active"><a href="#">Home</a></li>
-                    <li><a href="#">Features</a></li>
-                    <li><a href="#">Documentation</a></li>
-                    <li><a href="#">News</a></li>
-                    <li><a href="#">Download</a></li>
-                </ul>
-            </nav>
+            <a class="menu-toggle"><span></span></a>
         {% endblock header %}
         </div>
     </header>
-   
+   <nav class="main-nav">
+        <ul>
+            <li class="active"><a href="#">Home</a></li>
+            <li><a href="#">Features</a></li>
+            <li><a href="#">Documentation</a></li>
+            <li><a href="#">News</a></li>
+            <li><a href="#">Download</a></li>
+        </ul>
+    </nav>
+        
     <main>
     {% block content %}
     If you see this, something is very, very wrong....
@@ -100,7 +101,6 @@
 
 <script src="{{ paths.theme }}scripts/jquery-1.10.2.min.js"></script>
 <script src="{{ paths.theme }}scripts/rem.min.js" type="text/javascript"></script>
-<script src="{{ paths.theme }}scripts/auditzie.js"></script>
 
 {% block footer_extra_scripts %}
 {% endblock %}
