@@ -94,13 +94,13 @@ span.mobile {
 /* ------------ HEADER -------------- */
 
 header {
-    height: 260px;
+    height: 225px;
     position: relative;
     background-size: cover;
     // MEDIUM //
         @media #{$medium-up} {
-        height: 450px;
-        }
+        height: 200px;
+    }
     h1 {
         color: $white;
         margin-top: 0;
@@ -108,23 +108,52 @@ header {
         margin-left: 40px;
     }
     h2 {
+        display: none;
         color: $white;
         margin-left: 40px;
+        font-size: 1em;
+        // MEDIUM //
+       @media #{$medium-up} {
+            font-size: 2em;
+       }
     }
     .download {
        width: 100%;
-       font-size: 1.25rem;
-       padding: 1rem;
+       font-size: 1rem;
+       padding: .5rem;
        // MEDIUM //
        @media #{$medium-up} {
        position: absolute;
        width: 16rem;
        right: 6rem;
+       top: 4rem;
        }
        &:before {
            content: "";
            background: #f09;
        }
+       span.sub {
+           display: none;
+       }
+    }
+    
+    .body-home & {
+        height: 300px;
+        // MEDIUM //
+        @media #{$medium-up} {
+            height: 450px;
+        }
+        h2 {
+            display: block;
+        }
+        .download {
+            top:auto;
+            font-size: 1.25rem;
+            padding: 1rem;
+            span.sub {
+                display: block;
+            }
+        }
     }
 }
 
@@ -187,6 +216,9 @@ header {
     margin-left: -40px;
     padding-left: 25px;
     color: $black;
+    &.active {
+        background: $darkblue;
+    }
     // MEDIUM //
     @media #{$large-up} { 
         display: none;
@@ -200,12 +232,17 @@ header {
         top: 0;
         width: 20px;
     }
+    .active & {
+       box-shadow: 0 10px 0 1px $white, 0 16px 0 1px $white, 0 22px 0 1px $white; 
+    }
 }
 
 .main-nav {
+    display: none;
     background: $darkblue;
     width: 100%;
     padding-bottom: 1em;
+    transition:display 0s linear 0.5s,opacity 0.5s linear;
      // LARGE  //
     @media #{$large-up} { 
         display: block;
@@ -215,15 +252,30 @@ header {
         position: relative;
         height: 44px;
    }
+   &.expanded {
+       display: block;
+   }
     ul{
         list-style: none;
         margin-bottom: 0;
          // LARGE  //
         @media #{$large-up} { 
         margin: 0 auto;
-        width: 530px; //fixen: geen absolute waarde, maar liever een relatieve!
+        width: 600px; //fixen: geen absolute waarde, maar liever een relatieve!
         }
-        a{
+        &:after {
+          content: "";
+          display: table;
+          clear: both;
+        }
+        li {
+             // MEDIUM  //
+             @media #{$medium-only} {
+             width: 50%;
+             float: left;   
+             }
+        }
+        a {
             display: inline-block;
             padding: .4rem;
             color: $white;
@@ -233,7 +285,9 @@ header {
                 font-size: 1.125rem;
             }
         }
-        li.active a,
+        li.active a{
+            border-bottom: 2px solid $red;   
+        }
         li:hover a {
             border-bottom: 2px solid $white;
         }
@@ -275,6 +329,13 @@ header {
         padding-right: 1.5em;   
     }
     
+}
+
+.maininfo .maincolumn {
+    @extend .column;
+    @media #{$large-up} {
+        @extend .large-7;    
+    }
 }
 
 /* -------------- SLIDER SECTION--------------- */
@@ -376,12 +437,45 @@ header {
 }
 
 
+/* -------------- FOOTER --------------- */
+
+footer {
+    background: $darkblue;
+    color: $white;
+    padding: 3rem 0 2rem;
+    height: auto;
+    font-size: 0.8125rem;
+    .credits {
+        @extend .columns;
+        @extend .medium-6; 
+    }
+    .socials {
+        @extend .columns;
+        @extend .medium-4;
+        @extend .large-4;
+        @extend .right;
+        a{
+            color: $white;
+            display: block;
+        }
+        a:hover {
+            color: $red;
+            text-decoration: underline;
+        }
+    }
+}
 
 
 /* -------------- TYPOGRAPHY --------------- */
 
 p {
-    font-size: 
+    a:hover {
+        text-decoration: underline;
+    }
+    &.meta {
+        font-size: 0.8125rem;
+        color: $red;
+    }
 }
 
 .maininfo h2,
@@ -404,21 +498,27 @@ h3.subheader {
     }
 }
 
-
+i {
+    margin-right: .5em;
+}
 
 /* -------------- BUTTONS --------------- */
 
 
 
 .maininfo .column,
-.secinfo .column {
+.secinfo .column,
+.maininfo .maincolumn {
     a.button{
          @include button(
          $padding:rem-calc(10),
          $full-width:true);
          font-size: 0.8125rem;
-         // LARGE  //
-         @media #{$large-up}{
+         max-width: 200px;
+         display: block;
+         margin: 10px auto;
+         // MEDIUM  //
+         @media #{$medium-up}{
               max-width: 200px;
          }
          &:before {
@@ -448,7 +548,7 @@ button span.sub, .button span.sub {
 /* -------------- DEBUG --------------- */
 
 
-/* --- add a slash at the beginning of this line to enable!
+//* --- add a slash at the beginning of this line to enable!
 // --- Debug
 // --- From: http://bueltge.de/test/media-query-debugger.php
 @media all {

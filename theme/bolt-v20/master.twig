@@ -69,7 +69,7 @@
             </nav>
             <h1 id="logo"><img src="{{paths.theme}}/images/bolt.png" width='200' alt="{{ app.config.get('general/sitename') }}" /></h1>
             <h2 class="payoff">{{ app.config.get('general/payoff') }}</h2>
-            <a class="button download">
+            <a class="button download" href="/pages/download">
                 <span class="desktop">Download Bolt</span><span class="mobile">View download options</span>
                 <span class="sub">Current version v 2.0</span>
             </a>
@@ -77,13 +77,9 @@
         {% endblock header %}
         </div>
     </header>
-   <nav class="main-nav">
+   <nav class="main-nav expanded">
         <ul>
-            <li class="active"><a href="#">Home</a></li>
-            <li><a href="#">Features</a></li>
-            <li><a href="#">Documentation</a></li>
-            <li><a href="#">News</a></li>
-            <li><a href="#">Download</a></li>
+            {{ menu('main', '_sub_menu.twig') }}
         </ul>
     </nav>
         
@@ -95,12 +91,20 @@
     
     <footer>
         {% block footer %}
+        <div class="credits">
+            <p>This site is built with Bolt</p>
+        </div>
+        <div class="socials">
+            <a class="tw" href="http://twitter.com/boltcm"><i class="fa fa-lg fa-twitter"></i>Bolt on twitter</a>
+            <a class="gh" href="https://github.com/bolt/bolt"><i class="fa fa-lg fa-github"></i>Bolt on github</a>
+        </div>
         {% endblock footer %}
     </footer>
 
 
 <script src="{{ paths.theme }}scripts/jquery-1.10.2.min.js"></script>
 <script src="{{ paths.theme }}scripts/rem.min.js" type="text/javascript"></script>
+<script src="{{ paths.theme }}scripts/bolt-v20.js" type="text/javascript"></script>
 
 {% block footer_extra_scripts %}
 {% endblock %}
