@@ -22,3 +22,10 @@ categories:
     behaves_like: categories
     multiple: true
     options: [ news, events, movies, music, books, life, love, fun ]
+
+slidechapters:
+    slug: slidechapters
+    singular_slug: slidechapter
+    behaves_like: grouping
+    options: { main: "Slideshow homepage"}
+    has_sortorder: true

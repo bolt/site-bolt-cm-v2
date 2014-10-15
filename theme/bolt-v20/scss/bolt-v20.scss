@@ -390,25 +390,28 @@ header {
     }
     .slideimg {
         @extend .column;
-        @extend .medium-8;
-        float: left;
+        @extend .medium-center;
+        @extend .large-8;
+        text-align: center;
     }
     
-    .slideimg.large {
+    .slideimg img.large {
         display:none;
         // LARGE //
         @media #{$large-up}{
             display: block;
+            float: left;
         }
     }
     
-    .slideimg.mobile {
+    .slideimg img.mobile {
+        max-width: 300px;
         // LARGE //
         @media #{$large-up}{
             display: none;
         }
     }
-    ul.highlights {
+    .highlights ul {
         display: none;
         @extend .column;
         @extend .medium-4;
@@ -521,6 +524,12 @@ i {
          @media #{$medium-up}{
               max-width: 200px;
          }
+         // LARGE  //
+         @media #{$large-up}{
+              max-width: 200px;
+              margin: 10px 0;
+         }
+         
          &:before {
             content:"\00bb";
             margin-right: 5px;

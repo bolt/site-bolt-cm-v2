@@ -6,39 +6,30 @@
 {% block content %}
 
 <section class="maininfo">
-    <div class="column">
-        <h2>About Bolt</h2>
-        <h3 class="subheader">Easy to learn, to use and adapt</h3>
-        <p>Bolt allows editors to easily manage content.  The straight forward interface is easy to get used to.</p>
-        <p>Bolt is an open source Content Management Tool, which strives to be as simple and straightforward as possible. It is quick to set up, easy to configure, uses elegant templates, and above all: It’s a joy to use. Bolt is created using modern open source libraries, and is best suited to build sites in HTML5 with modern markup.</p>
-        <p>From a technical perspective: Bolt is written in PHP, and uses either SQLite, MySQL or PostgreSQL as a database. It’s built upon the Silex framework together with a number of Symfony components and other libraries. Bolt is released under the open source MIT-license.</p>
-        <a class="button">Learn more about Bolt</a>          
-    </div>
     
-    <div class="column">
-        <h2>Who needs Bolt?</h2>
-        <h3 class="subheader">Easy to learn, to use and adapt</h3>
-        <p>Bolt allows editors to easily manage content.  The straight forward interface is easy to get used to.</p>
-        <p>Bolt is an open source Content Management Tool, which strives to be as simple and straightforward as possible. It is quick to set up, easy to configure, uses elegant templates, and above all: It’s a joy to use. Bolt is created using modern open source libraries, and is best suited to build sites in HTML5 with modern markup.</p>
-        <p>From a technical perspective: Bolt is written in PHP, and uses either SQLite, MySQL or PostgreSQL as a database. It’s built upon the Silex framework together with a number of Symfony components and other libraries. Bolt is released under the open source MIT-license.</p>
-        <a class="button">Call to action</a>               
-    </div>
+    {% setcontent aboutblock = 'blocks/about-bolt' %}
+    {% setcontent whoblock = 'blocks/who-needs-bolt' %}
+    {% setcontent featureblock = 'blocks/features' %}
     
+    {% set primaryblocks = [aboutblock,whoblock,featureblock] %}
+
+    {% for item in primaryblocks %}
     <div class="column">
-        <h2>Features</h2>
-        <h3 class="subheader">Easy to learn, to use and adapt</h3>
-        <p>Bolt allows editors to easily manage content.  The straight forward interface is easy to get used to.</p>
-        <p>Bolt is an open source Content Management Tool, which strives to be as simple and straightforward as possible. It is quick to set up, easy to configure, uses elegant templates, and above all: It’s a joy to use. Bolt is created using modern open source libraries, and is best suited to build sites in HTML5 with modern markup.</p>
-        <p>From a technical perspective: Bolt is written in PHP, and uses either SQLite, MySQL or PostgreSQL as a database. It’s built upon the Silex framework together with a number of Symfony components and other libraries. Bolt is released under the open source MIT-license.</p>
-        <a class="button">See all features</a>               
+        <h2>{{item.title}}</h2>
+        <h3 class="subheader">{{item.subtitle}}</h3>
+        {{item.body}}
+        <a href="{{item.sitelink}}" class="button">{{item.calltoaction}}</a>          
     </div>
+    {% endfor %}
+    
+    
+    
 </section>
 
 <section class="slider">
     <div class="inner">
-    
-    <div class='pager'></div>
-    
+    {% setcontent slideshow = 'slides' %}
+    <div class='pager'></div> {# automatically filled #}
     <div class="cycle-slideshow"
         data-cycle-swipe='true'
         data-cycle-fx='scrollHorz'
@@ -46,56 +37,35 @@
         data-cycle-pager=".pager"
         data-cycle-slides="> div"
         >
-        <div class="slide" data-cycle-pager-template="<a href=#>Content editor</a> ">
-            <img class="slideimg large" src="http://malsup.github.io/images/p1.jpg">
-            <img class="slideimg mobile" src="https://www.drupal.org/files/Screen%20Shot%202013-04-26%20at%2011.26.33.png">
-            <ul class="highlights">
-                <li>Clear user interface</li>
-                <li>Insert images easily with stack</li>
-                <li>Preview your work quickly</li>
-                <li>Save your work as a draft, publish at a future date or immediately</li>
-            </ul>
+        {% for item in slideshow %}
+        <div class="slide" data-cycle-pager-template="<a href=#>{{item.title}}</a> ">
+            <div class="slideimg">
+                <img class="large" src="{{ thumbnail(item.image, 700, 530,"c") }}">
+                <img class="mobile" src="{{ thumbnail(item.imagemobile, 250, 435,"c") }}">
+            </div>
+            <div class="highlights">
+            {{item.body}}
+            </div>
         </div>
-        <div class="slide" data-cycle-pager-template="<a href=#>User roles</a> ">
-            <img class="slideimg large" src="http://malsup.github.io/images/p2.jpg">
-            <img class="slideimg mobile" src="http://malsup.github.io/images/p4.jpg">
-            <ul class="highlights">
-                <li>Clear user interface</li>
-                <li>Insert images easily with stack</li>
-                <li>Preview your work quickly</li>
-                <li>Save your work as a draft, publish at a future date or immediately</li>
-            </ul>
-        </div>
-        <div class="slide" data-cycle-pager-template="<a href=#>Contenttypes</a> "> <img src="http://malsup.github.io/images/p3.jpg"></div>
-        <div class="slide" data-cycle-pager-template="<a href=#>Twig templates</a> "> <img src="http://malsup.github.io/images/p1.jpg"></div>
-        <div class="slide" data-cycle-pager-template="<a href=#>The Stack</a> "> <img src="http://malsup.github.io/images/p2.jpg"></div>
-        <div class="slide" data-cycle-pager-template="<a href=#>Relations &amp; Taxonomies</a> "> <img src="http://malsup.github.io/images/p3.jpg"></div>
-    </div>
-    
+        {% endfor %}
     </div>
 </section>
 
 <section class="secinfo">
-    <div class="column">
-        <h2>About Bolt</h2>
-        <h3 class="subheader">Easy to learn, to use and adapt</h3>
-        <p>Bolt is an open source Content Management Tool, which strives to be as simple and straightforward as possible. It is quick to set up, easy to configure, uses elegant templates, and above all: It’s a joy to use. Bolt is created using modern open source libraries, and is best suited to build sites in HTML5 with modern markup.</p>
-        <a class="button">Learn More</a>               
-    </div>
+    {% setcontent supportblock = 'blocks/support' %}
+    {% setcontent docblock = 'blocks/documentation' %}
+    {% setcontent contributeblock = 'blocks/contribute' %}
     
+    {% set secblocks = [supportblock,docblock,contributeblock] %}
+
+    {% for item in secblocks %}
     <div class="column">
-        <h2>Who needs Bolt?</h2>
-        <h3 class="subheader">Easy to learn, to use and adapt</h3>
-        <p>Bolt is an open source Content Management Tool, which strives to be as simple and straightforward as possible. It is quick to set up, easy to configure, uses elegant templates, and above all: It’s a joy to use. Bolt is created using modern open source libraries, and is best suited to build sites in HTML5 with modern markup.</p>
-        <a class="button">Read more</a>               
+        <h2>{{item.title}}</h2>
+        <h3 class="subheader">{{item.subtitle}}</h3>
+        {{item.body}}
+        <a href="{{item.sitelink}}" class="button">{{item.calltoaction}}</a>          
     </div>
-    
-    <div class="column">
-        <h2>Features</h2>
-        <h3 class="subheader">Easy to learn, to use and adapt</h3>
-        <p>Bolt is an open source Content Management Tool, which strives to be as simple and straightforward as possible. It is quick to set up, easy to configure, uses elegant templates, and above all: It’s a joy to use. Bolt is created using modern open source libraries, and is best suited to build sites in HTML5 with modern markup.</p>
-        <a class="button">More features</a>               
-    </div>
+    {% endfor %}
 </section>
 
 
