@@ -1,54 +1,35 @@
 {% extends "master.twig" %}
 
-{% block bodyclass %}body-page{% endblock %}
-
+{% block bodyclass %}body-record{% endblock %}
+          
 {% block content %}
-    <div class="container content-row">
-        <div class="main">
-            <h1>{{ record.title }}</h1>
-            {% if record.image is not empty %}
-                <img class="mainimg" src="{{record.image|thumbnail(800,400,'c')}}" alt="{{record.title}}" />
-            {% endif %}
-            <div class="intro">
-                {{ record.introduction }}
-            </div>
-            {{ record.body }}
-            
-            
-            
-        </div>
-        <aside>
-            <h2>
-                {% setcontent diensten = 'blocks/dienstenkopje' %}   
-                {%if isnederlands %} {{ diensten.text_nl }} {% else %} {{ diensten.text_en }} {% endif %}
-            </h2>
-            <ul class="subnav">
-                {% setcontent diensten = pagecontenttype where {'chapters' : 'diensten' } %}
-                {% for page in diensten %}
-                    {% if record.slug == page.slug %}
-                        {% set activelink = 'active' %}
-                    {% endif %}
-                <li class="{{activelink}} clickable"><a href="{{ page.link }}">{{ page.title }}</a></li>
-                    {% set activelink = '' %}
-                {% endfor %}
-            </ul>  
-        </aside>
-    </div>
-    {% if 'contact' not in record.slug %}
-    <div class="container">
-        <div class="inner">
-            <div class="block">
-                <h2>{% setcontent meerinfo = 'blocks/meerinfo' %}
-                    {%if isnederlands %} {{ meerinfo.text_nl }} {% else %} {{ meerinfo.text_en }} {% endif %}
-                </h2>
-                <p>{{ record.calltoaction }}</p>
-                <a class="button" href="{{ contactUrl }}?over={{ record.title }}">
-                    {% setcontent contactknop = 'blocks/contactknop' %}   
-                    {%if isnederlands %} {{ contactknop.text_nl }} {% else %} {{ contactknop.text_en }} {% endif %}
+
+<section class="maininfo">
+    <div class="maincolumn ">
+        <article class="row">
+            <h1><a href="{{record.link}}">{{record.title}}</a></h1>
+            <h2 class="subheader">{{record.subtitle}}</h2>
+            <p class="meta">Published: {{ record.datepublish|date("l j F - H:i") }}</p>
+            <div class="articlebody">
+                {% if record.image %}
+                <a href="{{ record.image|image() }}" class="fancybox">
+                    <img src="{{ record.image|thumbnail(700,300) }}">
                 </a>
-             </div>
-        </div> 
+                {% endif %}
+                {{  record.introduction }}
+                {{  record.text }}
+                {{  record.text_markdown }}
+            </div>
+            THERE BE DISQUS HERE
+        </article>
+                
     </div>
-    {% endif %}
- 
+</section>
+
 {% endblock content %}
+
+{% block footer_extra_scripts %}
+    <script src="{{paths.theme}}scripts/picturefill.js"></script>
+    <script src="{{ paths.theme }}scripts/cycle2.min.js"></script>
+    <script src="{{ paths.theme }}scripts/cycle2.swipe.min.js"></script>
+{% endblock %}

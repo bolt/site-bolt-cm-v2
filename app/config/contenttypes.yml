@@ -12,6 +12,10 @@ news:
             uses: title
         image:
             type: image             
+        introduction:
+            type: html
+            height: 300px  
+            allowtwig: true
         text:
             type: html
             height: 300px  

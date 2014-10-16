@@ -5,16 +5,24 @@
 {% block content %}
 
 <section class="maininfo">
-    <div class="maincolumn">
-        <article>
-            <h1>Naam van dit nieuwsartikel</h1>
-            <h2 class="subheader">Easy to learn, to use and adapt</h2> 
-            <p class="meta">Published: Friday 12 September - 11:10</p>
-            <p>Bolt allows editors to easily manage content.  The straight forward interface is easy to get used to.</p>
-            <p>Bolt is an open source Content Management Tool, which strives to be as simple and straightforward as possible. It is quick to set up, easy to configure, uses elegant templates, and above all: It’s a joy to use. Bolt is created using modern open source libraries, and is best suited to build sites in HTML5 with modern markup.</p>
-            <p>From a technical perspective: Bolt is written in PHP, and uses either SQLite, MySQL or PostgreSQL as a database. It’s built upon the Silex framework together with a number of Symfony components and other libraries. Bolt is released under the open source MIT-license.</p>
-            <a class="button">Read the full article</a>  
+    <div class="maincolumn ">
+        {% setcontent news = 'news' orderby '-datepublish' %}
+        {% for item in news %}
+        <article class="row">
+            <h1><a href="{{record.link}}">{{item.title}}</a></h1>
+            <h2 class="subheader">{{item.subtitle}}</h2>
+            <p class="meta">Published: {{ item.datepublish|date("l j F - H:i") }}</p>
+            <div class="articlebody">
+                {% if item.image %}
+                <a href="{{ item.image|image() }}" class="fancybox">
+                    <img src="{{ item.image|thumbnail(700,300) }}">
+                </a>
+                {% endif %}
+                {{  item.excerpt(600) }}
+                <a href="{{item.link}}" class="button">Read the full article</a> 
+            </div> 
         </article>
+        {% endfor %}
                 
     </div>
 </section>

@@ -41,8 +41,8 @@
 </head>
 
 <body class="{%- block bodyclass -%}{%- endblock -%}">
-    
-    <header style="background-image: url({{ thumbnail(record.image, 1200, 450,"c") }});">
+    {% setcontent home = 'pages/homepage' %}
+    <header style="background-image: url({{ thumbnail(home.image, 1200, 450,"c") }});">
         <div class="inner">
         {% block header %}
         <!--
