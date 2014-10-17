@@ -26,6 +26,13 @@ class Storage
      */
     private $checkedfortimed = array();
 
+    /**
+     * Test to indicate if we're inside a dispatcher
+     *
+     * @var bool
+     */
+    private $inDispatcher = false;
+
     protected static $pager = array();
 
     public function __construct(Bolt\Application $app)
@@ -145,20 +152,7 @@ class Storage
 
         $content['ownerid'] = $user['id'];
 
-        switch (rand(1, 20)) {
-            case 1:
-                $content['status'] = "timed";
-                break;
-            case 2:
-                $content['status'] = "draft";
-                break;
-            case 3:
-                $content['status'] = "held";
-                break;
-            default:
-                $content['status'] = "published";
-                break;
-        }
+        $content['status'] = "published";
 
         foreach ($contenttype['fields'] as $field => $values) {
 
@@ -594,9 +588,22 @@ class Storage
             return false;
         }
 
-        if ($this->app['dispatcher']->hasListeners(StorageEvents::PRE_SAVE)) {
-            $event = new StorageEvent($content);
+        // Test to see if this is a new record, or an update
+        if (empty($fieldvalues['id'])) {
+            $create = true;
+        } else {
+            $create = false;
+        }
+
+        if (! $this->inDispatcher && $this->app['dispatcher']->hasListeners(StorageEvents::PRE_SAVE)) {
+            // Block dispatcher loops
+            $this->inDispatcher = true;
+
+            $event = new StorageEvent($content, $create);
             $this->app['dispatcher']->dispatch(StorageEvents::PRE_SAVE, $event);
+
+            // Re-enable the dispather
+            $this->inDispatcher = false;
         }
 
         if (!isset($fieldvalues['slug'])) {
@@ -689,11 +696,11 @@ class Storage
         }
 
         // We need to verify if the slug is unique. If not, we update it.
-        $get_id = isset($fieldvalues['id']) ? $fieldvalues['id'] : null;
+        $get_id = $create ? null : $fieldvalues['id'];
         $fieldvalues['slug'] = $this->getUri($fieldvalues['slug'], $get_id, $contenttype['slug'], false, false);
 
         // Decide whether to insert a new record, or update an existing one.
-        if (empty($fieldvalues['id'])) {
+        if ($create) {
             $id = $this->insertContent($fieldvalues, $contenttype, '', $comment);
             $fieldvalues['id'] = $id;
             $content->setValue('id', $id);
@@ -705,9 +712,15 @@ class Storage
         $this->updateTaxonomy($contenttype, $id, $content->taxonomy);
         $this->updateRelation($contenttype, $id, $content->relation);
 
-        if ($this->app['dispatcher']->hasListeners(StorageEvents::POST_SAVE)) {
-            $event = new StorageEvent($content);
+        if (!$this->inDispatcher && $this->app['dispatcher']->hasListeners(StorageEvents::POST_SAVE)) {
+            // Block loops
+            $this->inDispatcher = true;
+
+            $event = new StorageEvent($content, $create);
             $this->app['dispatcher']->dispatch(StorageEvents::POST_SAVE, $event);
+
+            // Re-enable the dispather
+            $this->inDispatcher = false;
         }
 
         return $id;
@@ -801,21 +814,12 @@ class Storage
 
         $content['datechanged'] = date('Y-m-d H:i:s');
 
-        // Keep datecreated around, for when we might need to 'insert' instead of 'update' after all
-        $datecreated = $content['datecreated'];
-        unset($content['datecreated']);
-
+        // Call update() and get the number of rows affected
         $res = $this->app['db']->update($tablename, $content, array('id' => $content['id']));
 
-        if ($res == true) {
+        if ($res > 0) {
+            // More than one row was changed, log the update
             $this->logUpdate($contenttype, $content['id'], $content, $oldContent, $comment);
-
-            return true;
-        } else {
-            // Attempt to _insert_ it, instead of updating..
-            $content['datecreated'] = $datecreated;
-
-            return $this->app['db']->insert($tablename, $content);
         }
     }
 
@@ -951,7 +955,7 @@ class Storage
         // Build actual where
         $where = array();
         $where[] = sprintf("%s.status = 'published'", $table);
-        $where[] = '(( ' . implode(' OR ', $fields_where) . ' ) '.$tags_query. ' )';
+        $where[] = '(( ' . implode(' OR ', $fields_where) . ' ) ' . $tags_query . ' )';
         $where = array_merge($where, $filter_where);
 
         // Build SQL query
@@ -1248,8 +1252,16 @@ class Storage
         // Make the query for the pager..
         $pagerquery = "SELECT COUNT(*) AS count FROM $tablename" . $where;
 
+        // Sort on either 'ascending' or 'descending'
+        // Make sure we set the order.
+        if ($this->app['config']->get('general/taxonomy_sort') == 'desc') {
+            $order = 'desc';
+        } else {
+            $order = 'asc';
+        }
+        
         // Add the limit
-        $query = "SELECT * FROM $tablename" . $where . " ORDER BY id ASC";
+        $query = "SELECT * FROM $tablename" . $where . " ORDER BY id " . $order;
         $query = $this->app['db']->getDatabasePlatform()->modifyLimitQuery($query, $limit, ($page - 1) * $limit);
 
         $taxorows = $this->app['db']->fetchAll($query);
@@ -1273,7 +1285,7 @@ class Storage
         // Set up the $pager array with relevant values..
         $rowcount = $this->app['db']->executeQuery($pagerquery)->fetch();
         $pager = array(
-            'for' => $taxonomytype['slug'] . "." . $slug,
+            'for' => $taxonomytype['slug'] . "_" . $slug,
             'count' => $rowcount['count'],
             'totalpages' => ceil($rowcount['count'] / $limit),
             'current' => $page,
@@ -1281,7 +1293,7 @@ class Storage
             'showing_to' => ($page - 1) * $limit + count($taxorows)
         );
 
-        $this->app['storage']->setPager($taxonomytype['slug'] . "." . $slug, $pager);
+        $this->app['storage']->setPager($taxonomytype['slug'] . "_" . $slug, $pager);
 
         return $content;
     }
@@ -1556,7 +1568,7 @@ class Storage
             $decoded['self_paginated'] = false;
         }
 
-        if ($decoded['order_callback'] !== false) {
+        if (($decoded['order_callback'] !== false) || ($decoded['return_single'] == true)) {
             // Callback sorting disables pagination
             $decoded['self_paginated'] = false;
         }
@@ -1643,7 +1655,7 @@ class Storage
 
         // $decoded['contettypes'] gotten here
         // get page nr. from url if has
-        $meta_parameters['page'] = $this->decodePageParameter($decoded['contenttypes'][0], $this->app['request']);
+        $meta_parameters['page'] = $this->decodePageParameter($decoded['contenttypes'][0]);
 
         $this->prepareDecodedQueryForUse($decoded, $meta_parameters, $ctype_parameters);
 
@@ -1796,7 +1808,9 @@ class Storage
     protected function decodePageParameter($context = '')
     {
         $param = Pager::makeParameterId($context);
-        $page = ($this->app['request']->query) ? $this->app['request']->query->get($param, 1) : 1;
+        /* @var $query \Symfony\Component\HttpFoundation\ParameterBag */
+        $query = $this->app['request']->query;
+        $page = ($query) ? $query->get($param, $query->get('page', 1)) : 1;
 
         return $page;
     }
@@ -1999,10 +2013,10 @@ class Storage
             }
         }
 
-        // Perform pagination if necessary
+        // Perform pagination if necessary, but never paginate when 'returnsingle' is used.
         $offset = 0;
         $limit = false;
-        if (($decoded['self_paginated'] == false) && (isset($decoded['parameters']['page']))) {
+        if (($decoded['self_paginated'] == false) && (isset($decoded['parameters']['page'])) && (!$decoded['return_single'])) {
             $offset = ($decoded['parameters']['page'] - 1) * $decoded['parameters']['limit'];
             $limit = $decoded['parameters']['limit'];
         }
@@ -2132,7 +2146,6 @@ class Storage
      */
     public function getSortOrder($name = '-datepublish')
     {
-
         // If we don't get a string, we can't determine a sortorder.
         if (!is_string($name)) {
             return false;
@@ -2633,7 +2646,7 @@ class Storage
 
                 // Make it look like 'desktop#10'
                 $valuewithorder = $slug . "#" . $currentsortorder;
-                $slugkey = '/'.$configTaxonomies[$taxonomytype]['slug'].'/'.$slug;
+                $slugkey = '/' . $configTaxonomies[$taxonomytype]['slug'] . '/' . $slug;
 
                 if (!in_array($slug, $newslugs) && !in_array($valuewithorder, $newslugs) && !array_key_exists($slugkey, $newslugs)) {
                     $this->app['db']->delete($tablename, array('id' => $id));

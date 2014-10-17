@@ -24,6 +24,7 @@
 <!DOCTYPE html>
 <html lang="{{ page_locale }}">
 <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=0, minimum-scale=1.0, maximum-scale=1.0">
 
@@ -60,45 +61,65 @@
     <script src="{{ paths.app }}view/js/moment.min.js"></script>
     <script>
         moment.lang('{{ app.locale|default('en') }}');
-        var ckeditor_lang="{{ app.locale|default('en') }}";
     </script>
 
     <script src="{{ paths.app }}view/js/bootbox.min.js"></script>
-    <script src="{{ paths.app }}view/js/modernizr.custom.2.8.2.js"></script>
-    <script src="{{ paths.app }}view/js/bolt.js"></script>
+    <script src="{{ paths.app }}view/js/modernizr.custom.2.8.3.js"></script>
 
     <link href="//fonts.googleapis.com/css?family=Source+Sans+Pro:400,600,400italic&amp;subset=latin,latin-ext" rel="stylesheet" type="text/css">
+    {# <link href='//fonts.googleapis.com/css?family=Fira+Sans:400,700,400italic&amp;subset=latin,latin-ext' rel='stylesheet' type='text/css'> #}
 
+    <!--[if lt IE 9]>
+        <link rel="stylesheet" href="{{ paths.app }}view/css/bolt-old-ie.css" media="screen, projection" type="text/css">
+    <![endif]-->
+    <!--[if gte IE 9]><!-->
     <link rel="stylesheet" href="{{ paths.app }}view/css/bolt.css" media="screen, projection" type="text/css">
+    <!--<![endif]-->
 
     <link rel="shortcut icon" href="{% if app.config.get('general/branding/favicon') %}{{ app.config.get('general/branding/favicon') }}{% else %}{{ paths.app }}view/img/favicon-bolt.ico{% endif %}">
     <link rel="apple-touch-icon" sizes="57x57" href="{% if app.config.get('general/branding/apple-touch-icon') %}{{ app.config.get('general/branding/apple-touch-icon') }}{% else %}{{ paths.app }}view/img/apple-touch-icon.png{% endif %}">
     <link rel="apple-touch-icon" sizes="72x72" href="{% if app.config.get('general/branding/apple-touch-icon-72x72') %}{{ app.config.get('general/branding/apple-touch-icon-72x72') }}{% else %}{{ paths.app }}view/img/apple-touch-icon-72x72.png{% endif %}">
     <link rel="apple-touch-icon" sizes="114x114" href="{% if app.config.get('general/branding/apple-touch-icon-114x114') %}{{ app.config.get('general/branding/apple-touch-icon-114x114') }}{% else %}{{ paths.app }}view/img/apple-touch-icon-114x114.png{% endif %}">
     <link rel="apple-touch-icon" sizes="144x144" href="{% if app.config.get('general/branding/apple-touch-icon-144x144') %}{{ app.config.get('general/branding/apple-touch-icon-144x144') }}{% else %}{{ paths.app }}view/img/apple-touch-icon-144x144.png{% endif %}">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+    <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
 </head>
 
 <body{% if page_bodyclass %} class="{{ page_bodyclass }}"{% endif %}>
     {% block page_plain %}{% endblock page_plain %}
 
-<script>
-    var path = "{{ paths.bolt }}";
-    var asyncpath = "{{ paths.async }}";
-    var apppath = "{{ paths.app }}";
-    {% if page_hasnav %}
-        var wysiwyg = {
-           images: {{ 0 + config.get('general/wysiwyg/images') }},
-           tables: {{ 0 + config.get('general/wysiwyg/tables') }},
-           anchor: {{ 0 + config.get('general/wysiwyg/anchor') }},
-           fontcolor: {{ 0 + config.get('general/wysiwyg/fontcolor') }},
-           align: {{ 0 + config.get('general/wysiwyg/align') }},
-           subsuper: {{ 0 + config.get('general/wysiwyg/subsuper') }},
-           embed: {{ 0 + config.get('general/wysiwyg/embed') }},
-           {% if config.get('general/wysiwyg/ck') is iterable %}ck: {{ config.get('general/wysiwyg/ck')|json_encode()|raw }},{% endif %}
-           {% if config.get('general/wysiwyg/filebrowser') is iterable %}filebrowser: {{ config.get('general/wysiwyg/filebrowser')|json_encode()|raw }}{% else %}filebrowser: false{% endif %}
-           };
-    {% endif %}
-</script>
+{% set bconfig = {
+    paths: {
+        bolt:  paths.bolt,
+        async: paths.async,
+        app:   paths.app,
+        root:  paths.root,
+    },
+    ckeditor: {
+        language:    app.locale|default('en'),
+        images:      0 + config.get('general/wysiwyg/images'),
+        tables:      0 + config.get('general/wysiwyg/tables'),
+        anchor:      0 + config.get('general/wysiwyg/anchor'),
+        fontcolor:   0 + config.get('general/wysiwyg/fontcolor'),
+        align:       0 + config.get('general/wysiwyg/align'),
+        subsuper:    0 + config.get('general/wysiwyg/subsuper'),
+        embed:       0 + config.get('general/wysiwyg/embed'),
+        blockquote:  0 + config.get('general/wysiwyg/blockquote'),
+        strike:      0 + config.get('general/wysiwyg/strike'),
+        underline:   0 + config.get('general/wysiwyg/underline'),
+        codesnippet: 0 + config.get('general/wysiwyg/codesnippet'),
+        specialchar: 0 + config.get('general/wysiwyg/specialchar'),
+        ck:          (config.get('general/wysiwyg/ck') is iterable) ? config.get('general/wysiwyg/ck') : false,
+        filebrowser: (config.get('general/wysiwyg/filebrowser') is iterable)
+                        ? config.get('general/wysiwyg/filebrowser') : false,
+    },
+}%}
+<script src="{{ paths.app }}view/js/bolt.js" data-config="{{ bconfig|json_encode }}"></script>
 {% block page_script %}{% endblock page_script %}
 
 {# Add the Grunt livereload script, if Grunt livereload is enabled in config.yml. #}

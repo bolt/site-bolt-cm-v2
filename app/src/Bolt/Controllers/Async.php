@@ -29,8 +29,9 @@ class Async implements ControllerProviderInterface
         $ctr->get("/filesautocomplete", array($this, 'filesautocomplete'))
             ->before(array($this, 'before'));
 
-        $ctr->get("/readme/{extension}", array($this, 'readme'))
+        $ctr->get("/readme/{filename}", array($this, 'readme'))
             ->before(array($this, 'before'))
+            ->assert('filename', '.+')
             ->bind('readme');
 
         $ctr->get("/widget/{key}", array($this, 'widget'))
@@ -198,14 +199,24 @@ class Async implements ControllerProviderInterface
         return new Response($html, 200, array('Cache-Control' => 's-maxage=180, public'));
     }
 
-    public function readme($extension, Silex\Application $app, Request $request)
+    public function readme($filename, Silex\Application $app, Request $request)
     {
-        $filename = __DIR__ . "/../../../extensions/" . $extension . "/readme.md";
+        $paths = $app['resources']->getPaths();
+
+        $filename = $paths['extensionspath'] . '/vendor/' . $filename;
+
+        // don't allow viewing of anything but "readme.md" files.
+        if (strtolower(basename($filename)) != 'readme.md') {
+            die('Not allowed');
+        }
+        if (!is_readable($filename)) {
+            die('Not readable');
+        }
 
         $readme = file_get_contents($filename);
 
         // Parse the field as Markdown, return HTML
-        $html = \Parsedown::instance()->parse($readme);
+        $html = \ParsedownExtra::instance()->text($readme);
 
         return new Response($html, 200, array('Cache-Control' => 's-maxage=180, public'));
     }
@@ -216,7 +227,6 @@ class Async implements ControllerProviderInterface
 
         return $uri;
     }
-
 
     public function tags(Silex\Application $app, $taxonomytype)
     {
@@ -240,7 +250,6 @@ class Async implements ControllerProviderInterface
         $query = "select `slug` , count(`slug`) as `count` from  `%staxonomy` where `taxonomytype` = ? group by  `slug` order by `count` desc limit %s";
         $query = sprintf($query, $prefix, intval($limit));
         $query = $app['db']->executeQuery($query, array($taxonomytype));
-
 
         $results = $query->fetchAll();
 
@@ -292,7 +301,7 @@ class Async implements ControllerProviderInterface
         $contenttype = $app['storage']->getContentType($contenttypeslug);
 
         // get the 'latest' from the requested contenttype.
-        $latest = $app['storage']->getContent($contenttype['slug'], array('limit' => 5, 'order' => 'datechanged DESC'));
+        $latest = $app['storage']->getContent($contenttype['slug'], array('limit' => 5, 'order' => 'datechanged DESC', 'hydrate' => false));
 
         $context = array(
             'latest' => $latest,
@@ -343,7 +352,7 @@ class Async implements ControllerProviderInterface
     {
         foreach ($app['storage']->getContentTypes() as $contenttype) {
 
-            $records = $app['storage']->getContent($contenttype, array('published' => true));
+            $records = $app['storage']->getContent($contenttype, array('published' => true, 'hydrate' => false));
 
             foreach ($records as $key => $record) {
                 $results[$contenttype][] = array(
@@ -367,11 +376,14 @@ class Async implements ControllerProviderInterface
      * @param $namespace
      * @param $path
      * @param  Silex\Application $app
-     * @param  Request $request
+     * @param  Request           $request
      * @return mixed
      */
     public function browse($namespace, $path, Silex\Application $app, Request $request)
     {
+        // No trailing slashes in the path.
+        $path = stripTrailingSlash($path);
+
         $filesystem = $app['filesystem']->getManager($namespace);
 
         // $key is linked to the fieldname of the original field, so we can
@@ -450,10 +462,10 @@ class Async implements ControllerProviderInterface
     /**
      * Rename a file within the files directory tree.
      *
-     * @param  Silex\Application $app     The Silex Application Container
-     * @param  Request          $request The HTTP Request Object containing the GET Params
+     * @param Silex\Application $app     The Silex Application Container
+     * @param Request           $request The HTTP Request Object containing the GET Params
      *
-     * @return Boolean                   Whether the renaming action was successful
+     * @return Boolean Whether the renaming action was successful
      */
     public function renamefile(Silex\Application $app, Request $request)
     {
@@ -474,13 +486,14 @@ class Async implements ControllerProviderInterface
                       . DIRECTORY_SEPARATOR
                       . $newName;
 
-        $fileSystemHelper = new Filesystem;
+        $fileSystemHelper = new Filesystem();
 
         try {
             $fileSystemHelper->rename($oldPath, $newPath, false /* Don't rename if target exists already! */);
         } catch (IOException $exception) {
 
             /* Thrown if target already exists or renaming failed. */
+
             return false;
         }
 
@@ -541,10 +554,10 @@ class Async implements ControllerProviderInterface
     /**
      * Rename a folder within the files directory tree.
      *
-     * @param  Silex\Application $app     The Silex Application Container
-     * @param  Request          $request The HTTP Request Object containing the GET Params
+     * @param Silex\Application $app     The Silex Application Container
+     * @param Request           $request The HTTP Request Object containing the GET Params
      *
-     * @return Boolean                   Whether the renaming action was successful
+     * @return Boolean Whether the renaming action was successful
      */
     public function renamefolder(Silex\Application $app, Request $request)
     {
@@ -564,7 +577,7 @@ class Async implements ControllerProviderInterface
                       . $parentPath
                       . $newName;
 
-        $fileSystemHelper = new Filesystem;
+        $fileSystemHelper = new Filesystem();
 
         try {
             $fileSystemHelper->rename(
@@ -575,6 +588,7 @@ class Async implements ControllerProviderInterface
         } catch (IOException $exception) {
 
             /* Thrown if target already exists or renaming failed. */
+
             return false;
         }
 
@@ -584,15 +598,14 @@ class Async implements ControllerProviderInterface
     /**
      * Delete a folder recursively if writeable.
      *
-     * @param  Silex\Application $app     The Silex Application Container
-     * @param  Request          $request The HTTP Request Object containing the GET Params
+     * @param Silex\Application $app     The Silex Application Container
+     * @param Request           $request The HTTP Request Object containing the GET Params
      *
-     * @return Boolean                   Whether the renaming action was successful
+     * @return Boolean Whether the renaming action was successful
      */
     public function removefolder(Silex\Application $app, Request $request)
     {
         $namespace = $request->request->get('namespace', 'files');
-
 
         $parentPath = $request->request->get('parent');
         $folderName = $request->request->get('foldername');
@@ -611,10 +624,10 @@ class Async implements ControllerProviderInterface
     /**
      * Create a new folder.
      *
-     * @param  Silex\Application $app     The Silex Application Container
-     * @param  Request          $request he HTTP Request Object containing the GET Params
+     * @param Silex\Application $app     The Silex Application Container
+     * @param Request           $request he HTTP Request Object containing the GET Params
      *
-     * @return Boolean                   Whether the creation was successful
+     * @return Boolean Whether the creation was successful
      */
     public function createfolder(Silex\Application $app, Request $request)
     {
@@ -635,8 +648,6 @@ class Async implements ControllerProviderInterface
 
         return false;
     }
-
-
 
     /**
      * Middleware function to do some tasks that should be done for all aynchronous

@@ -2,6 +2,7 @@
 
 namespace Bolt;
 
+use Bolt\Configuration\LowlevelException;
 use RandomLib;
 use SecurityLib;
 use Silex;
@@ -23,9 +24,14 @@ class Application extends Silex\Application
 
         // Initialize the config. Note that we do this here, on 'construct'.
         // All other initialisation is triggered from bootstrap.php
+        // Warning!
+        // One of a valid ResourceManager ['resources'] or ClassLoader ['classloader']
+        // must be defined for working properly
         if (!isset($this['resources'])) {
-            $this['resources'] = new Configuration\ResourceManager(getcwd());
+            $this['resources'] = new Configuration\ResourceManager($this['classloader']);
             $this['resources']->compat();
+        } else {
+            $this['classloader'] = $this['resources']->getClassLoader();
         }
 
         $this['resources']->setApp($this);
@@ -124,8 +130,7 @@ class Application extends Silex\Application
                 $error .= "<br><br>Since you're using " . $dboptions['driver'] . ", you should also make sure that the
                 database <code>" . $dboptions['dbname'] . "</code> exists, and the configured user has access to it.";
             }
-            $checker = new Configuration\LowlevelChecks($this['resources']);
-            $checker->lowLevelError($error);
+            throw new LowlevelException($error);
         }
 
         if ($dboptions['driver'] == 'pdo_sqlite') {
@@ -138,8 +143,8 @@ class Application extends Silex\Application
             // set utf8 on names and connection as all tables has this charset
 
             $this['db']->query("SET NAMES 'utf8';");
-            $this['db']->query("SET CHARACTER SET 'utf8';");
             $this['db']->query("SET CHARACTER_SET_CONNECTION = 'utf8';");
+            $this['db']->query("SET CHARACTER SET utf8;");
         }
 
         $this->register(
@@ -216,7 +221,7 @@ class Application extends Silex\Application
         }
 
         // Set up our secure random generator.
-        $factory = new RandomLib\Factory;
+        $factory = new RandomLib\Factory();
         $this['randomgenerator'] = $factory->getGenerator(new SecurityLib\Strength(SecurityLib\Strength::MEDIUM));
 
         $this->register(new Silex\Provider\UrlGeneratorServiceProvider())
@@ -298,7 +303,10 @@ class Application extends Silex\Application
         $this->mount('/upload', new Controllers\Upload());
 
         // Mount the 'extend' controller on /branding/extend.
-        $this->mount($this['config']->get('general/branding/path').'/extend', new Controllers\Extend());
+        $this->mount(
+            $this['config']->get('general/branding/path') . '/extend',
+            $this['extend']
+        );
 
         if ($this['config']->get('general/enforce_ssl')) {
             foreach ($this['routes']->getIterator() as $route) {
@@ -382,10 +390,10 @@ class Application extends Silex\Application
 
             // Register Whoops, to handle errors for logged in users only.
             if ($this['config']->get('general/debug_enable_whoops')) {
-                $this->register(new WhoopsServiceProvider);
+                $this->register(new WhoopsServiceProvider());
             }
 
-            $this->register(new Silex\Provider\ServiceControllerServiceProvider);
+            $this->register(new Silex\Provider\ServiceControllerServiceProvider());
 
             // Register the Silex/Symfony web debug toolbar.
             $this->register(
@@ -431,7 +439,7 @@ class Application extends Silex\Application
     /**
      * Global 'after' handler. Adds 'after' HTML-snippets and Meta-headers to the output.
      *
-     * @param Request $request
+     * @param Request  $request
      * @param Response $response
      */
     public function afterHandler(Request $request, Response $response)
@@ -481,7 +489,7 @@ class Application extends Silex\Application
     /**
      * Handle errors thrown in the application. Set up whoops, if set in conf
      *
-     * @param \Exception $exception
+     * @param  \Exception $exception
      * @return Response
      */
     public function errorHandler(\Exception $exception)

@@ -66,8 +66,7 @@
 
 /**** MODE: Expanded ****/
 
-@include in-large-mode() {
-
+@include respond-to(medium-screens) {
     #navpage-secondary {
         width: $nav-secondary-large-width;
         left: 0;
@@ -82,8 +81,7 @@
 
 /**** MODE: Collapsed ****/
 
-@include in-large-mode() {
-
+@include respond-to(medium-screens) {
     #navpage-wrapper.nav-secondary-collapsed {
 
         #navpage-secondary {
@@ -152,18 +150,17 @@
 
     &:hover > a {
         color: $sidebarlinkhover;
-        background: lighten($sidebarbackgroundhover, 5);
+        background: $sidebarbackgroundhover;
     }
 
     & > em {
         font-weight: bold;
         font-style: normal;
-        color: $sidebarbackgroundactive;
-        color: lighten($sidebarbackgroundactive, 20);
+        color: lighten($sidebarbackgroundactive, 40);
 
-        kbd {
+        i.icon {
             background: none;
-            color: lighten($sidebarbackgroundactive, 20);
+            color: lighten($sidebarbackgroundactive, 40);
         }
     }
 
@@ -202,7 +199,7 @@
             color: $sidebarlink;
         }
 
-        @include in-large-mode() {
+        @include respond-to(medium-screens) {
             @include hide();
         }
     }
@@ -217,10 +214,15 @@
         vertical-align: baseline;
         text-indent: 0;
         font-style: normal;
+        font-weight: bold;
         background: $sidebarlink;
         border-radius: 5px;
         font-size: ($nav-secondary-icon-size - 8px);
         color: #333;
+
+        &:before {
+            font-weight: normal;
+        }
     }
 
     .popover.right {
@@ -286,29 +288,23 @@
 .nav-secondary-expand {
     @include nav-secondary-divider();
     @include hide();
-
     i.icon {
         background: none !important;
         color: $sidebarlink !important;
     }
 }
 
-@include in-large-mode() {
-
+@include respond-to(medium-screens) {
     .nav-secondary-collapse {
         @include show();
     }
-
     .nav-secondary-expand {
         @include hide();
     }
-
     .nav-secondary-collapsed {
-
         .nav-secondary-collapse {
             @include hide();
         }
-
         .nav-secondary-expand {
             @include show();
         }

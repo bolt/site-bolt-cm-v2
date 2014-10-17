@@ -8,7 +8,7 @@
 
 {% macro contentlink_by_id(contenttype, title, content_id) %}{% spaceless %}
 <a href="{{ path('editcontent', { 'contenttypeslug': contenttype.slug, 'id': content_id }) }}">
-    {{- title|trimtext(70) -}}
+    {{- title|trimtext(70)|default("<em>(" ~ __("no title …") ~ ")</em>")|raw -}}
 </a>
 {% endspaceless %}{% endmacro %}
 
@@ -43,12 +43,18 @@
             {% if attrname == 'value' %}
                 value="{{ value }}"
             {% elseif value is not empty %}
-                {% if attrname in ['required', 'checked', 'disabled', 'autofocus', 'multiple', 'readonly'] %}
+                {% if attrname in ['required', 'disabled', 'autofocus', 'multiple', 'readonly'] %}
                     {{ attrname }}="{{ attrname }}"
                 {% elseif attrname == 'name_id' %}
                     name="{{ value }}" id="{{ value }}"
                 {% elseif attrname == 'class' %}
                     class="{{ value|trim }}"
+                {% elseif attrname == 'style' %}
+                    style="{{ value|trim }}"
+                {% elseif attrname == 'checked' %}
+                    {% if value != false %}checked="checked"{% endif %}
+                {% elseif attrname == 'bind' %}
+                    data-bind="{{ value|json_encode }}"
                 {% else %}
                     {{ attrname|replace({'_': '-'}) }}="{{ value }}"
                 {% endif %}
@@ -112,7 +118,7 @@
 
 {% macro stackbutton(file) %}
     {% if not stacked(file.newpath) %}
-        <a href="#" class="btn btn-default btn-sm" data-action="stack.addToStack('{{file.newpath}}', this);">
+        <a href="#" class="btn btn-default btn-sm" data-action="bolt.stack.addToStack('{{file.newpath}}', this);">
             <i class="fa fa-paperclip"></i>
             {{ __('Place on stack') }}
         </a>

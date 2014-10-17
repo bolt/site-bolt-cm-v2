@@ -1,7 +1,6 @@
-
 {% if context.content.relation is not empty or context.contenttype.relations is defined %}
 
-    {# only if we have NO grouping tabs. #}
+    {# Only if we have NO grouping tabs. #}
     {% if context.contenttype.groups|default is empty %}
         <hr>
     {% endif %}
@@ -16,67 +15,86 @@
 
 {% endif %}
 
-{# relationships for this record #}
+{# Relationships for this record #}
 {% if context.contenttype.relations is defined %}
 
     <div class="form-group">
-        <fieldset>
 
         {% for relcontenttype, relation in context.contenttype.relations %}
 
-            {# We set the 'format' for the rendering of each <option>. With fallback to a sensible default. #}
-            {% set format = relation.format|default("{{ item.title|escape }} <span>(№ {{ item.id }})</span>") %}
+            {# Prefix #}
+            {% if relation.prefix is defined and relation.prefix is not empty %}
+                <div class='prefix'>
+                    {{ relation.prefix|markdown }}
+                </div>
+            {% endif %}
 
-            {{ macro.label(relation.label, relcontenttype|ucfirst, 'col-sm-3 control-label', 'relation-' ~ relcontenttype) }}
-            <div class="col-sm-9">
+            {# Relationship #}
+            <fieldset>
+                {# We set the 'format' for the rendering of each <option>. With fallback to a sensible default. #}
+                {% set format = relation.format|default("{{ item.title|escape }} <span>(№ {{ item.id }})</span>") %}
 
-                {% if relation.multiple is defined and relation.multiple == 1 %}
-                <select name='relation[{{relcontenttype}}][]' id='relation-{{relcontenttype}}' class='wide' multiple  style="width: 100%;" data-placeholder="(none)">
-                {% else %}
-                <select name='relation[{{relcontenttype}}][]' id='relation-{{relcontenttype}}' class='wide' style="width: 100%;" data-placeholder="(none)">
-                    <option value="0">(none)</option>
-                {% endif %}
-                    {% for item in listcontent(relcontenttype, relation, context.content) %}
-                        {% if relcontenttype==app.request.get('relation') and item.id==app.request.get('relationid') %}
-                            {% set selectedbyrelation = true %}
-                        {% else %}
-                            {% set selectedbyrelation = false %}
-                        {% endif %}
-                        <option value="{{ item.id }}" {% if item.selected or selectedbyrelation %}selected{% endif %}>
-                            {{ format|twig({'item': item}) }}
-                        </option>
-                    {% endfor %}
+                {{ macro.label(relation.label, relcontenttype|ucfirst, 'col-sm-4 control-label', 'relation-' ~ relcontenttype) }}
+                <div class="col-sm-8">
 
-                </select>
+                    {% if relation.multiple is defined and relation.multiple == 1 %}
+                        <select name="relation[{{ relcontenttype }}][]" id="relation-{{ relcontenttype }}" class="wide" multiple style="width: 100%;" data-placeholder="{{ __('(none)') }}">
+                    {% else %}
+                        <select name="relation[{{ relcontenttype }}][]" id="relation-{{ relcontenttype }}" class="wide" style="width: 100%;" data-placeholder="{{ __('(none)') }}">
+                            <option value="0">{{ __('(none)') }}</option>
+                    {% endif %}
+                        {% for item in listcontent(relcontenttype, relation, context.content) %}
+                            {% if relcontenttype == app.request.get('relation') and item.id == app.request.get('relationid') %}
+                                {% set selectedbyrelation = true %}
+                            {% else %}
+                                {% set selectedbyrelation = false %}
+                            {% endif %}
+                            <option value="{{ item.id }}"{% if item.selected or selectedbyrelation %} selected{% endif %}>
+                                {{ format|twig({'item': item}) }}
+                            </option>
+                        {% endfor %}
 
-                <script>
-                    $('#relation-{{relcontenttype}}').select2({
-                        placeholder: "(none)",
-                        allowClear: true
-                    });
-                </script>
+                    </select>
 
-            </div>
+                    <script>
+                        $(function() {
+                            $('#relation-{{ relcontenttype }}').select2({
+                                placeholder: "{{ __('(none)') }}",
+                                allowClear: true
+                            });
+                        });
+                    </script>
+
+                </div>
+            </fieldset>
+
+            {# Postfix #}
+            {% if relation.postfix is defined and relation.postfix is not empty %}
+                <div class='postfix'>
+                    {{ relation.postfix|markdown }}
+                </div>
+            {% endif %}
+
         {% endfor %}
 
     </div>
 
 {% endif %}
 
-{# output 'incoming' relations #}
+{# Output 'incoming' relations #}
 {% if context.content.relation is not empty or context.contenttype.relations is defined %}
 
     {% for reltype, ids in context.content.relation %}
         {% if context.contenttype.relations[reltype] is not defined %}
             <p>{{ __('This record is related to:') }}</p>
             <table class="table table-striped dashboardlisting">
-            {% for id in ids %}
-                {% setcontent record = reltype~'/'~id %}
-                {% if record %}
-                    {% set editable = isallowed('edit', record) %}
-                    {% include ['_sub/_listing.twig'] with { 'excerptlength': 280, 'thumbsize': 54, 'compact': true, 'content': record } %}
-                {% endif %}
-            {% endfor %}
+                {% for id in ids %}
+                    {% setcontent record = reltype~'/'~id %}
+                    {% if record %}
+                        {% set editable = isallowed('edit', record) %}
+                        {% include ['_sub/_listing.twig'] with {'excerptlength': 280, 'thumbsize': 54, 'compact': true, 'content': record} %}
+                    {% endif %}
+                {% endfor %}
             </table>
         {% endif %}
     {% endfor %}
@@ -84,8 +102,6 @@
 {% endif %}
 
 {% if context.content.relation is not empty or context.contenttype.relations is defined %}
-
         <hr>
     </div>
-
 {% endif %}

@@ -9,13 +9,23 @@
 
 {% set video = context.content.get(key) %}
 
-{% set videotitle = (video.title is defined) ? video.title|trimtext(18)~' by '~video.authorname|trimtext(18) %}
+{% set videotitle = (video.title is defined) ? '"<b>' ~ video.title|trimtext(18)~'</b>" by '~video.authorname|trimtext(18) %}
+
+{% set attr_url = {
+    bind:        {bind: 'video', key: key},
+    class:       'form-control',
+    id:          'video-'~key,
+    name:        key~'[url]',
+    type:        'url',
+    placeholder: __('URL of video on Youtube, Vimeo or other video website') ~ ' …',
+    value:       video.url|default(''),
+}%}
 
 {% set attr_width = {
     class:  'form-control pull-left',
     id:     'video-'~key~'-width',
     name:   key~'[width]',
-    style:  'width: 60px; min-width: 60px;',
+    style:  'width: 80px; min-width: 80px;',
     type:   'number',
     value:  video.width|default(''),
 }%}
@@ -24,7 +34,7 @@
     class:  'form-control pull-left',
     id:     'video-'~key~'-height',
     name:   key~'[height]',
-    style:  'width: 60px; min-width: 60px;',
+    style:  'width: 80px; min-width: 80px;',
     type:   'number',
     value:  video.height|default(''),
 }%}
@@ -65,7 +75,7 @@
     name:      key~'[html]',
     readonly:  true,
     type:      'hidden',
-    value:     (video.html is defined ? video.html|escape : ''),
+    value:     (video.html is defined ? video.html|replace({'"': '\''}) : ''),
 }%}
 
 {% set attr_hid_thumbnail = {
@@ -79,25 +89,18 @@
 {#=== FIELDSET =======================================================================================================#}
 
 <fieldset class="video">
-
+    <label class="col-xs-12 control-label">{{ macro.infopop(labelkey, option.info) }}</label>
     <div class="col-sm-8">
-
-        <label class="control-label">{{ macro.infopop(labelkey, option.info, '(<span id="video-'~key~'-text">'~videotitle|e~'</span>)') }}</label>
-
         <div class="form-group">
-            <div class="col-sm-2">
-                <label class="control-label">{{ __('URL:') }}</label>
+            <div class="col-sm-12">
+                <label>{{ __('URL of video to embed') }}</label>
+                <input{{ macro.attr(attr_url) }}>
             </div>
-            <div class="col-sm-10">
-                <input type="url" name="{{key}}[url]" id="video-{{key}}" value='{{ video.url|default('') }}' class="form-control">
-            </div>
-
         </div>
 
         <div class="form-group">
-
             <div class="col-sm-2">
-                <label class="control-label">{{ __('Size:') }}</label>
+                <label class="control-label-inline">{{ __('Size') }}</label>
             </div>
             <div class="col-sm-10">
                 <input{{ macro.attr(attr_width) }}>
@@ -105,10 +108,19 @@
                 <input{{ macro.attr(attr_height) }}>
                 <span class="pull-left" style="margin: 6px 8px 0;">{{ __('pixels') }}</span>
             </div>
+        </div>
 
-            <div class="col-sm-12">
-                <span class="hidden-sm">
-                    <a href="#myModal" role="button" class="btn btn-tertiary " data-toggle="modal" style='float: right;'>{{ __('Preview video') }}</a>
+        <div class="form-group">
+            <div class="col-sm-9">
+                <span><b>{{ __('Matched video') }}</b></span>
+                <p id="video-{{ key }}-text">{{ videotitle|raw }}</p>
+            </div>
+
+            <div class="hidden-xs col-sm-3">
+                <span class="hidden-xs" style="float:right">
+                    <a href="#myModal" role="button" class="btn btn-default" data-toggle="modal">
+                    <i class="fa fa-youtube-play"></i>
+                    {{ __('Preview') }}</a>
                 </span>
             </div>
 
@@ -118,20 +130,16 @@
             <input{{ macro.attr(attr_hid_authorurl) }}>
             <input{{ macro.attr(attr_hid_html) }}>
             <input{{ macro.attr(attr_hid_thumbnail) }}>
-
         </div>
-
-        <script type="text/javascript">
-            bindVideoEmbed('{{ key }}');
-        </script>
     </div>
 
     <div class="col-sm-4">
-        <div class="imageholder" id="thumbnail-{{ key }}" style="width: 160px; text-align: center; background-color: #F8F8F8;">
+        <label>{{ __('Preview image') }}</label>
+        <div class="imageholder" id="thumbnail-{{ key }}">
             {% if video.thumbnail|default('') %}
-                <img src="{{ video.thumbnail }}" width="160" height="120">
+                <img src="{{ video.thumbnail }}" width="200" height="150">
             {% else %}
-                <img src="{{ app.paths.app }}view/img/default_empty.png" width="120" height="120">
+                <img src="{{ app.paths.app }}view/img/default_empty_4x3.png" width="200" height="150">
             {% endif %}
         </div>
     </div>

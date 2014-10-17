@@ -6,8 +6,8 @@
 
         {# --------------- prefix --------------- #}
         {% if field.prefix is defined and field.prefix is not empty %}
-            <div class='clearfix'>
-                {{ field.prefix|raw }}
+            <div class='prefix'>
+                {{ field.prefix|markdown }}
             </div>
         {% endif %}
 
@@ -24,15 +24,15 @@
         {# ---------------postfix & divider --------------- #}
 
         {% if field.postfix is defined and field.postfix is not empty %}
-            <div class='col-sm-12'>
-                {{ field.postfix|raw }}
+            <div class='postfix'>
+                {{ field.postfix|markdown }}
             </div>
         {% endif %}
-
-    </div><!-- end of 'formgroup' -->
 
     {% if field.separator is defined and field.separator == true %}
         <hr>
     {% endif %}
+
+    </div><!-- end of 'formgroup' -->
 
 {% endfor %}

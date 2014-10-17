@@ -1,30 +1,23 @@
 /**** MODE: Hidden + Shown ****/
-
 #navpage-content {
-    padding-top: 16px;
-    padding-bottom: 48px;
+    padding: 16px 16px 60px 8px;
     transition: left 0.3s;
     position: absolute;
     left: 0;
     right: 0;
 }
 
-/**** MODE: Expanded ****/
-
-@include in-large-mode() {
-
+@include respond-to(medium-screens) {
+    /**** MODE: Expanded ****/
     #navpage-content {
+        padding-left: 30px;
         left: $nav-secondary-large-width;
     }
 
-}
-
-/**** MODE: Collapsed ****/
-
-@include in-large-mode() {
+    /**** MODE: Collapsed ****/
     #navpage-wrapper.nav-secondary-collapsed {
-
         #navpage-content {
+            padding-left: 30px;
             left: $nav-secondary-collapsed-width;
         }
     }

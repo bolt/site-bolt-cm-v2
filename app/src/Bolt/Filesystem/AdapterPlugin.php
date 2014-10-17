@@ -27,16 +27,14 @@ abstract class AdapterPlugin implements PluginInterface
     {
     }
 
-
     public function setFilesystem(FilesystemInterface $filesystem)
     {
         $this->filesystem = $filesystem;
     }
 
-
     public function handle($path)
     {
-        $method = "get".$this->adapterType().ucfirst($this->getMethod());
+        $method = 'get' . $this->adapterType() . ucfirst($this->getMethod());
 
         if (method_exists($this, $method)) {
             return $this->$method($path);
@@ -48,7 +46,6 @@ abstract class AdapterPlugin implements PluginInterface
 
         return false;
     }
-
 
     protected function adapterType()
     {

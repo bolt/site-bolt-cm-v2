@@ -10,27 +10,23 @@
         {{ nav.link('dashboard', __('Dashboard'), 'dashboard', (page_nav == 'Dashboard')) }}
 
         {# Contenttypes #}
-        {{ nav.heading(__('Content')) }}
+        {{ nav.heading(__('Content'), 'file-text') }}
         {% include 'nav/_secondary-content.twig' %}
 
         {# Settings #}
         {% if isallowed('settings') %}
 
-            {{ nav.heading(__('Settings')) }}
+            {{ nav.heading(__('Settings'), 'wrench') }}
 
             {% include 'nav/_secondary-configuration.twig' %}
-
-            {% if app.extensions.hasMenuoptions %}
-                {% include 'nav/_secondary-menuoptions.twig' %}
-            {% endif %}
 
             {% include 'nav/_secondary-filemanagement.twig' %}
 
             {% include 'nav/_secondary-translations.twig' %}
 
             {# Link to Extend Bolt #}
-            {% if isallowed('extensions') %}
-                {{ nav.link('cog', __('Extend Bolt'), 'extend', (page_nav == 'ExtendBolt'), false) }}
+            {% if app.extensions.hasMenuoptions or isallowed('extensions') %}
+                {% include 'nav/_secondary-extensions.twig' %}
             {% endif %}
 
         {% endif %}
