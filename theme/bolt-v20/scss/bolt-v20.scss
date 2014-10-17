@@ -338,7 +338,7 @@ header {
         //@extend .large-7;
         padding-top: 2em;
     }
-    h1, h2, p.meta {
+    h1, h2, h3, p.meta {
         text-align: center;    
     }
     article {
@@ -500,6 +500,14 @@ footer {
     // LARGE //
     @media #{$large-up} {
         @include block-grid(3);
+    }
+    li {
+        h3 {
+            margin-bottom: 1em;
+        }
+        padding-left: 3%;
+        padding-right: 3%;
+        padding-bottom: 3em;
     }
 }
 
