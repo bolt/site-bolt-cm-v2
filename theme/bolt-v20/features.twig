@@ -1,18 +1,27 @@
 {% extends "master.twig" %}
 
-{% block bodyclass %}body-record{% endblock %}
+{% block bodyclass %}body-features{% endblock %}
           
 {% block content %}
 
 {% set chapters = app.config.get('taxonomy/chapters/options') %}
+
+        <nav class='jumpnav'>
+            <ul>
+                {% for cat, catname in chapters %}
+                <li><a href="#{{cat}}">For {{catname}}</a></li> <!-- AW - WORKING ON THIS -->
+                {% endfor %}        
+            </ul>
+        </nav>
+
 {% for cat, catname in chapters %}
+<section class="maininfo">
+    <div class="maincolumn">
 
 {% setcontent textblock='blocks/'~cat %}   
 
-<section class="maininfo">
-    <div class="maincolumn">
-        <article class="row">
-            <h1>For {{catname}}</h1>
+     <article class="row">
+            <h1 id="{{cat}}">For {{catname}}</h1>
             <h3 class="subheader">{{textblock.body}}</h3>
         </article>
     
@@ -26,10 +35,12 @@
             {% endfor %}
         </ul>
         <a class="button">See all download options</a>
+
     </div>
 </section>
 
 {% endfor%}
+
 
 {% endblock content %}
 

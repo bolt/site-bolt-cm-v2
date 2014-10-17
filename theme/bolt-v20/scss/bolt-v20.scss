@@ -70,6 +70,13 @@ nav {
     }
 }
 
+.jumpnav {
+    // LARGE //
+    @media #{$large-up} {
+    display: none;
+    }      
+}
+
 section {
     
 }
@@ -359,6 +366,9 @@ header {
         }
     }
 }
+
+
+
 .disqus {
     margin-top: 4em;
 }
