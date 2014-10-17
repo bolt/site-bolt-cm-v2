@@ -6,13 +6,14 @@
 
 {% set chapters = app.config.get('taxonomy/chapters/options') %}
 {% for cat, catname in chapters %}
-    
+
+{% setcontent textblock='blocks/'~cat %}   
 
 <section class="maininfo">
     <div class="maincolumn">
         <article class="row">
             <h1>For {{catname}}</h1>
-            <h3 class="subheader">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Teneo, inquit, finem illi videri nihil dolere. Sic enim censent, oportunitatis esse beate vivere. Simus igitur contenti his. Is es profecto tu. Quis hoc dicit? Ratio enim nostra consentit,</h3>
+            <h3 class="subheader">{{textblock.body}}</h3>
         </article>
     
         {% setcontent features = 'features' where { 'chapters':cat }%}
@@ -20,7 +21,7 @@
             {% for item in features %}
             <li>
                 <h3>{{ item.title }}</h3>
-                {{ item.text | slice(0,150) }} 
+                {{ item.text }} 
             </li>
             {% endfor %}
         </ul>
