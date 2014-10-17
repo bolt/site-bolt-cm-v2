@@ -24,7 +24,7 @@ news:
             type: markdown
             height: 400px  
     record_template: newsitem.twig
-    listing_template: newslisting.twig
+    listing_template: news.twig
     sort: -id
 
  

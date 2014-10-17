@@ -489,6 +489,21 @@ footer {
     }
 }
 
+/* --------------- FEATURES ---------------*/
+
+.featurelist {
+    @include block-grid(1);
+    // MEDIUM //
+    @media #{$medium-up} {
+        @include block-grid(2);
+    }
+    // LARGE //
+    @media #{$large-up} {
+        @include block-grid(3);
+    }
+}
+
+
 
 /* -------------- TYPOGRAPHY --------------- */
 

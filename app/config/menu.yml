@@ -7,11 +7,11 @@ main:
     path: homepage
 #    class: first
   - label: Features
-    path: pages/features
+    path: /features
   - label: Documentation
     link: http://docs.bolt.cm
   - label: News
-    path: pages/news
+    path: /news
   - label: IRC/Chat
     path: pages/irc
   - label: Download

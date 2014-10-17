@@ -1,0 +1,51 @@
+{% extends "master.twig" %}
+
+{% block bodyclass %}body-record{% endblock %}
+          
+{% block content %}
+
+<section class="">
+    <div class="maincolumn">
+        <h2>For Editors</h2>
+        <h3 class="subheader">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Teneo, inquit, finem illi videri nihil dolere. Sic enim censent, oportunitatis esse beate vivere. Simus igitur contenti his. Is es profecto tu. Quis hoc dicit? Ratio enim nostra consentit,</h3>
+    </div>
+    {% setcontent editorfeatures = 'features' where { 'chapters':'editors' }%}
+    <ul class="featurelist">
+        {% for item in editorfeatures %}
+        <li>
+            <h3>{{ item.title }}</h3>
+            {{ item.text }} 
+        </li>
+        {% endfor %}
+    </ul>
+</section>
+
+<section class="maininfo">
+    <div class="maincolumn ">
+        <article class="row">
+            <h1><a href="{{record.link}}">{{record.title}}</a></h1>
+            <h2 class="subheader">{{record.subtitle}}</h2>
+            <p class="meta">Published: {{ record.datepublish|date("l j F - H:i") }}</p>
+            <div class="articlebody">
+                {% if record.image %}
+                <a href="{{ record.image|image() }}" class="fancybox">
+                    <img src="{{ record.image|thumbnail(700,300) }}">
+                </a>
+                {% endif %}
+                {{  record.introduction }}
+                {{  record.text }}
+                {{  record.text_markdown }}
+            </div>
+            THERE BE DISQUS HERE
+        </article>
+                
+    </div>
+</section>
+
+{% endblock content %}
+
+{% block footer_extra_scripts %}
+    <script src="{{paths.theme}}scripts/picturefill.js"></script>
+    <script src="{{ paths.theme }}scripts/cycle2.min.js"></script>
+    <script src="{{ paths.theme }}scripts/cycle2.swipe.min.js"></script>
+{% endblock %}

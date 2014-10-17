@@ -11,8 +11,8 @@ chapters:
     slug: chapters
     singular_slug: chapter
     behaves_like: grouping
-    options: { main: "The main chapter", meta: "Meta Chapter", other: "The other stuff" }
     has_sortorder: true
+    options: { 'editors': 'Content editors', 'frontenders': 'Frontend developers',  'backenders': 'Backend developers' }
 
 categories:
     name: Categories
