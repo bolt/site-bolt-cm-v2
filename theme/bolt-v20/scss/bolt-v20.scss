@@ -347,6 +347,7 @@ header {
         border-bottom: 1px solid #ccc;
         img {
             margin-bottom: 1em;
+            clear:both;
         }
         .articlebody {
             @media #{$large-up} {
