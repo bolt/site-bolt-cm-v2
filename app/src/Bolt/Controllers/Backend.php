@@ -5,13 +5,14 @@ namespace Bolt\Controllers;
 use Silex;
 use Silex\ControllerProviderInterface;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Form\FormError;
 use Symfony\Component\Form\FormEvent;
 use Symfony\Component\Form\FormEvents;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Yaml\Yaml;
-use Symfony\Component\Yaml\Exception\ParseException;
 use Bolt\Permissions;
+use Bolt\TranslationFile;
 
 class Backend implements ControllerProviderInterface
 {
@@ -83,13 +84,6 @@ class Backend implements ControllerProviderInterface
         $ctl->get('/content/deletecontent/{contenttypeslug}/{id}', array($this, 'deleteContent'))
             ->before(array($this, 'before'))
             ->bind('deletecontent');
-
-        /* FIXME Temporarily commented out until decide whether it needed
-
-        $ctl->get('/content/sortcontent/{contenttypeslug}', array($this, 'sortcontent'))
-            ->before(array($this, 'before'))
-            ->bind('sortcontent');
-        */
 
         $ctl->get('/content/{action}/{contenttypeslug}/{id}', array($this, 'contentAction'))
             ->before(array($this, 'before'))
@@ -183,7 +177,7 @@ class Backend implements ControllerProviderInterface
         // get the 'latest' from each of the content types.
         foreach ($app['config']->get('contenttypes') as $key => $contenttype) {
             if ($app['users']->isAllowed('contenttype:' . $key) && $contenttype['show_on_dashboard'] == true) {
-                $latest[$key] = $app['storage']->getContent($key, array('limit' => $limit, 'order' => 'datechanged DESC'));
+                $latest[$key] = $app['storage']->getContent($key, array('limit' => $limit, 'order' => 'datechanged DESC', 'hydrate' => false));
                 if (!empty($latest[$key])) {
                     $total += count($latest[$key]);
                 }
@@ -266,8 +260,8 @@ class Backend implements ControllerProviderInterface
      * Reset the password. This controller is normally only reached when the user
      * clicks a "password reset" link in the email.
      *
-     * @param Silex\Application $app
-     * @param Request $request
+     * @param  Silex\Application $app
+     * @param  Request           $request
      * @return string
      */
     public function resetPassword(Silex\Application $app, Request $request)
@@ -454,7 +448,7 @@ class Backend implements ControllerProviderInterface
 
         $multiplecontent = $app['storage']->getContent(
             $contenttype['slug'],
-            array('limit' => $limit, 'order' => $order, 'page' => $page, 'filter' => $filter, 'paging' => true)
+            array('limit' => $limit, 'order' => $order, 'page' => $page, 'filter' => $filter, 'paging' => true, 'hydrate' => true)
         );
 
         // @todo Do we need pager here?
@@ -580,7 +574,7 @@ class Backend implements ControllerProviderInterface
             // We have a content type, and possibly a contentid.
             $contenttypeObj = $app['storage']->getContentType($contenttype);
             if ($contentid) {
-                $content = $app['storage']->getContent($contenttype, array('id' => $contentid));
+                $content = $app['storage']->getContent($contenttype, array('id' => $contentid, 'hydrate' => false));
                 $options['contentid'] = $contentid;
             }
             // Getting a slice of data and the total count
@@ -667,8 +661,10 @@ class Backend implements ControllerProviderInterface
         // for Editors.
         if (empty($id)) {
             $perm = "contenttype:$contenttypeslug:create";
+            $new = true;
         } else {
             $perm = "contenttype:$contenttypeslug:edit:$id";
+            $new = false;
         }
         if (!$app['users']->isAllowed($perm)) {
             $app['session']->getFlashBag()->set('error', __('You do not have the right privileges to edit that record.'));
@@ -704,6 +700,7 @@ class Backend implements ControllerProviderInterface
                 }
             }
 
+            // If we have an ID now, this is an existing record
             if ($id) {
                 $content = $app['storage']->getContent($contenttype['slug'], array('id' => $id));
                 $oldStatus = $content['status'];
@@ -738,8 +735,6 @@ class Backend implements ControllerProviderInterface
             $content->setFromPost($request_all, $contenttype);
             $newStatus = $content['status'];
 
-            $statusOK = $app['users']->isContentStatusTransitionAllowed($oldStatus, $newStatus, $contenttype['slug'], $id);
-
             // Don't try to spoof the $id..
             if (!empty($content['id']) && $id != $content['id']) {
                 $app['session']->getFlashBag()->set('error', "Don't try to spoof the id!");
@@ -747,30 +742,64 @@ class Backend implements ControllerProviderInterface
                 return redirect('dashboard');
             }
 
-            $comment = $request->request->get('changelog-comment');
-
             // Save the record, and return to the overview screen, or to the record (if we clicked 'save and continue')
-            if ($statusOK && $app['storage']->saveContent($content, $comment)) {
-                if (!empty($id)) {
-                    $app['session']->getFlashBag()->set('success', __('The changes to this %contenttype% have been saved.', array('%contenttype%' => $contenttype['singular_name'])));
-                } else {
-                    $app['session']->getFlashBag()->set('success', __('The new %contenttype% has been saved.', array('%contenttype%' => $contenttype['singular_name'])));
-                }
+            $statusOK = $app['users']->isContentStatusTransitionAllowed($oldStatus, $newStatus, $contenttype['slug'], $id);
+            if ($statusOK) {
+                // Get the associate record change comment
+                $comment = $request->request->get('changelog-comment');
+
+                // Save the record
+                $id = $app['storage']->saveContent($content, $comment);
+
+                // Log the change
                 $app['log']->add($content->getTitle(), 3, $content, 'save content');
 
-                // If 'returnto is set', we return to the edit page, with the correct anchor.
+                if ($new) {
+                    $app['session']->getFlashBag()->set('success', __('The new %contenttype% has been saved.', array('%contenttype%' => $contenttype['singular_name'])));
+                } else {
+                    $app['session']->getFlashBag()->set('success', __('The changes to this %contenttype% have been saved.', array('%contenttype%' => $contenttype['singular_name'])));
+                }
+
+                /*
+                 * Bolt 2:
+                 * We now only get a returnto parameter if we are saving a new
+                 * record and staying on the same page, i.e. "Save {contenttype}"
+                 */
                 if ($app['request']->get('returnto')) {
-
                     if ($app['request']->get('returnto') == "new") {
-                        // We must 'return to' the edit "New record" page.
-                        return redirect('editcontent', array('contenttypeslug' => $contenttype['slug'], 'id' => 0));
-                    } else {
-                        // We must 'return to' the edit page. In which case we must know the Id, so let's fetch it.
-                        $id = $app['storage']->getLatestId($contenttype['slug']);
+                        return redirect('editcontent', array('contenttypeslug' => $contenttype['slug'], 'id' => 0), '#' . $app['request']->get('returnto'));
+                    } elseif ($app['request']->get('returnto') == "ajax") {
+                        /*
+                         * Flush any buffers from saveConent() dispatcher hooks
+                         * and make sure our JSON output is clean.
+                         *
+                         * Currently occurs due to a 404 exception being generated
+                         * in \Bolt\Storage::saveContent() dispatchers:
+                         *     $this->app['dispatcher']->dispatch(StorageEvents::PRE_SAVE, $event);
+                         *     $this->app['dispatcher']->dispatch(StorageEvents::POST_SAVE, $event);
+                         */
+                        if (ob_get_length()) {
+                            ob_end_clean();
+                        }
 
-                        return redirect('editcontent', array('contenttypeslug' => $contenttype['slug'], 'id' => $id), "#".$app['request']->get('returnto'));
+                        // Get our record after POST_SAVE hooks are dealt with and return the JSON
+                        $content = $app['storage']->getContent($contenttype['slug'], array('id' => $id, 'returnsingle' => true));
+
+                        foreach ($content->values as $key => $value) {
+                            // Some values are returned as \Twig_Markup and JSON can't deal with that
+                            if (is_array($value)) {
+                                foreach ($value as $subkey => $subvalue) {
+                                    if (gettype($subvalue) == 'object' && get_class($subvalue) == 'Twig_Markup') {
+                                        $val[$key][$subkey] = $subvalue->__toString();
+                                    }
+                                }
+                            } else {
+                                $val[$key] = $value;
+                            }
+                        }
+
+                        return new JsonResponse($val);
                     }
-
                 }
 
                 // No returnto, so we go back to the 'overview' for this contenttype.
@@ -788,6 +817,7 @@ class Backend implements ControllerProviderInterface
             }
         }
 
+        // We're doing a GET
         if (!empty($id)) {
             $content = $app['storage']->getContent($contenttype['slug'], array('id' => $id));
 
@@ -919,38 +949,6 @@ class Backend implements ControllerProviderInterface
         return redirect('overview', array('contenttypeslug' => $contenttype['slug']));
     }
 
-    /**
-     * Change sorting (called by ajax request).
-     */
-    // FIXME Is it necessary along with its router entry above?
-    /*
-    public function sortcontent(Silex\Application $app, $contenttypeslug, Request $request)
-    {
-        $contenttype = $app['storage']->getContentType($contenttypeslug); // maybe needed in UpdateQuery?
-        $groupingtaxonomy = $app['storage']->getContentTypeGrouping($contenttypeslug); // maybe needed in UpdateQuery?
-
-        $sortingarray = $request->get('item');
-        foreach ($sortingarray as $sortorder => $id) {
-            $content = $app['storage']->getContent($contenttypeslug . '/' . $id);
-            $group = $content->group[slug]; // maybe needed in UpdateQuery?
-
-            // @todo UpdateQuery for new sortorders
-            //if(saved){
-                //$changedContent[] = $id;
-            //}
-        }
-
-        if ($changedContent) {
-            $app['session']->getFlashBag()->set('info', __('Sortorder has been changed'));
-
-            return true;
-        } else {
-            $app['session']->getFlashBag()->set('error', __('Sortorder could not be changed.'));
-
-            return false;
-        }
-    }
-    */
 
     /**
      * Show a list of all available users.
@@ -1015,11 +1013,7 @@ class Backend implements ControllerProviderInterface
             // Add a note, if we're setting up the first user using SQLite..
             $dbdriver = $app['config']->get('general/database/driver');
             if ($dbdriver == 'sqlite' || $dbdriver == 'pdo_sqlite') {
-                $note = __(
-                    'You are currently using SQLite to set up the first user. If you wish to use MySQL or PostgreSQL ' .
-                    'instead, edit the configuration file at <tt>\'app/config/config.yml\'</tt> and Bolt will set '.
-                    'up the database tables for you. Be sure to reload this page before continuing.'
-                );
+                $note = __('You are currently using SQLite to set up the first user. If you wish to use MySQL or PostgreSQL instead, edit the configuration file at <tt>\'app/config/config.yml\'</tt> and Bolt will set up the database tables for you. Be sure to reload this page before continuing.');
             }
 
             // If we get here, chances are we don't have the tables set up, yet.
@@ -1035,23 +1029,39 @@ class Backend implements ControllerProviderInterface
             ->add('id', 'hidden')
             ->add('username', 'text', array(
                 'constraints' => array(new Assert\NotBlank(), new Assert\Length(array('min' => 2, 'max' => 32))),
-                'label' => __('Username')
+                'label' => __('Username'),
+                'attr' => array( 
+                    'placeholder' => __('Pick a username, lowercase only')
+                )
             ))
             ->add('password', 'password', array(
                 'required' => false,
-                'label' => __('Password')
+                'label' => __('Password'),
+                'attr' => array( 
+                    'placeholder' => __('Enter a password, longer than 6 chars')
+                )
+
             ))
             ->add('password_confirmation', 'password', array(
                 'required' => false,
-                'label' => __('Password (confirm)')
+                'label' => __('Password (confirm)'),
+                'attr' => array( 
+                    'placeholder' => __('Confirm your password')
+                )
             ))
             ->add('email', 'text', array(
                 'constraints' => new Assert\Email(),
-                'label' => __('Email')
+                'label' => __('Email'),
+                'attr' => array( 
+                    'placeholder' => __('Enter a valid email address')
+                )
             ))
             ->add('displayname', 'text', array(
                 'constraints' => array(new Assert\NotBlank(), new Assert\Length(array('min' => 2, 'max' => 32))),
-                'label' => __('Display name')
+                'label' => __('Display name'),
+                'attr' => array( 
+                    'placeholder' => __('Pick a display name / alias')
+                )
             ));
 
         // If we're adding the first user, add them as 'developer' by default, so don't
@@ -1383,7 +1393,11 @@ class Backend implements ControllerProviderInterface
             // Define the "Upload here" form.
             $form = $app['form.factory']
                 ->createBuilder('form')
-                ->add('FileUpload', 'file', array('label' => __("Upload a file to this folder:")))
+                ->add('FileUpload', 'file', array(
+                    'label' => __("Upload a file to this folder"),
+                    'attr' => array(
+                    'data-filename-placement' => 'inside',
+                    'title' => __('Select file …'))))
                 ->getForm();
 
             // Handle the upload.
@@ -1405,7 +1419,7 @@ class Backend implements ControllerProviderInterface
                         if ($app['filepermissions']->allowedUpload($filename)) {
 
                             $handler = $app['upload'];
-                            $handler->setPrefix($path."/");
+                            $handler->setPrefix($path . '/');
                             $result = $app['upload']->process($fileToProcess);
 
                             if ($result->isValid()) {
@@ -1428,7 +1442,7 @@ class Backend implements ControllerProviderInterface
                             $extensionList = implode(' ', $extensionList);
                             $app['session']->getFlashBag()->set(
                                 'error',
-                                __("File '%file%' could not be uploaded (wrong/disallowed file type). Make sure the file extension is one of the following: ", array('%file%' => $filename))
+                                __("File '%file%' could not be uploaded (wrong/disallowed file type). Make sure the file extension is one of the following:", array('%file%' => $filename))
                                 . $extensionList
                             );
                         }
@@ -1464,6 +1478,7 @@ class Backend implements ControllerProviderInterface
         if (!$request->query->has('CKEditor')) {
             $twig = 'files/files.twig';
         } else {
+            $app['debugbar'] = false;
             $twig = 'files_ck/files_ck.twig';
         }
 
@@ -1538,13 +1553,10 @@ class Backend implements ControllerProviderInterface
 
         // Gather the 'similar' files, if present.. i.e., if we're editing config.yml, we also want to check for
         // config.yml.dist and config_local.yml
-        $basename = str_replace('.yml', '', str_replace('.dist', '', str_replace('_local', '', $filename)));
+        $basename = str_replace('.yml', '', str_replace('_local', '', $filename));
         $filegroup = array();
         if (is_readable($basename . '.yml')) {
             $filegroup[] = basename($basename . '.yml');
-        }
-        if (is_readable($basename . '.yml.dist')) {
-            $filegroup[] = basename($basename . '.yml.dist');
         }
         if (is_readable($basename . '_local.yml')) {
             $filegroup[] = basename($basename . '_local.yml');
@@ -1577,7 +1589,7 @@ class Backend implements ControllerProviderInterface
                         $ok = $yamlparser->parse($contents);
                     } catch (\Symfony\Component\Yaml\Exception\ParseException $e) {
                         $ok = false;
-                        $app['session']->getFlashBag()->set('error', __("File '%s' could not be saved: ", array('%s' => $file)) . $e->getMessage());
+                        $app['session']->getFlashBag()->set('error', __("File '%s' could not be saved:", array('%s' => $file)) . $e->getMessage());
                     }
                 }
 
@@ -1598,12 +1610,21 @@ class Backend implements ControllerProviderInterface
             }
         }
 
+        // For 'related' files we might need to keep track of the current dirname on top of the namespace.
+        if (dirname($file) != '') {
+            $additionalpath = dirname($file) . '/';
+        } else {
+            $additionalpath = '';
+        }
+
         $context = array(
             'form' => $form->createView(),
             'filetype' => $type,
             'file' => $file,
             'basename' => basename($file),
             'pathsegments' => $pathsegments,
+            'additionalpath' => $additionalpath,
+            'namespace' => $namespace,
             'write_allowed' => $writeallowed,
             'filegroup' => $filegroup
         );
@@ -1616,106 +1637,23 @@ class Backend implements ControllerProviderInterface
      */
     public function translation($domain, $tr_locale, Silex\Application $app, Request $request)
     {
-        $short_locale = substr($tr_locale, 0, 2);
-        $type = 'yml';
-        $file = "app/resources/translations/$short_locale/$domain.$short_locale.$type";
-        $filename = realpath(__DIR__ . '/../../../..') . '/' . $file;
+        $translation = new TranslationFile($app, $domain, $tr_locale);
 
-        $app['log']->add('Editing translation: ' . $file, $app['debug'] ? 1 : 3);
+        list($path, $shortPath) = $translation->path();
 
-        if ($domain == 'infos') {
-            // no gathering here : if the file doesn't exist yet, we load a
-            // copy from the locale_fallback version (en)
-            if (!file_exists($filename) || filesize($filename) < 10) {
-                $srcfile = "app/resources/translations/en/$domain.en.$type";
-                $srcfilename = realpath(__DIR__ . '/../../../..') . '/'.$srcfile;
-                $content = file_get_contents($srcfilename);
-            } else {
-                $content = file_get_contents($filename);
-            }
-        } else {
-            $translated = array();
-            if (is_file($filename) && is_readable($filename)) {
-                try {
-                    $translated = Yaml::parse($filename);
-                } catch (ParseException $e) {
-                    $app['session']->getFlashBag()->set('error', printf("Unable to parse the YAML translations: %s", $e->getMessage()));
-                }
-            }
-            list($msg, $ctype) = gatherTranslatableStrings($tr_locale, $translated);
-            $ts = date("Y/m/d H:i:s");
-            $content = "# $file -- generated on $ts\n";
-            if ($domain == 'messages') {
-                $cnt = count($msg['not_translated']);
-                if ($cnt) {
-                    $content .= sprintf("# %d untranslated strings\n\n", $cnt);
-                    foreach ($msg['not_translated'] as $key) {
-                        $content .= "$key:  #\n";
-                    }
-                    $content .= "\n#-----------------------------------------\n";
-                } else {
-                    $content .= "# no untranslated strings; good ;-)\n\n";
-                }
-                $cnt = count($msg['translated']);
-                $content .= sprintf("# %d translated strings\n\n", $cnt);
-                foreach ($msg['translated'] as $key => $trans) {
-                    $content .= "$key: $trans\n";
-                }
-            } else {
-                $cnt = count($ctype['not_translated']);
-                if ($cnt) {
-                    $content .= sprintf("# %d untranslated strings\n\n", $cnt);
-                    foreach ($ctype['not_translated'] as $key) {
-                        $content .= "$key:  #\n";
-                    }
-                    $content .= "\n#-----------------------------------------\n";
-                } else {
-                    $content .= "# no untranslated strings: good ;-)\n\n";
-                }
-                $cnt = count($ctype['translated']);
-                $content .= sprintf("# %d translated strings\n\n", $cnt);
-                foreach ($ctype['translated'] as $key => $trans) {
-                    $content .= "$key: $trans\n";
-                }
-            }
-            //==========================
-            //$file = "app/resources/translations/$short_locale/$domain.yml";
-            //$filename = realpath(__DIR__."/../../../..")."/$file";
-            //$type = 'yml';
-        }
-        // maybe no translations yet
-        if (!file_exists($filename) && !is_writable(dirname($filename))) {
-            $app['session']->getFlashBag()->set(
-                'info',
-                __(
-                    "The translations file '%s' can't be created. You will have to use your own editor to make modifications to this file.",
-                    array('%s' => $file)
-                )
-            );
-            $writeallowed = false;
-        } elseif (file_exists($filename) && !is_readable($filename)) {
-            $error = __("The translations file '%s' is not readable.", array('%s' => $file));
-            $app->abort(404, $error);
-        } elseif (!is_writable($filename)) {
-            $app['session']->getFlashBag()->set(
-                'warning',
-                __(
-                    "The file '%s' is not writable. You will have to use your own editor to make modifications to this file.",
-                    array('%s' => $file)
-                )
-            );
-            $writeallowed = false;
-        } else {
-            $writeallowed = true;
-        }
+        $app['log']->add('Editing translation: ' . $shortPath, $app['debug'] ? 1 : 3);
 
-        $data['contents'] = $content;
+        $data['contents'] = $translation->content();
+
+        $writeallowed = $translation->isWriteAllowed();
+
         $form = $app['form.factory']->createBuilder('form', $data)
-            ->add('contents', 'textarea', array(
-                'constraints' => array(new Assert\NotBlank(), new Assert\Length(array('min' => 10)))
-            ));
-
-        $form = $form->getForm();
+            ->add(
+                'contents',
+                'textarea',
+                array('constraints' => array(new Assert\NotBlank(), new Assert\Length(array('min' => 10))))
+            )
+            ->getForm();
 
         // Check if the form was POST-ed, and valid. If so, store the file.
         if ($request->getMethod() == 'POST') {
@@ -1726,27 +1664,24 @@ class Backend implements ControllerProviderInterface
                 $data = $form->getData();
                 $contents = cleanPostedData($data['contents']) . "\n";
 
-                $ok = true;
-
                 // Before trying to save a yaml file, check if it's valid.
-                if ($type == 'yml') {
-                    //$yamlparser = new \Symfony\Component\Yaml\Parser();
-                    try {
-                        //$ok = $yamlparser->parse($contents);
-                        $ok = Yaml::parse($contents);
-                    } catch (\Symfony\Component\Yaml\Exception\ParseException $e) {
-                        $ok = false;
-                        $app['session']->getFlashBag()->set('error', __("File '%s' could not be saved: ", array('%s' => $file)) . $e->getMessage());
-                    }
+                try {
+                    $ok = Yaml::parse($contents);
+                } catch (\Symfony\Component\Yaml\Exception\ParseException $e) {
+                    $ok = false;
+                    $msg = __("File '%s' could not be saved:", array('%s' => $shortPath));
+                    $app['session']->getFlashBag()->set('error', $msg . $e->getMessage());
                 }
 
                 if ($ok) {
-                    if (file_put_contents($filename, $contents)) {
-                        $app['session']->getFlashBag()->set('info', __("File '%s' has been saved.", array('%s' => $file)));
+                    if (file_put_contents($path, $contents)) {
+                        $msg = __("File '%s' has been saved.", array('%s' => $shortPath));
+                        $app['session']->getFlashBag()->set('info', $msg);
 
                         return redirect('translation', array('domain' => $domain, 'tr_locale' => $tr_locale));
                     } else {
-                        $app['session']->getFlashBag()->set('error', __("File '%s' could not be saved, for some reason.", array('%s' => $file)));
+                        $msg = __("File '%s' could not be saved, for some reason.", array('%s' => $shortPath));
+                        $app['session']->getFlashBag()->set('error', $msg);
                     }
                 }
 
@@ -1755,8 +1690,8 @@ class Backend implements ControllerProviderInterface
 
         $context = array(
             'form' => $form->createView(),
-            'basename' => basename($file),
-            'filetype' => $type,
+            'basename' => basename($shortPath),
+            'filetype' => 'yml',
             'write_allowed' => $writeallowed,
         );
 

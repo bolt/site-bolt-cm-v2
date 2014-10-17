@@ -50,6 +50,8 @@ class Pager extends \ArrayObject
         $parameters = $this->app['request']->query->all();
         if (array_key_exists($pageid, $parameters)) {
             unset($parameters[$pageid]);
+        } else {
+            unset($parameters['page']);
         }
         array_walk(
             $parameters,
@@ -58,6 +60,7 @@ class Pager extends \ArrayObject
             }
         );
         $parameters[] = $pageid . '=';
+        // $parameters[] = 'page=';
         $link = '?' . implode('&', $parameters);
 
         return $link;

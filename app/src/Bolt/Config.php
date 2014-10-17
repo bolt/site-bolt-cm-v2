@@ -2,6 +2,7 @@
 
 namespace Bolt;
 
+use Bolt\Configuration\LowlevelException;
 use Symfony\Component\Yaml;
 
 /**
@@ -23,10 +24,10 @@ class Config
         'text', 'integer', 'float', 'geolocation', 'imagelist', 'image', 'file', 'filelist', 'video', 'html',
         'textarea', 'datetime', 'date', 'select', 'templateselect', 'markdown', 'checkbox', 'slug'
     );
-    
+
     public $fields;
 
-    static private $yamlParser;
+    private static $yamlParser;
 
     /**
      * @param Application $app
@@ -51,9 +52,10 @@ class Config
     /**
      * @param  string $basename
      * @param  array  $default
-     * @param  mixed $defaultConfigPath TRUE: use default config path; FALSE:
-     *    just use the raw basename; string: use the given string as config
-     *    file path
+     * @param  mixed  $defaultConfigPath TRUE: use default config path
+     *                                   FALSE: just use the raw basename
+     *                                   string: use the given string as config
+     *                                   file path
      * @return array
      */
     private function parseConfigYaml($basename, $default = array(), $defaultConfigPath = true)
@@ -87,7 +89,7 @@ class Config
      * $app['config']->set('general/branding/name', 'Bolt');
      *
      * @param  string $path
-     * @param  mixed $value
+     * @param  mixed  $value
      * @return bool
      */
     public function set($path, $value)
@@ -162,12 +164,12 @@ class Config
     {
         $config = array();
 
-        // Read the config
-        $config['general']     = array_merge(
-            $this->parseConfigYaml('config.yml'),
-            $this->parseConfigYaml('config_local.yml')
-        );
+        // Read the config and merge it. (note: We use temp variables to prevent
+        // "Only variables should be passed by reference")
+        $tempconfig            = $this->parseConfigYaml('config.yml');
+        $tempconfiglocal       = $this->parseConfigYaml('config_local.yml');
 
+        $config['general']     = array_merge_recursive_distinct($tempconfig, $tempconfiglocal);
         $config['taxonomy']    = $this->parseConfigYaml('taxonomy.yml');
         $tempContentTypes      = $this->parseConfigYaml('contenttypes.yml');
         $config['menu']        = $this->parseConfigYaml('menu.yml');
@@ -288,13 +290,11 @@ class Config
             // neither 'singular_name' nor 'singular_slug' is set.
             if (!isset($temp['name']) && !isset($temp['slug'])) {
                 $error = sprintf("In contenttype <code>%s</code>, neither 'name' nor 'slug' is set. Please edit <code>contenttypes.yml</code>, and correct this.", $key);
-                $llc = new Configuration\LowlevelChecks($this->app['resources']);
-                $llc->lowlevelError($error);
+                throw new LowlevelException($error);
             }
             if (!isset($temp['singular_name']) && !isset($temp['singular_slug'])) {
                 $error = sprintf("In contenttype <code>%s</code>, neither 'singular_name' nor 'singular_slug' is set. Please edit <code>contenttypes.yml</code>, and correct this.", $key);
-                $llc = new Configuration\LowlevelChecks($this->app['resources']);
-                $llc->lowlevelError($error);
+                throw new LowlevelException($error);
             }
 
             if (!isset($temp['slug'])) {
@@ -356,9 +356,9 @@ class Config
                     }
                 }
 
-                // If the field has a 'group', make sure it's added to the 'groups' array, so we can turn 
+                // If the field has a 'group', make sure it's added to the 'groups' array, so we can turn
                 // them into tabs while rendering. This also makes sure that once you started with a group,
-                // all others have a group too. 
+                // all others have a group too.
                 if (!empty($temp['fields'][$key]['group'])) {
                     $currentgroup = $temp['fields'][$key]['group'];
                     $temp['groups'][] = $currentgroup;
@@ -411,6 +411,8 @@ class Config
     public function checkConfig()
     {
         $slugs = array();
+
+        $wrongctype = false;
 
         foreach ($this->data['contenttypes'] as $key => $ct) {
             // Make sure any field that has a 'uses' parameter actually points to a field that exists.
@@ -474,13 +476,14 @@ class Config
                 }
 
                 // Make sure the 'type' is in the list of allowed types
-                if (!isset($field['type']) || !$this->fields->has($field['type']) ) {
+                if (!isset($field['type']) || !$this->fields->has($field['type'])) {
                     $error = __(
                         "In the contenttype for '%contenttype%', the field '%field%' has 'type: %type%', which is not a proper fieldtype. Please edit contenttypes.yml, and correct this.",
                         array('%contenttype%' => $key, '%field%' => $fieldname, '%type%' =>
                          $field['type'])
                     );
                     $this->app['session']->getFlashBag()->set('error', $error);
+                    $wrongctype = true && $this->app['users']->getCurrentUsername();
                 }
             }
 
@@ -498,11 +501,11 @@ class Config
         }
 
         // Check DB-tables integrity
-        if ($this->app['integritychecker']->needsCheck() &&
+        if (!$wrongctype && $this->app['integritychecker']->needsCheck() &&
            (count($this->app['integritychecker']->checkTablesIntegrity()) > 0) &&
             $this->app['users']->getCurrentUsername()) {
             $msg = __(
-                "The database needs to be updated / repaired. Go to 'Settings' > '<a href=\"%link%\">Check Database</a>' to do this now.",
+                "The database needs to be updated/repaired. Go to 'Settings' > '<a href=\"%link%\">Check Database</a>' to do this now.",
                 array('%link%' => path('dbcheck'))
             );
             $this->app['session']->getFlashBag()->set('error', $msg);
@@ -539,7 +542,7 @@ class Config
             }
         }
     }
-    
+
     /**
      * A getter to access the fields manager
      *
@@ -584,13 +587,18 @@ class Config
                 'request'   => false
             ),
             'wysiwyg'                     => array(
-                'images'      => true,
+                'images'      => false,
                 'tables'      => false,
                 'fontcolor'   => false,
                 'align'       => false,
                 'subsuper'    => false,
                 'embed'       => true,
                 'anchor'      => false,
+                'underline'   => false,
+                'strike'      => false,
+                'blockquote'  => true,
+                'codesnippet' => false,
+                'specialchar' => false,
                 'ck'          => array(
                     'allowedContent'          => true,
                     'autoParagraph'           => true,
@@ -671,7 +679,7 @@ class Config
         $this->set('general/wysiwyg/filebrowser/browseUrl', $this->app['resources']->getUrl('async') . 'filebrowser/');
         $this->set(
             'general/wysiwyg/filebrowser/imageBrowseUrl',
-            $this->app['resources']->getUrl('bolt')  . 'files' . '/files/'
+            $this->app['resources']->getUrl('bolt') . 'files/files/'
         );
     }
 
@@ -711,7 +719,6 @@ class Config
 
             // Trigger the config loaded event on the resource manager
             $this->app['resources']->initializeConfig($this->data);
-
 
             // Yup, all seems to be right.
             return true;
@@ -754,13 +761,13 @@ class Config
             if (isset($configdb["path"])) {
                 $configpaths = $this->app['resources']->getPaths();
                 if (substr($configdb['path'], 0, 1) !== "/") {
-                    $configdb["path"] = $configpaths["rootpath"]."/".$configdb["path"];
+                    $configdb['path'] = $configpaths["rootpath"] . '/' . $configdb['path'];
                 }
             }
 
             $dboptions = array(
                 'driver' => 'pdo_sqlite',
-                'path' => isset($configdb['path']) ? realpath($configdb["path"])."/".$basename : $this->app['resources']->getPath('database') ."/". $basename,
+                'path' => isset($configdb['path']) ? realpath($configdb['path']) . '/' . $basename : $this->app['resources']->getPath('database') . '/' . $basename,
                 'randomfunction' => 'RANDOM()',
                 'memory' => isset($configdb['memory']) ? true : false
             );

@@ -28,13 +28,13 @@ class Content implements \ArrayAccess
             // If this contenttype has a taxonomy with 'grouping', initialize the group.
             if (isset($this->contenttype['taxonomy'])) {
                 foreach ($this->contenttype['taxonomy'] as $taxonomytype) {
-                    if ($this->app['config']->get('taxonomy/'.$taxonomytype.'/behaves_like') == "grouping") {
+                    if ($this->app['config']->get('taxonomy/' . $taxonomytype . '/behaves_like') == 'grouping') {
                         $this->setGroup('', '', $taxonomytype);
                     }
 
                     // add support for taxonomy default value when options is set
-                    $default_value = $this->app['config']->get('taxonomy/'.$taxonomytype.'/default');
-                    $options = $this->app['config']->get('taxonomy/'.$taxonomytype.'/options');
+                    $default_value = $this->app['config']->get('taxonomy/' . $taxonomytype . '/default');
+                    $options = $this->app['config']->get('taxonomy/' . $taxonomytype . '/options');
                     if (isset($options) &&
                             isset($default_value) &&
                             array_search($default_value, array_keys($options)) !== false ) {
@@ -97,7 +97,7 @@ class Content implements \ArrayAccess
         );
     }
 
-    public function setValues(Array $values)
+    public function setValues(array $values)
     {
         // Since Bolt 1.4, we use 'ownerid' instead of 'username' in the DB tables. If we get an array that has an
         // empty 'ownerid', attempt to set it from the 'username'. In $this->setValue the user will be set, regardless
@@ -115,8 +115,7 @@ class Content implements \ArrayAccess
 
         if (!isset($this->values['datecreated']) ||
             !preg_match("/(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})/", $this->values['datecreated'])) {
-            // Not all DB-engines can handle a date like '0000-00-00', so we pick a safe date, that's far enough in the past.
-            $this->values['datecreated'] = "1970-01-01 00:00:00";
+            $this->values['datecreated'] = $now;
         }
 
         if (!isset($this->values['datepublish']) || ($this->values['datepublish'] < "1971-01-01 01:01:01") ||
@@ -168,8 +167,8 @@ class Content implements \ArrayAccess
 
                 // update the HTML, according to given width and height
                 if (!empty($video['width']) && !empty($video['height'])) {
-                    $video['html'] = preg_replace("/width=(['\"])([0-9]+)(['\"])/i", 'width=${1}'.$video['width'].'${3}', $video['html']);
-                    $video['html'] = preg_replace("/height=(['\"])([0-9]+)(['\"])/i", 'height=${1}'.$video['height'].'${3}', $video['html']);
+                    $video['html'] = preg_replace("/width=(['\"])([0-9]+)(['\"])/i", 'width=${1}' . $video['width'] . '${3}', $video['html']);
+                    $video['html'] = preg_replace("/height=(['\"])([0-9]+)(['\"])/i", 'height=${1}' . $video['height'] . '${3}', $video['html']);
                 }
 
                 $responsiveclass = "responsive-video";
@@ -258,7 +257,7 @@ class Content implements \ArrayAccess
         // to do this.
         if (isset($values['ownerid'])) {
             if ($this['ownerid'] != $values['ownerid']) {
-                if (!$this->app['users']->isAllowed("contenttype:$contenttype:change-ownership:{$this->id}")) {
+                if (!$this->app['users']->isAllowed("contenttype:{$contenttype['slug']}:change-ownership:{$this->id}")) {
                     throw new \Exception("Changing ownership is not allowed.");
                 }
                 $this['ownerid'] = intval($values['ownerid']);
@@ -340,7 +339,7 @@ class Content implements \ArrayAccess
                 }
 
                 $fieldname  = substr($key, 11);
-                $fileSystem = new Filesystem;
+                $fileSystem = new Filesystem();
 
                 // Make sure the folder exists.
                 $fileSystem->mkdir(dirname($filename));
@@ -390,7 +389,7 @@ class Content implements \ArrayAccess
      * Taken from jQuery file upload..
      *
      * @see upcountName()
-     * @param array $matches
+     * @param  array  $matches
      * @internal param string $name
      * @return string
      */
@@ -399,7 +398,7 @@ class Content implements \ArrayAccess
         $index = isset($matches[1]) ? intval($matches[1]) + 1 : 1;
         $ext = isset($matches[2]) ? $matches[2] : '';
 
-        return ' ('.$index.')'.$ext;
+        return ' (' . $index . ')' . $ext;
     }
 
     public function setContenttype($contenttype)
@@ -416,8 +415,8 @@ class Content implements \ArrayAccess
      *
      * @param $taxonomytype
      * @param $slug
-     * @param string $name
-     * @param int $sortorder
+     * @param  string $name
+     * @param  int    $sortorder
      * @return bool
      */
     public function setTaxonomy($taxonomytype, $slug, $name = '', $sortorder = 0)
@@ -437,7 +436,7 @@ class Content implements \ArrayAccess
         }
 
         // Make sure sortorder is set correctly;
-        if ($this->app['config']->get('taxonomy/'.$taxonomytype.'/has_sortorder') == false) {
+        if ($this->app['config']->get('taxonomy/' . $taxonomytype . '/has_sortorder') == false) {
             $sortorder = false;
         } else {
             $sortorder = (int) $sortorder;
@@ -449,8 +448,8 @@ class Content implements \ArrayAccess
         $link = sprintf("%s%s/%s", $this->app['paths']['root'], $taxonomytype, $slug);
 
         // Set the 'name', for displaying the pretty name, if there is any.
-        if ($this->app['config']->get('taxonomy/'.$taxonomytype.'/options/'.$slug)) {
-            $name = $this->app['config']->get('taxonomy/'.$taxonomytype.'/options/'.$slug);
+        if ($this->app['config']->get('taxonomy/' . $taxonomytype . '/options/' . $slug)) {
+            $name = $this->app['config']->get('taxonomy/' . $taxonomytype . '/options/' . $slug);
         } elseif (empty($name)) {
             $name = $slug;
         }
@@ -458,7 +457,7 @@ class Content implements \ArrayAccess
         $this->taxonomy[$taxonomytype][$link] = $name;
 
         // If it's a "grouping" type, set $this->group.
-        if ($this->app['config']->get('taxonomy/'.$taxonomytype.'/behaves_like') == "grouping") {
+        if ($this->app['config']->get('taxonomy/' . $taxonomytype . '/behaves_like') == 'grouping') {
             $this->setGroup($slug, $name, $taxonomytype, $sortorder);
         }
 
@@ -477,7 +476,7 @@ class Content implements \ArrayAccess
         }
 
         foreach ($this->taxonomy as $type => $values) {
-            $taxonomytype = $this->app['config']->get('taxonomy/'.$type);
+            $taxonomytype = $this->app['config']->get('taxonomy/' . $type);
             // Don't order tags..
             if ($taxonomytype['behaves_like'] == "tags") {
                 continue;
@@ -485,7 +484,7 @@ class Content implements \ArrayAccess
 
             // Order them by the order in the contenttype.
             $new = array();
-            foreach ($this->app['config']->get('taxonomy/'.$type.'/options') as $key => $value) {
+            foreach ($this->app['config']->get('taxonomy/' . $type . '/options') as $key => $value) {
                 if ($foundkey = array_search($key, $this->taxonomy[$type])) {
                     $new[$foundkey] = $value;
                 } elseif ($foundkey = array_search($value, $this->taxonomy[$type])) {
@@ -525,7 +524,7 @@ class Content implements \ArrayAccess
      * @param $group
      * @param string $name
      * @param string $taxonomytype
-     * @param int $sortorder
+     * @param int    $sortorder
      * @internal param string $value
      */
     public function setGroup($group, $name, $taxonomytype, $sortorder = 0)
@@ -535,7 +534,7 @@ class Content implements \ArrayAccess
             'name' => $name
         );
 
-        $has_sortorder = $this->app['config']->get('taxonomy/'.$taxonomytype.'/has_sortorder');
+        $has_sortorder = $this->app['config']->get('taxonomy/' . $taxonomytype . '/has_sortorder');
 
         // Only set the sortorder, if the contenttype has a taxonomy that has sortorder
         if ($has_sortorder !== false) {
@@ -543,7 +542,7 @@ class Content implements \ArrayAccess
         }
 
         // Set the 'index', so we can sort on it later.
-        $index = array_search($group, array_keys($this->app['config']->get('taxonomy/'.$taxonomytype.'/options')));
+        $index = array_search($group, array_keys($this->app['config']->get('taxonomy/' . $taxonomytype . '/options')));
 
         if ($index !== false) {
             $this->group['index'] = $index;
@@ -573,7 +572,7 @@ class Content implements \ArrayAccess
                     $value = $this->preParse($this->values[$name], $allowtwig);
 
                     // Parse the field as Markdown, return HTML
-                    $value = \Parsedown::instance()->parse($value);
+                    $value = \ParsedownExtra::instance()->text($value);
 
                     // Sanitize/clean the HTML.
                     $maid = new \Maid\Maid(
@@ -773,6 +772,22 @@ class Content implements \ArrayAccess
     }
 
     /**
+     * Creates a link to EDIT this record, if the user is logged in. 
+     */ 
+    public function editlink() 
+    {
+
+        $perm = "contenttype:" . $this->contenttype['slug'] . ":edit:" . $this->id;
+
+        if ($this->app['users']->isAllowed($perm)) {
+            return path('editcontent', array('contenttypeslug' => $this->contenttype['slug'], 'id' => $this->id ));
+        } else {
+            return false;
+        }
+
+    }
+
+    /**
      * Creates a URL for the content record.
      */
     public function link()
@@ -864,9 +879,9 @@ class Content implements \ArrayAccess
     }
 
     /**
-     * Get the previous record. In this case 'next' is defined as 'latest one published before 
+     * Get the previous record. In this case 'previous' is defined as 'latest one published before
      * this one' by default. You can pass a parameter like 'id' or '-title' to use that as
-     * the column to sort on. 
+     * the column to sort on.
      */
     public function previous($field = 'datepublish', $where = array())
     {
@@ -876,10 +891,11 @@ class Content implements \ArrayAccess
         $order = $asc ? ' DESC' : ' ASC';
 
         $params = array(
-            $field => $operator .$this->values[$field],
+            $field => $operator . $this->values[$field],
             'limit' => 1,
             'order' => $field . $order,
-            'returnsingle' => true
+            'returnsingle' => true,
+            'hydrate' => false
         );
 
         $previous = $this->app['storage']->getContent($this->contenttype['singular_slug'], $params, $dummy, $where);
@@ -888,9 +904,9 @@ class Content implements \ArrayAccess
     }
 
     /**
-     * Get the next record. In this case 'next' is defined as 'first one published after 
+     * Get the next record. In this case 'next' is defined as 'first one published after
      * this one' by default. You can pass a parameter like 'id' or '-title' to use that as
-     * the column to sort on. 
+     * the column to sort on.
      */
     public function next($field = 'datepublish', $where = array())
     {
@@ -900,10 +916,11 @@ class Content implements \ArrayAccess
         $order = $asc ? ' ASC' : ' DESC';
 
         $params = array(
-            $field => $operator .$this->values[$field],
+            $field => $operator . $this->values[$field],
             'limit' => 1,
             'order' => $field . $order,
-            'returnsingle' => true    
+            'returnsingle' => true,
+            'hydrate' => false
         );
 
         $next = $this->app['storage']->getContent($this->contenttype['singular_slug'], $params, $dummy, $where);
@@ -1009,34 +1026,38 @@ class Content implements \ArrayAccess
      *
      * Create an excerpt for the content.
      *
-     * @param  int $length
-     * @param bool $includetitle
+     * @param  int    $length
+     * @param  bool   $includetitle
      * @return string
      */
     public function excerpt($length = 200, $includetitle = false)
     {
         if ($includetitle) {
-            $title = $this->getTitle();
+            $title = trimText(strip_tags($this->getTitle()), $length);
             $length = $length - strlen($title);
         }
 
-        $excerpt = array();
+        if ($length > 0) {
+            $excerptParts = array();
 
-        if (!empty($this->contenttype['fields'])) {
-            foreach ($this->contenttype['fields'] as $key => $field) {
-                if (in_array($field['type'], array('text', 'html', 'textarea', 'markdown'))
-                    && isset($this->values[$key])
-                    && !in_array($key, array('title', 'name')) ) {
-                    $excerpt[] = $this->values[$key];
+            if (!empty($this->contenttype['fields'])) {
+                foreach ($this->contenttype['fields'] as $key => $field) {
+                    if (in_array($field['type'], array('text', 'html', 'textarea', 'markdown'))
+                        && isset($this->values[$key])
+                        && !in_array($key, array('title', 'name')) ) {
+                        $excerptParts[] = $this->values[$key];
+                    }
                 }
             }
+
+            $excerpt = str_replace('>', '> ', implode(' ', $excerptParts));
+            $excerpt = trimText(strip_tags($excerpt), $length);
+        } else {
+            $excerpt = '';
         }
 
-        $excerpt = str_replace('>', '> ', implode(' ', $excerpt));
-        $excerpt = trimText(strip_tags($excerpt), $length);
-
         if (!empty($title)) {
-            $excerpt = sprintf('<b>%s</b> %s', $title, $excerpt);
+            $excerpt = '<b>' . $title . '</b> ' . $excerpt;
         }
 
         return new \Twig_Markup($excerpt, 'UTF-8');
@@ -1053,9 +1074,7 @@ class Content implements \ArrayAccess
      * @param  int    $excerptLength Number of chars of the excerpt
      * @return string RSS safe string
      */
-    // @codingStandardsIgnoreStart
-    public function rss_safe($fields = '', $excerptLength = 0)
-    // @codingStandardsIgnoreEnd
+    public function /*@codingStandardsIgnoreStart*/rss_safe/*@codingStandardsIgnoreEnd*/($fields = '', $excerptLength = 0)
     {
         // Make sure we have an array of fields. Even if it's only one.
         if (!is_array($fields)) {
@@ -1086,7 +1105,6 @@ class Content implements \ArrayAccess
         return '<![CDATA[ ' . $result . ' ]]>';
     }
 
-
     /**
      * Weight a text part relative to some other part
      *
@@ -1094,7 +1112,7 @@ class Content implements \ArrayAccess
      * @param  string  $complete The complete search term (lowercased).
      * @param  array   $words    All the individual search terms (lowercased).
      * @param  integer $max      Maximum number of points to return.
-     * @return integer           The weight
+     * @return integer The weight
      */
     private function weighQueryText($subject, $complete, $words, $max)
     {
@@ -1169,8 +1187,8 @@ class Content implements \ArrayAccess
 
         if (isset($this->contenttype['taxonomy'])) {
             foreach ($this->contenttype['taxonomy'] as $key) {
-                if ($this->app['config']->get('taxonomy/'.$key.'/behaves_like') == 'tags') {
-                    $taxonomies[$key] = $this->app['config']->get('taxonomy/'.$key.'/searchweight', 75);
+                if ($this->app['config']->get('taxonomy/' . $key . '/behaves_like') == 'tags') {
+                    $taxonomies[$key] = $this->app['config']->get('taxonomy/' . $key . '/searchweight', 75);
                 }
             }
         }

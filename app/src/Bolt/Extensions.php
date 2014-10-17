@@ -4,7 +4,11 @@ namespace Bolt;
 
 use Bolt;
 use Bolt\Extensions\Snippets\Location as SnippetLocation;
-use Bolt\Extensions\BaseExtensionInterface;
+use Bolt\Extensions\ExtensionInterface;
+use Bolt\Configuration\LowlevelException;
+use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Filesystem\Exception\IOExceptionInterface;
+use Symfony\Component\Finder\Finder;
 
 class Extensions
 {
@@ -77,6 +81,22 @@ class Extensions
      */
     private $initialized;
 
+    /**
+     * Contains json of loaded extensions.
+     *
+     * @var array
+     */
+    public $composer = array();
+    /**
+     * Contains a list of all css and js assets added through addCss and
+     * addJavascript functions.
+     *
+     * @var array
+     */
+    private $assets;
+
+    private $isInitialized = false;
+
     public function __construct(Application $app)
     {
         $this->app = $app;
@@ -88,6 +108,11 @@ class Extensions
         } else {
             $this->addjquery = false;
         }
+
+        $this->assets = array(
+            'css' => array(),
+            'js'  => array()
+        );
     }
 
     /**
@@ -114,29 +139,101 @@ class Extensions
             $loader->register();
         }
 
-        $filepath = $this->basefolder.'/vendor/composer/autoload_files.php';
+        $filepath = $this->basefolder . '/vendor/composer/autoload_files.php';
         if (is_readable($filepath)) {
             $files = include $filepath;
             foreach ($files as $file) {
-                if (is_readable($file)) {
-                    include $file;
+                try {
+                    $this->errorCatcher($file);
+                    if (is_readable($file)) {
+                        require $file;
+                    }
+                } catch (\Exception $e) {
                 }
             }
         }
     }
 
     /**
-     * Extension register method. Allows any extension to register itself onto the enabled stack.
+     * Workaround to load locally installed extensions
      *
-     * @return void
-     **/
-    public function register(BaseExtensionInterface $extension)
+     * @param Application $app
+     */
+    public function localload($app)
     {
-        $name = $extension->getName();
-        $this->app['extensions.'.$name] = $extension;
-        $this->enabled[$name] = $this->app['extensions.'.$name];
+        $fs = new Filesystem();
+        $flag = $fs->exists($this->basefolder . '/local');
+
+        // Check that local exists
+        if ($flag) {
+            // Find init.php files that are exactly 2 directories below etensions/local/
+            $finder = new Finder();
+            $finder->files()
+                   ->in($this->basefolder . '/local')
+                   ->name('init.php')
+                   ->depth('== 2');
+
+            foreach ($finder as $file) {
+                try {
+                        // Include the extensions core file
+                        require_once dirname($file->getRealpath()) . '/Extension.php';
+
+                        // Include the init file
+                        require_once $file->getRealpath();
+                    } catch (\Exception $e) {
+                    }
+            }
+        }
     }
 
+    public function errorCatcher($file)
+    {
+        $current = str_replace($this->app['resources']->getPath('extensions'), '', $file);
+
+        // Flush output buffer before starting a new buffer or $current will contain
+        // the first file read rather than the acutal current file.
+        // @see GitHub #1661
+        if (ob_get_length()) {
+            ob_end_flush();
+        }
+        ob_start(
+            function ($buffer) use ($current) {
+                $error = error_get_last();
+                $isExtensionError = strpos($error['file'], $this->app['resources']->getPath('extensions'));
+                if (($error['type'] == E_ERROR || $error['type'] == E_PARSE) && $isExtensionError !== false) {
+                    $html = LowlevelException::$html;
+                    $message = '<code>' . $error['message'] . '<br>File ' . $error['file'] . '<br>Line: ' . $error['line'] . '</code><br><br>';
+                    $message .= $this->app['translator']->trans('There is a fatal error in one of the extensions loaded on your Bolt Installation.');
+                    if ($current) {
+                        $message .= $this->app['translator']->trans(' You will only be able to continue by manually deleting the extension that was initialized at: extensions' . $current);
+                    }
+
+                    return str_replace('%error%', $message, $html);
+                }
+
+                return $buffer;
+            }
+        );
+    }
+
+    /**
+     * Extension register method. Allows any extension to register itself onto the enabled stack.
+     *
+     * @param  ExtensionInterface $extension
+     * @return void
+     */
+    public function register(ExtensionInterface $extension)
+    {
+        $name = $extension->getName();
+        $this->app['extensions.' . $name] = $extension;
+        $this->enabled[$name] = $this->app['extensions.' . $name];
+
+        // Store the composer part of the extensions config
+        array_push($this->composer, $extension->getExtensionConfig());
+        if ($this->isInitialized) {
+            $this->initializeExtension($extension);
+        }
+    }
 
     /**
      * Check if an extension is enabled, case sensitive.
@@ -156,23 +253,65 @@ class Extensions
     public function initialize()
     {
         $this->autoload($this->app);
-        foreach ($this->enabled as $name => $extension) {
+        $this->localload($this->app);
+        $this->isInitialized = true;
+        foreach ($this->enabled as $extension) {
+            $this->initializeExtension($extension);
+        }
+    }
 
+    protected function initializeExtension(ExtensionInterface $extension)
+    {
+        $name = $extension->getName();
 
-            $this->initialized[$name] = $extension;
-
+        // Attempt to get extension YAML config
+        try {
             $extension->getConfig();
+        } catch (\Exception $e) {
+            $this->app['log']->add("[EXT] YAML config failed to load for {$name}: " . $e->getMessage(), 2);
+
+            return;
+        }
+
+        // Call extension initialize()
+        try {
             $extension->initialize();
 
-            // Check if (instead, or on top of) initialize, the extension has a 'getSnippets' method
-            $this->getSnippets($name);
+            // Add an object of this extension to the global Twig scope. 
+            $namespace = $this->getNamespace($extension);
+            if (!empty($namespace)) {
+                $this->app['twig']->addGlobal($namespace, $extension);
+            }
 
-            if ($extension instanceof \Twig_Extension) {
-                $info = $extension->info();
+        } catch (\Exception $e) {
+            $this->app['log']->add("[EXT] Initialisation failed for {$name}: " . $e->getMessage(), 2);
+
+            return;
+        }
+
+        // Flag the extension as initialised
+        $this->initialized[$name] = $extension;
+
+        // Get the extension defined snippets
+        try {
+            $this->getSnippets($name);
+        } catch (\Exception $e) {
+            $this->app['log']->add("[EXT] Snippet loading failed for {$name}: " . $e->getMessage(), 2);
+
+            return;
+        }
+
+        // Add Twig extensions
+        if ($extension instanceof \Twig_Extension) {
+             try {
                 $this->app['twig']->addExtension($extension);
                 if (!empty($info['allow_in_user_content'])) {
                     $this->app['safe_twig']->addExtension($extension);
                 }
+            } catch (\Exception $e) {
+                $this->app['log']->add("[EXT] Failed to regsiter Twig extension for {$name}: " . $e->getMessage(), 2);
+
+                return;
             }
         }
     }
@@ -194,15 +333,39 @@ class Extensions
     }
 
     /**
+     * Returns a list of all css and js assets that are added via extensions.
+     *
+     * @return array
+     */
+    public function getAssets()
+    {
+        return $this->assets;
+    }
+
+    private function getNamespace($extension)
+    {
+        $classname = get_class($extension);
+        $classatoms = explode('\\', $classname);
+
+        // throw away last atom.
+        array_pop($classatoms);
+
+        // return second to last as namespace name
+        return (array_pop($classatoms));
+
+    }
+
+    /**
      * Add a particular CSS file to the output. This will be inserted before the
      * other css files.
      *
      * @param string $filename
-     * @param bool $late
+     * @param bool   $late
      */
     public function addCss($filename, $late = false)
     {
         $html = sprintf('<link rel="stylesheet" href="%s" media="screen">', $filename);
+        $this->assets['css'][] = $filename;
 
         if ($late) {
             $this->insertSnippet(SnippetLocation::END_OF_BODY, $html);
@@ -215,11 +378,12 @@ class Extensions
      * Add a particular javascript file to the output. This will be inserted after
      * the other javascript files.
      * @param string $filename
-     * @param bool $late
+     * @param bool   $late
      */
     public function addJavascript($filename, $late = false)
     {
         $html = sprintf('<script src="%s"></script>', $filename);
+        $this->assets['js'][] = $filename;
 
         if ($late) {
             $this->insertSnippet(SnippetLocation::END_OF_BODY, $html);
@@ -600,7 +764,6 @@ class Extensions
         return $html;
     }
 
-
     /**
      * Helper function to insert some HTML into the head section of an HTML page.
      *
@@ -684,7 +847,7 @@ class Extensions
      *
      * @param  string $tag
      * @param  string $html
-     * @param bool $insidehead
+     * @param  bool   $insidehead
      * @return string
      */
     public function insertAfterJs($tag, $html, $insidehead = true)
@@ -749,7 +912,7 @@ class Extensions
      *
      * @param string $label
      * @param string $path
-     * @param bool $icon
+     * @param bool   $icon
      * @param string $requiredPermission (NULL if no permission is required)
      */
     public function addMenuOption($label, $path, $icon = false, $requiredPermission = null)

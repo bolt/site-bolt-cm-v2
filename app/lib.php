@@ -1,8 +1,6 @@
 <?php
 
 use Maid\Maid;
-use Symfony\Component\Finder\Finder;
-use Symfony\Component\Yaml\Escaper;
 use Bolt\Configuration\ResourceManager;
 
 /**
@@ -125,7 +123,7 @@ function formatFilesize($size)
     } elseif ($size > 1024) {
         return sprintf("%0.2f kb", ($size / 1024));
     } else {
-        return $size." b";
+        return $size . ' b';
     }
 }
 
@@ -522,7 +520,7 @@ function path($path, $param = array(), $add = '')
         $param = array();
     }
 
-    return $app['url_generator']->generate($path, $param). $add;
+    return $app['url_generator']->generate($path, $param) . $add;
 }
 
 /**
@@ -693,13 +691,15 @@ function loadSerialize($filename, $silent = false)
             return false;
         }
 
-        $format = __(
-            "<p>The following file could not be read:</p>%s" .
-            "<p>Try logging in with your ftp-client and make the file readable. " .
-            "Else try to go <a href='javascript:history.go(-1)'>back</a> to the last page.</p>"
+        $part = __(
+            'Try logging in with your ftp-client and make the file readable. ' .
+            'Else try to go <a>back</a> to the last page.'
         );
-        $message = sprintf($format, '<pre>' . htmlspecialchars($filename) . '</pre>');
-        renderErrorpage(__("File is not readable!"), $message);
+        $message = '<p>' . __('The following file could not be read:') . '</p>' .
+            '<pre>' . htmlspecialchars($filename) . '</pre>' .
+            '<p>' . str_replace('<a>', '<a href="javascript:history.go(-1)">', $part) . '</p>';
+
+        renderErrorpage(__('File is not readable!'), $message);
     }
 
     $serialized_data = trim(implode("", file($filename)));
@@ -747,7 +747,7 @@ function saveSerialize($filename, &$data)
 {
     $filename = fixPath($filename);
 
-    $ser_string = "<?php /* bolt */ die(); ?".">json:" . json_encode($data);
+    $ser_string = '<?php /* bolt */ die(); ?>json:' . json_encode($data);
 
     // disallow user to interrupt
     ignore_user_abort(true);
@@ -852,7 +852,7 @@ function str_replace_first($search, $replace, $subject)
  * @author Gabriel Sobrinho <gabriel (dot) sobrinho (at) gmail (dot) com>
  * @author Bob for bolt-specific excludes
  */
-function array_merge_recursive_distinct (array &$array1, array &$array2)
+function array_merge_recursive_distinct(array &$array1, array &$array2)
 {
     $merged = $array1;
 
@@ -865,7 +865,7 @@ function array_merge_recursive_distinct (array &$array1, array &$array2)
         }
 
         if (is_array($value) && isset($merged[$key]) && is_array($merged[$key])) {
-            $merged[$key] = array_merge_recursive_distinct($merged [$key], $value);
+            $merged[$key] = array_merge_recursive_distinct($merged[$key], $value);
         } else {
             $merged[$key] = $value;
         }
@@ -1000,226 +1000,6 @@ function __()
         //return $args[0];
         die($e->getMessage());
     }*/
-}
-
-/**
- * Find all twig templates and bolt php code, extract translatables
- * strings, merge with existing translations, return
- */
-function gatherTranslatableStrings($locale = null, $translated = array())
-{
-    $app = ResourceManager::getApp();
-
-    $isPhp = function ($fname) {
-        return pathinfo(strtolower($fname), PATHINFO_EXTENSION) == 'php';
-    };
-
-    $isTwig = function ($fname) {
-        return pathinfo(strtolower($fname), PATHINFO_EXTENSION) == 'twig';
-    };
-
-    $ctypes = $app['config']->get('contenttypes');
-
-    // function that generates a string for each variation of contenttype/contenttypes
-    $genContentTypes = function ($txt) use ($ctypes) {
-        $stypes = array();
-        if (strpos($txt, '%contenttypes%') !== false) {
-            foreach ($ctypes as $key => $ctype) {
-                $stypes[] = str_replace('%contenttypes%', $ctype['name'], $txt);
-            }
-        }
-        if (strpos($txt, '%contenttype%') !== false) {
-            foreach ($ctypes as $key => $ctype) {
-                $stypes[] = str_replace('%contenttype%', $ctype['singular_name'], $txt);
-            }
-        }
-
-        return $stypes;
-    };
-
-    // Step one: gather all translatable strings
-
-    $finder = new Finder();
-    $finder->files()
-        ->ignoreVCS(true)
-        ->name('*.twig')
-        ->name('*.php')
-        ->notName('*~')
-        ->exclude(array('cache', 'config', 'database', 'resources', 'tests'))
-        ->in(dirname($app['paths']['themepath'])) //
-        ->in($app['paths']['apppath']);
-    // regex from: stackoverflow.com/questions/5695240/php-regex-to-ignore-escaped-quotes-within-quotes
-    $re_dq = '/"[^"\\\\]*(?:\\\\.[^"\\\\]*)*"/s';
-    $re_sq = "/'[^'\\\\]*(?:\\\\.[^'\\\\]*)*'/s";
-    $nstr = 0;
-    $strings = array();
-    foreach ($finder as $file) {
-        $s = file_get_contents($file);
-
-        // Scan twig templates for  __('...' and __("..."
-        if ($isTwig($file)) {
-            // __('single_quoted_string'...
-            if (preg_match_all("/\b__\(\s*'([^'\\\\]*(?:\\\\.[^'\\\\]*)*)'(?U).*\)/s", $s, $matches)) {
-                //print_r($matches[1]);
-                foreach ($matches[1] as $t) {
-                    $nstr++;
-                    if (!in_array($t, $strings) && strlen($t) > 1) {
-                        $strings[] = $t;
-                        sort($strings);
-                    }
-                }
-            }
-            // __("double_quoted_string"...
-            if (preg_match_all('/\b__\(\s*"([^"\\\\]*(?:\\\\.[^"\\\\]*)*)"(?U).*\)/s', $s, $matches)) {
-                //print_r($matches[1]);
-                foreach ($matches[1] as $t) {
-                    $nstr++;
-                    if (!in_array($t, $strings) && strlen($t) > 1) {
-                        $strings[] = $t;
-                        sort($strings);
-                    }
-                }
-            }
-        }
-
-        // php :
-        /** all translatables strings have to be called with:
-         *  __("text", $params=array(), $domain='messages', locale=null) // $app['translator']->trans()
-         *  __("text", count, $params=array(), $domain='messages', locale=null) // $app['translator']->transChoice()
-         */
-        if ($isPhp($file)) {
-            $tokens = token_get_all($s);
-            $num_tokens = count($tokens);
-            for ($x = 0; $x < $num_tokens; $x++) {
-                $token = $tokens[$x];
-                if (is_array($token) && $token[0] == T_STRING && $token[1] == '__') {
-                    $token = $tokens[++$x];
-                    if ($x < $num_tokens && is_array($token) && $token[0] == T_WHITESPACE) {
-                        $token = $tokens[++$x];
-                    }
-                    if ($x < $num_tokens && !is_array($token) && $token == '(') {
-                        // in our func args...
-                        $token = $tokens[++$x];
-                        if ($x < $num_tokens && is_array($token) && $token[0] == T_WHITESPACE) {
-                            $token = $tokens[++$x];
-                        }
-                        if (!is_array($token)) {
-                            // give up
-                            continue;
-                        }
-                        if ($token[0] == T_CONSTANT_ENCAPSED_STRING) {
-                            $t = substr($token[1], 1, strlen($token[1]) - 2);
-                            $nstr++;
-                            if (!in_array($t, $strings) && strlen($t) > 1) {
-                                $strings[] = $t;
-                                sort($strings);
-                            }
-                            // TODO: retrieve domain?
-                        }
-                    }
-                }
-            }// end for $x
-        }
-    }
-
-    // Add fields name|label for contenttype (forms)
-    foreach ($ctypes as $ckey => $contenttype) {
-        foreach ($contenttype['fields'] as $fkey => $field) {
-            if (isset($field['label'])) {
-                $t = $field['label'];
-            } else {
-                $t = ucfirst($fkey);
-            }
-            if (!in_array($t, $strings) && strlen($t) > 1) {
-                $strings[] = $t;
-            }
-        }
-        // Relation name|label if exists
-        if (array_key_exists('relations', $contenttype)) {
-            foreach ($contenttype['relations'] as $fkey => $field) {
-                if (isset($field['label'])) {
-                    $t = $field['label'];
-                } else {
-                    $t = ucfirst($fkey);
-                }
-                if (!in_array($t, $strings) && strlen($t) > 1) {
-                    $strings[] = $t;
-                }
-            }
-        }
-    }
-
-    // Add name + singular_name for taxonomies
-    foreach ($app['config']->get('taxonomy') as $txkey => $value) {
-        foreach (array('name', 'singular_name') as $key) {
-            $t = $value[$key];
-            if (!in_array($t, $strings)) {
-                $strings[] = $t;
-            }
-        }
-    }
-
-    // Return the previously translated string if exists,
-    // Return an empty string otherwise
-    $getTranslated = function ($key) use ($app, $translated) {
-        if (($trans = $app['translator']->trans($key)) == $key) {
-            if (is_array($translated) && array_key_exists($key, $translated) && !empty($translated[$key])) {
-                return $translated[$key];
-            }
-
-            return '';
-        }
-
-        return $trans;
-    };
-
-    // Step 2: find already translated strings
-
-    sort($strings);
-    if (!$locale) {
-        $locale = $app['request']->getLocale();
-    }
-    $msg_domain = array(
-        'translated' => array(),
-        'not_translated' => array(),
-    );
-    $ctype_domain = array(
-        'translated' => array(),
-        'not_translated' => array(),
-    );
-
-    foreach ($strings as $idx => $key) {
-        $key = stripslashes($key);
-        $raw_key = $key;
-        $key = Escaper::escapeWithDoubleQuotes($key);
-        if (($trans = $getTranslated($raw_key)) == '' && ($trans = $getTranslated($key)) == '') {
-            $msg_domain['not_translated'][] = $key;
-        } else {
-            $trans = Escaper::escapeWithDoubleQuotes($trans);
-            $msg_domain['translated'][$key] = $trans;
-        }
-        // Step 3: generate additionals strings for contenttypes
-        if (strpos($raw_key, '%contenttype%') !== false || strpos($raw_key, '%contenttypes%') !== false) {
-            foreach ($genContentTypes($raw_key) as $ctypekey) {
-                $key = Escaper::escapeWithDoubleQuotes($ctypekey);
-                if (($trans = $getTranslated($ctypekey)) == '' && ($trans = $getTranslated($key)) == '') {
-                    // Not translated
-                    $ctype_domain['not_translated'][] = $key;
-                } else {
-                    $trans = Escaper::escapeWithDoubleQuotes($trans);
-                    $ctype_domain['translated'][$key] = $trans;
-                }
-            }
-        }
-    }
-
-    sort($msg_domain['not_translated']);
-    ksort($msg_domain['translated']);
-
-    sort($ctype_domain['not_translated']);
-    ksort($ctype_domain['translated']);
-
-    return array($msg_domain, $ctype_domain);
 }
 
 /**

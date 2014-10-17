@@ -69,6 +69,13 @@ class IntegrityChecker
 
     private static function getValidityTimestampFilename()
     {
+        // If 'invalidate()' was called statically, we don't have the
+        // $integrityCachePath yet, so we set it here.
+        if (empty(self::$integrityCachePath)) {
+            $app = \Bolt\Configuration\ResourceManager::getApp();
+            self::$integrityCachePath = $app['resources']->getPath('cache');
+        }
+
         return self::$integrityCachePath . '/' . self::INTEGRITY_CHECK_TS_FILENAME;
     }
 
@@ -136,7 +143,7 @@ class IntegrityChecker
         $tables = $this->getTableObjects();
 
         // Check the users table..
-        if (!isset($tables[$this->prefix.'users'])) {
+        if (!isset($tables[$this->prefix . 'users'])) {
             return false;
         }
 
@@ -340,7 +347,7 @@ class IntegrityChecker
     /**
      * This method allows extensions to register their own tables.
      * @param Callable $generator A generator function that takes the Schema
-     *         instance and returns a table or an array of tables.
+     *                            instance and returns a table or an array of tables.
      */
     public function registerExtensionTable($generator)
     {
@@ -388,7 +395,7 @@ class IntegrityChecker
     {
         $tables = array();
 
-        $authtokenTable = $schema->createTable($this->prefix.'authtoken');
+        $authtokenTable = $schema->createTable($this->prefix . 'authtoken');
         $authtokenTable->addColumn('id', 'integer', array('autoincrement' => true));
         $authtokenTable->setPrimaryKey(array('id'));
         // TODO: addColumn("userid"...), phase out referencing users by username
@@ -402,7 +409,7 @@ class IntegrityChecker
         $authtokenTable->addColumn('validity', 'datetime', array('default' => '1900-01-01 00:00:00'));
         $tables[] = $authtokenTable;
 
-        $usersTable = $schema->createTable($this->prefix.'users');
+        $usersTable = $schema->createTable($this->prefix . 'users');
         $usersTable->addColumn('id', 'integer', array('autoincrement' => true));
         $usersTable->setPrimaryKey(array('id'));
         $usersTable->addColumn('username', 'string', array('length' => 32));
@@ -423,7 +430,7 @@ class IntegrityChecker
         $usersTable->addColumn('roles', 'string', array('length' => 1024, 'default' => ''));
         $tables[] = $usersTable;
 
-        $taxonomyTable = $schema->createTable($this->prefix."taxonomy");
+        $taxonomyTable = $schema->createTable($this->prefix . 'taxonomy');
         $taxonomyTable->addColumn("id", "integer", array('autoincrement' => true));
         $taxonomyTable->setPrimaryKey(array("id"));
         $taxonomyTable->addColumn("content_id", "integer");
@@ -438,7 +445,7 @@ class IntegrityChecker
         $taxonomyTable->addIndex(array( 'sortorder'));
         $tables[] = $taxonomyTable;
 
-        $relationsTable = $schema->createTable($this->prefix."relations");
+        $relationsTable = $schema->createTable($this->prefix . 'relations');
         $relationsTable->addColumn("id", "integer", array('autoincrement' => true));
         $relationsTable->setPrimaryKey(array("id"));
         $relationsTable->addColumn("from_contenttype", "string", array("length" => 32));
@@ -451,7 +458,7 @@ class IntegrityChecker
         $relationsTable->addIndex(array('to_id'));
         $tables[] = $relationsTable;
 
-        $logTable = $schema->createTable($this->prefix."log");
+        $logTable = $schema->createTable($this->prefix . 'log');
         $logTable->addColumn("id", "integer", array('autoincrement' => true));
         $logTable->setPrimaryKey(array("id"));
         $logTable->addColumn("level", "integer");
@@ -473,7 +480,7 @@ class IntegrityChecker
         $logTable->addColumn("dump", "string", array("length" => 1024));
         $tables[] = $logTable;
 
-        $contentChangelogTable = $schema->createTable($this->prefix."content_changelog");
+        $contentChangelogTable = $schema->createTable($this->prefix . 'content_changelog');
         $contentChangelogTable->addColumn("id", "integer", array('autoincrement' => true));
         $contentChangelogTable->setPrimaryKey(array("id"));
         $contentChangelogTable->addColumn("date", "datetime");
@@ -504,7 +511,7 @@ class IntegrityChecker
         $contentChangelogTable->addColumn("comment", "string", array('length' => 150, "default" => "", "notnull" => false));
         $tables[] = $contentChangelogTable;
 
-        $cronTable = $schema->createTable($this->prefix."cron");
+        $cronTable = $schema->createTable($this->prefix . 'cron');
         $cronTable->addColumn("id", "integer", array('autoincrement' => true));
         $cronTable->setPrimaryKey(array("id"));
         // Note: we're keeping the 'interval' column around for backwards compatibility. We do not use
@@ -565,7 +572,7 @@ class IntegrityChecker
                     $this->app['session']->getFlashBag()->set('error', $error);
                     continue;
                 }
-                
+
                 $handler = $this->app['config']->getFields()->getField($values['type']);
 
                 switch ($values['type']) {

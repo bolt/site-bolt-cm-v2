@@ -145,7 +145,6 @@ class Users
             $user['roles'] = json_encode(array_values(array_unique($user['roles'])));
         }
 
-
         // Decide whether to insert a new record, or update an existing one.
         if (empty($user['id'])) {
             unset($user['id']);
@@ -203,7 +202,7 @@ class Users
 
         if ($key != $this->currentuser['sessionkey']) {
             $this->app['log']->add("keys don't match. Invalidating session: $key != " . $this->currentuser['sessionkey'], 2);
-            $this->app['log']->add("Automatically logged out user '".$this->currentuser['username']."': Session data didn't match.", 3, '', 'issue');
+            $this->app['log']->add("Automatically logged out user '" . $this->currentuser['username'] . "': Session data didn't match.", 3, '', 'issue');
             $this->logout();
 
             return false;
@@ -228,7 +227,7 @@ class Users
      * Get a key to identify the session with.
      *
      * @param  string $name
-     * @param string $salt
+     * @param  string $salt
      * @return string
      */
     private function getAuthToken($name = "", $salt = "")
@@ -240,13 +239,13 @@ class Users
         $seed = $name . "-" . $salt;
 
         if ($this->app['config']->get('general/cookies_use_remoteaddr')) {
-            $seed .= "-". $this->remoteIP;
+            $seed .= '-' . $this->remoteIP;
         }
         if ($this->app['config']->get('general/cookies_use_browseragent')) {
-            $seed .= "-". $_SERVER['HTTP_USER_AGENT'];
+            $seed .= '-' . $_SERVER['HTTP_USER_AGENT'];
         }
         if ($this->app['config']->get('general/cookies_use_httphost')) {
-            $seed .= "-". (isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : $_SERVER['SERVER_NAME']);
+            $seed .= '-' . (isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : $_SERVER['SERVER_NAME']);
         }
 
         $token = md5($seed);
@@ -308,13 +307,13 @@ class Users
         $seed = $this->app['request']->cookies->get('bolt_session');
 
         if ($this->app['config']->get('general/cookies_use_remoteaddr')) {
-            $seed .= "-". $this->remoteIP;
+            $seed .= '-' . $this->remoteIP;
         }
         if ($this->app['config']->get('general/cookies_use_browseragent')) {
-            $seed .= "-". $_SERVER['HTTP_USER_AGENT'];
+            $seed .= '-' . $_SERVER['HTTP_USER_AGENT'];
         }
         if ($this->app['config']->get('general/cookies_use_httphost')) {
-            $seed .= "-". (isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : $_SERVER['SERVER_NAME']);
+            $seed .= '-' . (isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : $_SERVER['SERVER_NAME']);
         }
 
         $token = substr(md5($seed), 0, 8);
@@ -325,7 +324,7 @@ class Users
     /**
      * Check if a given token matches the current (correct) Anit-CSRF-like token
      *
-     * @param string $token
+     * @param  string $token
      * @return bool
      */
     public function checkAntiCSRFToken($token = '')
@@ -612,9 +611,7 @@ class Users
                 $this->app['log']->add("Failed to send password request sent to '" . $user['displayname'] . "'.", 3, '', 'issue');
             }
 
-
         }
-
 
         // Take a nap, to prevent brute-forcing. Zzzzz...
         sleep(1);
@@ -651,7 +648,6 @@ class Users
             // That was not a valid token, or too late, or not from the correct IP.
             $this->app['log']->add("Somebody tried to reset a password with an invalid token.", 3, '', 'issue');
             $this->app['session']->getFlashBag()->set('error', __("Password reset not successful! Either the token was incorrect, or you were too late, or you tried to reset the password from a different IP-address."));
-
 
         }
     }
@@ -818,8 +814,8 @@ class Users
     /**
      * Enable or disable a user, specified by id.
      *
-     * @param  int $id
-     * @param  int $enabled
+     * @param  int  $id
+     * @param  int  $enabled
      * @return bool
      */
     public function setEnabled($id, $enabled = 1)
@@ -838,8 +834,8 @@ class Users
     /**
      * Check if a certain user has a specific role
      *
-     * @param mixed $id
-     * @param string $role
+     * @param  mixed  $id
+     * @param  string $role
      * @return bool
      */
     public function hasRole($id, $role)
@@ -856,8 +852,8 @@ class Users
     /**
      * Add a certain role from a specific user.
      *
-     * @param mixed $id
-     * @param string $role
+     * @param  mixed  $id
+     * @param  string $role
      * @return bool
      */
     public function addRole($id, $role)
@@ -877,8 +873,8 @@ class Users
     /**
      * Remove a certain role from a specific user.
      *
-     * @param mixed $id
-     * @param string $role
+     * @param  mixed  $id
+     * @param  string $role
      * @return bool
      */
     public function removeRole($id, $role)
@@ -952,8 +948,8 @@ class Users
      * "contenttype:$contenttype:change-ownership:$id" - Change the ownership
      *                                of the specified content type or item.
      *
-     * @param string $what The desired permission, as elaborated upon above.
-     * @return bool TRUE if the permission is granted, FALSE if denied.
+     * @param  string $what The desired permission, as elaborated upon above.
+     * @return bool   TRUE if the permission is granted, FALSE if denied.
      */
     public function isAllowed($what, $contenttype = null, $contentid = null)
     {

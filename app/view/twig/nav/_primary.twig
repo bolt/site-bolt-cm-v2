@@ -1,13 +1,10 @@
 <div class="navbar-header">
-    <button type="button" class="navbar-toggle" data-action="sidebar.toggle()">
-        <span class="sr-only">Toggle navigation</span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
+    <button type="button" class="navbar-toggle" data-action="bolt.sidebar.toggle()">
+        <i class="fa fa-fw fa-bars"></i> MENU
     </button>
     <a class="navbar-brand" href="{{ path('dashboard') }}">
         {# <img src="{{ paths.app }}view/img/bolt-icon.svg"> #}
-        Bolt
+        {{ app.config.get('general/branding/name')|default('Bolt') }}
     </a>
     <a href="{{ path('dashboard') }}" class="navbar-site hidden-xs"><span>{% if app.config.get('general/sitename') %}{{ app.config.get('general/sitename') }}{% else %}Site{% endif %}</span></a>
 </div>
@@ -43,7 +40,7 @@
             <li>
                 <form action="{{ path('logout') }}" method="POST">
                     <button class="btn btn-link btn-block" type="submit">
-                        <span class="pull-left"><i class="fa fa-fw fa-sign-out"></i> {{ __('Logout') }}</span>
+                        <span class="pull-left"><i class="fa fa-fw fa-sign-out" style="margin-left: 4px;"></i> {{ __('Logout') }}</span>
                     </button>
                 </form>
             </li>

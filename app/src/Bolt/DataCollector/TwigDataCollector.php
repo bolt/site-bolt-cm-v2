@@ -50,7 +50,7 @@ class TwigDataCollector extends DataCollector
                 if ($filter instanceof \Twig_FilterInterface) {
                     $call = $filter->compile();
                     if (is_array($call) && is_callable($call)) {
-                        $call = 'Method '.$call[1].' of an object '.get_class($call[0]);
+                        $call = 'Method ' . $call[1] . ' of an object ' . get_class($call[0]);
                     }
                 } else {
                     $call = $filter->getName();
@@ -167,7 +167,6 @@ class TwigDataCollector extends DataCollector
     {
         return $this->data['templatechosen'];
     }
-
 
     /**
      * Getter for templateerror
