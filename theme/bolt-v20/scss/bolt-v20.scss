@@ -359,6 +359,9 @@ header {
         }
     }
 }
+.disqus {
+    margin-top: 4em;
+}
 
 /* -------------- SLIDER SECTION--------------- */
 
@@ -509,6 +512,10 @@ footer {
         padding-left: 3%;
         padding-right: 3%;
         padding-bottom: 3em;
+    }
+    .fa {
+            color: $red;
+            font-size: 80%;
     }
 }
 
