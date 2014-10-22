@@ -338,7 +338,7 @@ header {
     
 }
 
-.maininfo .maincolumn {
+.maincolumn {
     @extend .column;
    // LARGE //
     @media #{$large-up} {
@@ -351,7 +351,7 @@ header {
     article {
         margin-bottom: 4em;
         padding-bottom: 2em;
-        border-bottom: 1px solid #ccc;
+        //border-bottom: 1px solid #ccc; too specific, needs other place
         img {
             margin-bottom: 1em;
             clear:both;
@@ -372,6 +372,19 @@ header {
 .disqus {
     margin-top: 4em;
 }
+
+/* -------------- HERO SECTION--------------- */
+
+section.hero {
+	padding-top: 4em;
+	h1 {
+		margin-bottom: 1em;
+	}
+	h2 {
+		font-size: 1.25rem;
+	}
+}
+
 
 /* -------------- SLIDER SECTION--------------- */
 
