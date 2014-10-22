@@ -1,59 +1,6 @@
 # This file defines the contenttypes on the website. See the documentation for
 # details: http://docs.bolt.cm/content#defining-contenttypes
 
-
-# Entries can be used for things like 'news' or 'blogpostings'. They have a 'teaser',
-# which can be used for a short blurb on listing-pages, allowing visitors to
-# click-through to the rest of the entry. It also has fields for an image and an
-# optional video.
-# A relation is defined to the pages contenttype. This way you can refer to a page
-# from your news-item.
-# This contenttype defines 'categories' and 'tags' as taxonomies, allowing the
-# editor to use both to categorize a specific entry.
-# The 'sort' is set to "datepublish DESC", which means that newer entries will
-# show above older entries.
-
-entries:
-    name: Entries
-    singular_name: Entry
-    fields:
-        title:
-            type: text
-            class: large
-            group: basic
-        slug:
-            type: slug
-            uses: title
-            group: basic
-        image:
-            type: image
-            group: media
-            separator: true
-        teaser:
-            type: html
-            height: 150px
-            group: basic
-        video:
-            type: video
-            group: media
-        body:
-            type: html
-            height: 300px
-            group: basic
-    relations:
-        pages:
-          multiple: false
-          order: title
-          label: Select a page
-    taxonomy: [ categories, tags ]
-    record_template: entry.twig
-    listing_template: listing.twig
-    listing_records: 10
-    default_status: publish
-    sort: datepublish DESC
-    recordsperpage: 10
-    groups: [ basic, media ]
-
 # Pages can be used for the more 'static' pages on your site. Things like
 # 'about us', 'contact' or a 'disclaimer'. This content-type has a 'templateselect'
 # field, which allows you to override the record_template setting for an
@@ -67,10 +14,17 @@ entries:
 pages:
     name: Pages
     singular_name: Page
+    description: |
+      The **Pages** contentype can be used for the more 'static' pages on your site. Things like
+      _'about us'_, _'contact'_ or a _'disclaimer'_.  
+      To change the fields that are in this contenttype, edit the file `contenttypes.yml` in the
+      folder `app/config/`, using the editor of your choice, or by going to 'Configuration' »
+      'Contenttypes' in the menu on the left.
     fields:
         title:
             type: text
             class: large
+            group: content
         slug:
             type: slug
             uses: title
@@ -88,31 +42,102 @@ pages:
     taxonomy: [ chapters ]
     recordsperpage: 100
 
-# The 'Kitchensink' is not particularly useful in most cases, but it does a good
+
+# Entries can be used for things like 'news' or 'blogpostings'. They have a 'teaser',
+# which can be used for a short blurb on listing-pages, allowing visitors to
+# click-through to the rest of the entry. It also has fields for an image and an
+# optional video.
+# A relation is defined to the pages contenttype. This way you can refer to a page
+# from your news-item.
+# This contenttype defines 'categories' and 'tags' as taxonomies, allowing the
+# editor to use both to categorize a specific entry.
+# The 'sort' is set to "datepublish DESC", which means that newer entries will
+# show above older entries.
+
+entries:
+    name: Entries
+    singular_name: Entry
+    description: |
+      The **Entries** contentype can be used for things like _'news'_ or _'blogpostings'_. They
+      have a teaser, which can be used for a short blurb on listing-pages, allowing visitors to
+      click-through to the rest of the entry. It also has fields for an image and an optional video.  
+      To change the fields that are in this contenttype, edit the file `contenttypes.yml` in the
+      folder `app/config/`, using the editor of your choice, or by going to 'Configuration' »
+      'Contenttypes' in the menu on the left.
+    fields:
+        title:
+            type: text
+            class: large
+            group: content
+        slug:
+            type: slug
+            uses: title
+        teaser:
+            type: html
+            height: 150px
+        body:
+            type: html
+            height: 300px
+        image:
+            type: image
+            group: media
+        video:
+            type: video
+    relations:
+        pages:
+          multiple: false
+          order: title
+          label: Select a page
+    taxonomy: [ categories, tags ]
+    record_template: entry.twig
+    listing_template: listing.twig
+    listing_records: 10
+    default_status: publish
+    sort: -datepublish
+    recordsperpage: 10
+
+# The 'Showcases' is not particularly useful in most cases, but it does a good
 # job of showcasing most of the available fieldtypes. Feel free to delete it, or
 # copy some fields to your own contenttypes.
 # Since no templates are defined for this contenttype, the default record_template,
 # listing_template, and related settings are used from config.yml
 
-kitchensink:
-    name: Kitchensinks
-    singular_name: Kitchensink
+showcases:
+    name: Showcases
+    slug: showcases
+    singular_name: Showcase
+    singular_slug: showcase
+    description: |
+      The **Showcases** contentype is used to show all of the available common field types.
+      In practice, its uses are limited, but be sure to take a look to see which fields are
+      available for use.  
+      To change (or delete) the fields that are in this contenttype, edit the file `contenttypes.yml`
+      in the folder `app/config/`, using the editor of your choice, or by going to 'Configuration' »
+      'Contenttypes' in the menu on the left.
     fields:
         title:
             type: text
             class: large
             required: true
             pattern: "*{2,255}" # see: http://html5pattern.com/
+            group: Text
         slug:
             type: slug
-            uses: [ selectfield, title ]
-        video:
-            type: video
+            uses: [ title ]
         html:
             type: html
             height: 150px
+        textarea:
+            type: textarea
+            postfix: "<p><em>This is a plain text area. the contents will not be processed.</em></p>"
+        markdown:
+            type: markdown
+            postfix: "<p><em>This field gets parsed as <a href='https://help.github.com/articles/markdown-basics'>Markdown</a>, when rendered on the site.</em></p>"
         geolocation:
             type: geolocation
+            group: Media
+        video:
+            type: video
         image:
             type: image
             attrib: title
@@ -121,20 +146,16 @@ kitchensink:
             type: imagelist
         file:
             type: file
+            group: files
         filelist:
             type: filelist
-        checkbox:
-            type: checkbox
-            label: "This is a checkbox"
-        markdown:
-            prefix: "<em>This short text comes before the actual field.</em>"
-            type: markdown
-            postfix: "<hr>"
-        textarea:
-            type: textarea
         template:
             type: templateselect
             filter: '*.twig'
+        checkbox:
+            type: checkbox
+            label: "This is a checkbox"
+            group: other
         datetime:
             type: datetime
             default: "2000-01-01"
@@ -164,11 +185,12 @@ kitchensink:
             label: Choose an entry
             order: -id
             format: "{{ item.title|escape }} <span>(№ {{ item.id }})</span>"
+            postfix: "By selecting an Entry, you're creating a di-directional relationshop to that Entry."
         pages:
             multiple: true
             order: title
             label: Select zero or more pages
-    taxonomy: [ categories, tags, chapters ]
+    taxonomy: [ categories, tags ]
     show_on_dashboard: true
     default_status: publish
     searchable: false

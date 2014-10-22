@@ -10,8 +10,8 @@ database:
 sitename: A sample site
 payoff: The amazing payoff goes here
 
-# The theme to use. Be sure to copy the {theme_path}/base-2013 folder, and change the
-# name here accordingly. Don't edit the templates in theme/base-2013, because
+# The theme to use. Be sure to copy the {theme_path}/base-2014 folder, and change the
+# name here accordingly. Don't edit the templates in theme/base-2014, because
 # they _will_ get updated in next releases
 theme: base-2014
 
@@ -69,6 +69,11 @@ record_template: record.twig
 listing_template: listing.twig
 listing_records: 6
 listing_sort: datepublish DESC
+
+# Because of limitations on how the underlying database queries work, there are 
+# only two options for sorting on taxonomies. 'ASC' for roughly "oldest first" 
+# and 'DESC' for roughly 'newest first'. 
+taxonomy_sort: DESC
 
 # Template for showing the search results. If not defined, uses the settings
 # for listing_template and listing_records
@@ -169,16 +174,23 @@ strict_variables: false
 # options are set to 'false'. If you choose to enable them for your editors, please
 # instruct them thoroughly on their responsibility not to break the layout.
 wysiwyg:
-  images: true
+  images: false
   anchor: false
-  tables: true
+  tables: false
   fontcolor: false
-  align: false
-  subsuper: false
-  embed: true
+  align: false        # Add 'align left', 'align right',etc. 
+  subsuper: false     # Add buttons for subscript and superscript, using <sub> and <sup>
+  embed: false        # allows the user to insert embedded video's from Youtube, Vimeo, etc. 
+  underline: false    # add a button to underline text, using the <u>-tag.
+  strike: false       # add a button to add stikethrough, using the <s>-tag.
+  blockquote: false 
+  codesnippet: false
+  specialchar: false  # adds a button to insert special chars like '€' or '™'. 
   ck:
     allowedContent: true # If set to 'true', any elements and attributes are allowed in Wysiwg Elements
     autoParagraph: true # If set to 'true', any pasted content is wrapped in <p> tags for multiple line-breaks
+    disableNativeSpellChecker: true # If set to 'true' it will stop browsers from underlining spelling mistakes
+    # viewSourceRoles: [ 'admin', 'developer' ] # the roles which are allowed to use the [Source]-button. 
 
 # by default, mail is sent using PHP's built-in mail function. In general, it's advised to use SMTP for sending mail
 # instead. Uncomment the following lines to use an SMTP server with authentication.
@@ -264,7 +276,7 @@ hash_strength: 10
 #  password: pwd
 
 
-# options for when you're working with Grunt. Feel free to ignore these, if you don't use grunt. 
+# options for when you're working with Grunt. Feel free to ignore these, if you don't use grunt.
 grunt:
   livereload: false
   livereloadport: 35729

@@ -1,4 +1,16 @@
 <?php
+/**
+ * Second stage loader
+ *
+ * After verifying the first stage was run, we bootstrap the app:
+ *
+ * - Initialize mb functions for UTF-8
+ * - Figure out path structure
+ * - Bring in the autoloader
+ * - Load and verify configuration
+ * - Initialize the application
+ */
+
 namespace Bolt;
 
 use Bolt\Configuration\LowlevelException;
@@ -15,7 +27,7 @@ return call_user_func(
         // Second to last entry must be load.php
         $isLoadChainOk = $includeCount >= 3 && $includes[$includeCount - 2] == $loaderPath;
 
-        require_once __DIR__ . '/src/Bolt/Configuration/LowlevelException.php';
+        require_once __DIR__ . '/../src/Configuration/LowlevelException.php';
 
         if (! $isLoadChainOk) {
             throw new LowlevelException('Include load.php, not bootstrap.php');
