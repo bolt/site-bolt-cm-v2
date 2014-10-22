@@ -87,12 +87,12 @@
     {% set secblocks = [supportblock,docblock,contributeblock] %}
 
     {% for item in secblocks %}
-    <div class="column">
+    <article class="column">
         <h2>{{item.title}}</h2>
         <h3 class="subheader">{{item.subtitle}}</h3>
         {{item.body}}
         <a href="{{item.sitelink}}" class="button">{{item.calltoaction}}</a>          
-    </div>
+    </article>
     {% endfor %}
 </section>
 
