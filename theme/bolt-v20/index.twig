@@ -16,6 +16,25 @@
     </div>
 </section>
 
+<section class="shorttexts">
+	<article>
+		<i class="fa fa-cogs fa-2x"></i>
+		<h3>Open source</h3>
+	</article>
+	<article>
+		<i class="fa fa-mobile fa-2x"></i>
+		<h3>Responsive</h3>
+	</article>
+	<article>
+		<i class="fa fa-group fa-2x"></i>
+		<h3>Community-driven</h3>
+	</article>
+	<article>
+		<i class="fa fa-magic fa-2x"></i>
+		<h3>Easy to use</h3>
+	</article>
+</section>
+
 <section class="maininfo">
     
     {% setcontent aboutblock = 'blocks/about-bolt' %}
@@ -25,12 +44,12 @@
     {% set primaryblocks = [aboutblock,whoblock,featureblock] %}
 
     {% for item in primaryblocks %}
-    <div class="column">
+    <article class="column">
         <h2>{{item.title}}</h2>
         <h3 class="subheader">{{item.subtitle}}</h3>
         {{item.body}}
         <a href="{{item.sitelink}}" class="button">{{item.calltoaction}}</a>          
-    </div>
+    </article>
     {% endfor %}
     
 </section>

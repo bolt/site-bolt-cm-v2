@@ -77,10 +77,6 @@ nav {
     }      
 }
 
-section {
-    
-}
-
 /* ------------ STUFF -------------- */
 
 span.desktop {
@@ -304,8 +300,8 @@ header {
 
 /* -------------- MAIN --------------- */
 
-.maininfo, .secinfo{
-    padding-top: 3em;
+section{   // was .maininfo, .secinfo
+	padding-top: 3em;
     // MEDIUM  //
     @media #{$medium-up} {
          padding-left: 10%;
@@ -384,6 +380,40 @@ section.hero {
 		font-size: 1.25rem;
 	}
 }
+
+/* -------------- SHORTTEXTS SECTION--------------- */
+
+section.shorttexts {
+	article {
+		@include grid-column(
+            $columns: 6
+            );
+            text-align: center;
+         // LARGE  //
+        @media #{$large-up} {
+            @include grid-column(
+            $columns: 3
+            );
+        }
+        h3, .icon {
+	        text-align: center;
+	        color: $mediumgrey;
+	        font-size: 1.125rem;
+        }
+        i {
+	        color: #fff;
+	        background: $red;
+	        width: 44px;
+	        height: 44px;
+	        border-radius: 22px;
+	        padding-top: 7px;
+	        margin-bottom: .5em;
+	        margin-right: 0;
+        }	
+	}
+	
+}
+
 
 
 /* -------------- SLIDER SECTION--------------- */
