@@ -47,7 +47,7 @@
     <article class="column">
         <h2>{{item.title}}</h2>
         <h3 class="subheader">{{item.subtitle}}</h3>
-        {{item.body}}
+        {{item.body | slice(0,300)}}
         <a href="{{item.sitelink}}" class="button">{{item.calltoaction}}</a>          
     </article>
     {% endfor %}
@@ -96,7 +96,24 @@
     {% endfor %}
 </section>
 
-
+<section class="shorttexts">
+	<article>
+		<div class="icon"><a href="http://symfony.com/"><img src="{{paths.theme}}images/symfony_logo.png" width="100" alt="Symfony logo" /></a></div>
+		<h3>Built on Silex/Symfony</h3>
+	</article>
+	<article>
+		<div class="icon"><a href="http://twig.sensiolabs.org/"><img src="{{paths.theme}}images/twig_logo.png" width="100" alt="Twig logo" /></a></div>
+		<h3>Twig template engine</h3>
+	</article>
+	<article>
+		<div class="icon"><a href="http://github.com"><img src="{{paths.theme}}images/octocat.png" width="100" alt="Github" /></a></div>
+		<h3>Github</h3>
+	</article>
+	<article>
+		<div class="icon"><a href="#"><img src="{{paths.theme}}images/debugbar.svg" alt="Symfony logo" /></a></div>
+		<h3>Debug bar</h3>
+	</article>
+</section>
 
 {% endblock content %}
 
