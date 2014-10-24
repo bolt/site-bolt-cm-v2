@@ -6,13 +6,13 @@
 
 {% set chapters = app.config.get('taxonomy/chapters/options') %}
 
-        <nav class='jumpnav'>
-            <ul>
-                {% for cat, catname in chapters %}
-                <li><a href="#{{cat}}">For {{catname}}</a></li> <!-- AW - WORKING ON THIS -->
-                {% endfor %}        
-            </ul>
-        </nav>
+<nav class='jumpnav'>
+    <ul>
+        {% for cat, catname in chapters %}
+        <li><a href="#{{cat}}">For {{catname}}</a></li> <!-- AW - WORKING ON THIS -->
+        {% endfor %}        
+    </ul>
+</nav>
 
 {% for cat, catname in chapters %}
 <section class="maininfo">
@@ -35,7 +35,7 @@
             {% endfor %}
         </ul>
         <a class="button">See all download options</a>
-
+        <a class="toplink" href="#">Back to top</a>
     </div>
 </section>
 
