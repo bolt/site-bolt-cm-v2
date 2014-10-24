@@ -7,7 +7,7 @@
 <section class="maininfo">
     <div class="maincolumn ">
         <article class="row">
-            <h1><a href="{{record.link}}">{{record.title}}</a></h1>
+            <h1><a href="{{record.link}}">{{record.title}} - {{record.contentype.slug}}</a></h1>
             <h2 class="subheader">{{record.subtitle}}</h2>
             <p class="meta">Published: {{ record.datepublish|date("l j F - H:i") }}</p>
             <div class="articlebody">
@@ -19,9 +19,11 @@
                 {{  record.introduction }}
                 {{  record.text }}
                 {{  record.text_markdown }}
+                {% if record.contenttype.slug =='news' %}
                 <div class="disqus">
                 {{ disqus() }}
                 </div>
+                {% endif %}
             </div>
             
         </article>
