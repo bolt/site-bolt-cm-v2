@@ -9,6 +9,7 @@ jQuery(function ($) {
     bolt.stack = new Stack();
     bolt.sidebar = new Sidebar();
     bolt.navpopups = new Navpopups();
+    bolt.moments = new Moments();
     bolt.imagelist = [];
     bolt.filelist = [];
 
@@ -23,7 +24,6 @@ jQuery(function ($) {
     init.dropZone();
     init.popOvers();
     init.dateTimePickers();
-    init.momentTimestamps();
     init.activityWidget();
     init.dropDowns();
     init.deferredWidgets();
@@ -33,6 +33,7 @@ jQuery(function ($) {
     init.omnisearch();
     init.uploads();
     init.geolocation();
+    init.focusStatusSelect();
 
     $('[data-bind]').each(function () {
         var data = $(this).data('bind');

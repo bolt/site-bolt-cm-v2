@@ -12,6 +12,8 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Filesystem\Filesystem;
 
 use Bolt\Composer\CommandRunner;
+use Bolt\Library as Lib;
+use Bolt\Translation\Translator as Trans;
 
 class Extend implements ControllerProviderInterface, ServiceProviderInterface
 {
@@ -212,6 +214,10 @@ class Extend implements ControllerProviderInterface, ServiceProviderInterface
                 $filesystem->mkdir($destination);
                 $filesystem->mirror($source, $destination);
 
+                if (file_exists($destination . "/config.yml.dist")) {
+                    $filesystem->copy($destination . "/config.yml.dist", $destination . "/config.yml");
+                }
+
                 return new Response($app['translator']->trans('Theme successfully generated. You can now edit it directly from your theme folder.'));
             } catch (\Exception $e) {
                 return new Response($app['translator']->trans('We were unable to generate the theme. It is likely that your theme directory is not writable by Bolt. Check the permissions and try reinstalling.'));
@@ -246,14 +252,20 @@ class Extend implements ControllerProviderInterface, ServiceProviderInterface
      */
     public function before(Request $request, \Bolt\Application $app)
     {
+        
+        // This disallows extensions from adding any extra snippets to the output
+        if ($request->get("_route") !== 'extend') {
+            $app['htmlsnippets'] = false;
+        }
+        
         // Start the 'stopwatch' for the profiler.
         $app['stopwatch']->start('bolt.backend.before');
 
         // Most of the 'check if user is allowed' happens here: match the current route to the 'allowed' settings.
         if (!$app['users']->isAllowed('extensions')) {
-            $app['session']->getFlashBag()->set('error', __('You do not have the right privileges to view that page.'));
+            $app['session']->getFlashBag()->set('error', Trans::__('You do not have the right privileges to view that page.'));
 
-            return redirect('dashboard');
+            return Lib::redirect('dashboard');
         }
 
         // Stop the 'stopwatch' for the profiler.

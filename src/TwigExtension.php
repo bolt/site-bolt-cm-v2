@@ -3,6 +3,10 @@
 namespace Bolt;
 
 use Silex;
+use Bolt\Library as Lib;
+use Bolt\Helpers\String;
+use Bolt\Helpers\Html;
+use Bolt\Translation\Translator as Trans;
 
 /**
  * The class for Bolt' Twig tags, functions and filters.
@@ -176,13 +180,7 @@ class TwigExtension extends \Twig_Extension
      */
     public function htmlLang()
     {
-        $locale = $this->app['config']->get('general/locale');
-        if ($locale == "") {
-            // return fallback
-            return 'en';
-        }
-
-        return str_replace("_", "-", $locale);
+        return str_replace('_', '-', $this->app['config']->get('general/locale', Application::DEFAULT_LOCALE));
     }
 
     /**
@@ -273,7 +271,7 @@ class TwigExtension extends \Twig_Extension
         }
 
         $output = str_replace(">", "> ", $output);
-        $output = trimText(strip_tags($output), $length);
+        $output = Html::trimText(strip_tags($output), $length);
 
         return $output;
     }
@@ -310,7 +308,7 @@ class TwigExtension extends \Twig_Extension
         }
 
         if (preg_match("/ ([a-z0-9_-]+\.yml)/i", $str, $matches)) {
-            $path = path('fileedit', array('file' => "app/config/" . $matches[1]));
+            $path = Lib::path('fileedit', array('file' => "app/config/" . $matches[1]));
             $link = sprintf(" <a href='%s'>%s</a>", $path, $matches[1]);
             $str = preg_replace("/ ([a-z0-9_-]+\.yml)/i", $link, $str);
         }
@@ -390,7 +388,7 @@ class TwigExtension extends \Twig_Extension
      */
     public function slug($str)
     {
-        $slug = makeSlug($str);
+        $slug = String::slug($str);
 
         return $slug;
     }
@@ -443,7 +441,7 @@ class TwigExtension extends \Twig_Extension
 
     public function decorateTT($str)
     {
-        return decorateTT($str);
+        return Html::decorateTT($str);
     }
 
     /**
@@ -864,7 +862,7 @@ class TwigExtension extends \Twig_Extension
             round($width),
             round($height),
             $scale,
-            safeFilename($filename)
+            Lib::safeFilename($filename)
         );
 
         return $path;
@@ -927,7 +925,7 @@ class TwigExtension extends \Twig_Extension
             $large = $this->thumbnail($filename, $fullwidth, $fullheight, 'r');
 
             if (empty($title)) {
-                $title = sprintf('%s: %s', __("Image"), $filename);
+                $title = sprintf('%s: %s', Trans::__('Image'), $filename);
             }
 
             $output = sprintf(
@@ -970,7 +968,7 @@ class TwigExtension extends \Twig_Extension
         $image = sprintf(
             "%sfiles/%s",
             $this->app['paths']['root'],
-            safeFilename($filename)
+            Lib::safeFilename($filename)
         );
 
         return $image;
@@ -1104,7 +1102,7 @@ class TwigExtension extends \Twig_Extension
             $param = empty($item['param']) ? array() : $item['param'];
             $add = empty($item['add']) ? '' : $item['add'];
 
-            $item['link'] = path($item['route'], $param, $add);
+            $item['link'] = Lib::path($item['route'], $param, $add);
         } elseif (isset($item['path'])) {
             // if the item is like 'content/1', get that content.
             if (preg_match('#^([a-z0-9_-]+)/([a-z0-9_-]+)$#i', $item['path'])) {
@@ -1127,7 +1125,7 @@ class TwigExtension extends \Twig_Extension
 
             } else {
                 // we assume the user links to this on purpose.
-                $item['link'] = fixPath($this->app['paths']['root'] . $item['path']);
+                $item['link'] = Lib::fixPath($this->app['paths']['root'] . $item['path']);
             }
 
         }
@@ -1231,15 +1229,15 @@ class TwigExtension extends \Twig_Extension
         $num_args = func_num_args();
         switch ($num_args) {
             case 5:
-                return __($args[0], $args[1], $args[2], $args[3], $args[4]);
+                return Trans::__($args[0], $args[1], $args[2], $args[3], $args[4]);
             case 4:
-                return __($args[0], $args[1], $args[2], $args[3]);
+                return Trans::__($args[0], $args[1], $args[2], $args[3]);
             case 3:
-                return __($args[0], $args[1], $args[2]);
+                return Trans::__($args[0], $args[1], $args[2]);
             case 2:
-                return __($args[0], $args[1]);
+                return Trans::__($args[0], $args[1]);
             case 1:
-                return __($args[0]);
+                return Trans::__($args[0]);
         }
 
         return null;
@@ -1248,7 +1246,7 @@ class TwigExtension extends \Twig_Extension
     /**
      * Return a 'safe string' version of a given string.
      *
-     * @see function safeString() in app/classes/lib.php.
+     * @see function Bolt\Library::safeString()
      *
      * @param $str
      * @param  bool   $strict
@@ -1257,7 +1255,7 @@ class TwigExtension extends \Twig_Extension
      */
     public function safeString($str, $strict = false, $extrachars = "")
     {
-        return safeString($str, $strict, $extrachars);
+        return String::makeSafe($str, $strict, $extrachars);
     }
 
     /**
@@ -1270,7 +1268,7 @@ class TwigExtension extends \Twig_Extension
             return null;
         }
 
-        simpleredirect($path);
+        Lib::simpleredirect($path);
 
         $result = $this->app->redirect($path);
 

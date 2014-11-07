@@ -29,11 +29,9 @@ return call_user_func(
 
         require_once __DIR__ . '/../src/Configuration/LowlevelException.php';
 
-        if (! $isLoadChainOk) {
+        if (!$isLoadChainOk) {
             throw new LowlevelException('Include load.php, not bootstrap.php');
         }
-
-        // Bootstrap:
 
         // Use UTF-8 for all multi-byte functions
         mb_internal_encoding('UTF-8');
@@ -58,9 +56,6 @@ return call_user_func(
                 break;
             }
         }
-
-        // TODO: Phase out lib.php
-        require_once __DIR__ . '/lib.php';
 
         // None of the mappings matched, error
         if (!isset($config)) {

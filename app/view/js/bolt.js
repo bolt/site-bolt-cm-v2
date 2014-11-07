@@ -51,25 +51,114 @@ function getSelectedItems() {
     return aItems;
 }
 
-/**********************************************************************************************************************/
 
-/**
- * Initialize 'moment' timestamps.
- */
+// basic form validation before submit, adapted from
+// http://www.sitepoint.com/html5-forms-javascript-constraint-validation-api/
+// =========================================================
 
-var momentstimeout;
+function validateContent(form) {
 
-function updateMoments() {
-    $('time.moment').each(function () {
-        var stamp = moment($(this).attr('datetime'));
+    var formLength = form.elements.length,
+        f, field, formvalid = true;
 
-        $(this).html(stamp.fromNow());
-    });
-    clearTimeout(momentstimeout);
-    momentstimeout = setTimeout(function () {
-        updateMoments();
-    }, 16 * 1000);
+    // loop all fields
+    for (f = 0; f < formLength; f++) {
+        field = form.elements[f];
+
+        if (field.nodeName !== "INPUT" && field.nodeName !== "TEXTAREA" && field.nodeName !== "SELECT") continue;
+
+		if (field.nodeName === "INPUT"){
+			// trim input values
+			field.value = field.value.trim();
+		}
+
+        // is native browser validation available?
+        if (typeof field.willValidate !== "undefined") {
+            // native validation available
+            if (field.nodeName === "INPUT" && field.type !== field.getAttribute("type")) {
+                // input type not supported! Use legacy JavaScript validation
+                field.setCustomValidity(LegacyValidation(field) ? "" : "error");
+            }
+            // native browser check
+            field.checkValidity();
+        }
+        else {
+            // native validation not available
+            field.validity = field.validity || {};
+            // set to result of validation function
+            field.validity.valid = LegacyValidation(field);
+
+            // if "invalid" events are required, trigger it here
+
+        }
+
+        var noticeID = field.id + '-notice';
+
+        // first, remove any existing old notices
+        $('#'+noticeID).remove();
+
+        if (field.validity.valid) {
+
+            // remove error styles and messages
+            $(field).removeClass('error');
+        }
+        else {
+            // style field, show error, etc.
+            $(field).addClass('error');
+
+            var msg = $(field).data('errortext') || 'The '+field.name+' field is required or needs to match a pattern';
+
+            $('.page-header').after('<div id='+noticeID+' class="form-notice error">'+msg+'</div>');
+
+            // form is invalid
+            formvalid = false;
+        }
+    }
+
+    return formvalid;
 }
+
+
+// basic legacy validation checking
+function LegacyValidation(field) {
+    var
+        valid = true,
+        val = field.value,
+        type = field.getAttribute("type"),
+        chkbox = (type === "checkbox" || type === "radio"),
+        required = field.getAttribute("required"),
+        minlength = field.getAttribute("minlength"),
+        maxlength = field.getAttribute("maxlength"),
+        pattern = field.getAttribute("pattern");
+
+    // disabled fields should not be validated
+    if (field.disabled) return valid;
+
+    // value required?
+    valid = valid && (!required ||
+        (chkbox && field.checked) ||
+        (!chkbox && val !== "")
+    );
+
+    // minlength or maxlength set?
+    valid = valid && (chkbox || (
+        (!minlength || val.length >= minlength) &&
+        (!maxlength || val.length <= maxlength)
+    ));
+
+    // test pattern
+    if (valid && pattern) {
+        pattern = new RegExp('^(?:'+pattern+')$');
+        valid = pattern.test(val);
+    }
+
+    return valid;
+}
+
+
+// =========================================================
+
+/**********************************************************************************************************************/
 
 /**
  * Auto-update the 'latest activity' widget.
@@ -77,7 +166,7 @@ function updateMoments() {
 function updateLatestActivity() {
     $.get(bolt.paths.async + 'latestactivity', function (data) {
         $('#latesttemp').html(data);
-        updateMoments();
+        bolt.moments.update();
         $('#latestactivity').html($('#latesttemp').html());
     });
 
@@ -820,11 +909,10 @@ var Navpopups = Backbone.Model.extend({
 
         // Add the submenus to the data-content for bootstrap.popover
         $('#navpage-secondary a.menu-pop').each(
-            function(i) {
-                var name = $(this).attr('data-name'),
-                    menu = '';
+            function() {
+                var menu = '';
 
-                $('ul .submenu-' + name + ' li').each(function () {
+                $(this).nextAll('.submenu').children().each(function () {
                     if ($(this).hasClass('subdivider')) {
                         menu += '<hr>';
                     }
@@ -840,12 +928,13 @@ var Navpopups = Backbone.Model.extend({
             // only trigger the mobile open action
             $('#navpage-secondary a.menu-pop').on('click', function(e) {
                     e.preventDefault();
-                    var name = $(this).attr('data-name');
-                    if ($('#navpage-secondary .submenu-' + name).hasClass('show')) {
-                        $('#navpage-secondary .submenu-' + name).removeClass('show');
+                    var submenu = $(this).nextAll('.submenu');
+
+                    if (submenu.hasClass('show')) {
+                        submenu.removeClass('show');
                     } else {
                         $('#navpage-secondary .submenu').removeClass('show');
-                        $('#navpage-secondary .submenu-' + name).addClass('show');
+                        submenu.addClass('show');
                     }
                 }
             );
@@ -873,6 +962,50 @@ var Navpopups = Backbone.Model.extend({
                     }
                 );
         }
+    }
+});
+
+/**********************************************************************************************************************/
+
+/**
+ * Backbone object for all file actions functionality.
+ */
+var Moments = Backbone.Model.extend({
+
+    defaults: {
+        timeout: undefined,
+        wait: 16 * 1000 // 16 seconds
+    },
+
+    initialize: function () {
+        // Set locale
+        moment.locale(bolt.locale.long);
+
+        // Something to update?
+        if ($('time.moment').length) {
+            this.update();
+        }
+    },
+
+    update: function () {
+        var that = this,
+            next;
+
+        // Update all moment fields
+        $('time.moment').each(function () {
+            $(this).html(moment($(this).attr('datetime')).fromNow());
+        });
+
+        // Clear pending timeout
+        clearTimeout(this.get('timeout'));
+
+        // Set next call to update
+        next = setTimeout(function () {
+            that.update();
+        }, this.get('wait'));
+
+        // Remember timeout
+        this.set('timeout', next);
     }
 });
 
@@ -1278,6 +1411,28 @@ var init = {
      * @returns {undefined}
      */
     bindEditContent: function (data) {
+
+        // set handler to validate form submit
+        $('#editcontent')
+          .attr('novalidate', 'novalidate')
+          .on('submit', function(event){
+              var valid = validateContent(this);
+              $(this).data('valid', valid);
+              if ( ! valid){
+                  event.preventDefault();
+                  return false;
+              }
+              // submitting, disable warning
+              window.onbeforeunload = null;
+        });
+
+        // basic custom validation handler
+        $('#editcontent').on('boltvalidate', function(){
+            var valid = validateContent(this);
+            $(this).data('valid', valid);
+            return valid;
+        });
+
         // Save the page.
         $('#sidebarsavebutton').bind('click', function () {
             $('#savebutton').trigger('click');
@@ -1301,7 +1456,15 @@ var init = {
         // Clicking the 'save & continue' button either triggers an 'ajaxy' post, or a regular post which returns
         // to this page. The latter happens if the record doesn't exist yet, so it doesn't have an id yet.
         $('#sidebarsavecontinuebutton, #savecontinuebutton').bind('click', function (e) {
+
             e.preventDefault();
+
+            // trigger form validation
+            $('#editcontent').trigger('boltvalidate');
+            // check validation
+            if ( ! $('#editcontent').data('valid')) {
+                return false;
+            }
 
             var newrecord = data.newRecord,
                 savedon = data.savedon,
@@ -1332,7 +1495,7 @@ var init = {
                         $('p.lastsaved').find('strong').text(moment().format('MMM D, HH:mm'));
                         $('p.lastsaved').find('time').attr('datetime', moment().format());
                         $('p.lastsaved').find('time').attr('title', moment().format());
-                        updateMoments();
+                        bolt.moments.update();
 
                         $('a#lastsavedstatus strong').html(
                             '<i class="fa fa-circle status-' + $("#statusselect option:selected").val() + '"></i> ' +
@@ -1595,7 +1758,7 @@ var init = {
                 paragraphItems = paragraphItems.concat('-', 'Blockquote');
             }
 
-            config.language = set.language;
+            config.language = bolt.locale.short;
             config.uiColor = '#DDDDDD';
             config.resize_enabled = true;
             config.entities = false;
@@ -1708,7 +1871,7 @@ var init = {
             }
 
             // Parse override settings from field in contenttypes.yml
-            custom = $('textarea[name=' + this.name + ']').data('ckconfig');
+            custom = $('textarea[name=' + this.name + ']').data('field-options');
             for (key in custom) {
                 if (custom.hasOwnProperty(key)) {
                     config[key] = custom[key];
@@ -1823,9 +1986,26 @@ var init = {
      * @returns {undefined}
      */
     dateTimePickers: function () {
-        $(".datepicker").datepicker({
-            dateFormat: "DD, d MM yy"
+
+        $(".datepicker").each(function(){
+
+            var options = {};
+
+            // Parse override settings from field in contenttypes.yml
+            var custom = $(this).data('field-options');
+            for (key in custom) {
+                if (custom.hasOwnProperty(key)) {
+                    options[key] = custom[key];
+                }
+            }
+
+            // Reset dateFormat to Bolt internal date format
+            options.dateFormat = "DD, d MM yy";
+
+            $(this).datepicker( options );
         });
+
+
     },
 
     /*
@@ -1995,15 +2175,17 @@ var init = {
     },
 
     /*
-     * Initialize 'moment' timestamps.
+     * Initialize current status display setting focus on status select
      *
      * @returns {undefined}
      */
-    momentTimestamps: function () {
-        if ($('.moment').is('*')) {
-            updateMoments();
-        }
-    },
+    focusStatusSelect: function () {
+        $('#lastsavedstatus').click(function (e) {
+            e.preventDefault();
+            $('a[data-filter="meta"]').click();
+            $('#statusselect').focus();
+        });
+     },
 
     /*
      * Omnisearch
@@ -2167,7 +2349,7 @@ var init = {
                 });
             }
         });
-    }
+    },
 
 };
 
@@ -2184,6 +2366,7 @@ jQuery(function ($) {
     bolt.stack = new Stack();
     bolt.sidebar = new Sidebar();
     bolt.navpopups = new Navpopups();
+    bolt.moments = new Moments();
     bolt.imagelist = [];
     bolt.filelist = [];
 
@@ -2198,7 +2381,6 @@ jQuery(function ($) {
     init.dropZone();
     init.popOvers();
     init.dateTimePickers();
-    init.momentTimestamps();
     init.activityWidget();
     init.dropDowns();
     init.deferredWidgets();
@@ -2208,6 +2390,7 @@ jQuery(function ($) {
     init.omnisearch();
     init.uploads();
     init.geolocation();
+    init.focusStatusSelect();
 
     $('[data-bind]').each(function () {
         var data = $(this).data('bind');

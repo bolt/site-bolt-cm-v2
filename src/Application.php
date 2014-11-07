@@ -3,6 +3,7 @@
 namespace Bolt;
 
 use Bolt\Configuration\LowlevelException;
+use Bolt\Library as Lib;
 use RandomLib;
 use SecurityLib;
 use Silex;
@@ -12,15 +13,23 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Stopwatch;
 use Whoops\Provider\Silex\WhoopsServiceProvider;
+use Bolt\Provider\PathServiceProvider;
 
 class Application extends Silex\Application
 {
+    /**
+     * The default locale, used as fallback
+     */
+    const DEFAULT_LOCALE = 'en_GB';
+
     public function __construct(array $values = array())
     {
         $values['bolt_version'] = '2.0.0';
-        $values['bolt_name'] = 'beta Boltcamp';
+        $values['bolt_name'] = 'beta 3-pl1';
 
         parent::__construct($values);
+
+        $this->register(new PathServiceProvider());
 
         // Initialize the config. Note that we do this here, on 'construct'.
         // All other initialisation is triggered from bootstrap.php
@@ -28,7 +37,7 @@ class Application extends Silex\Application
         // One of a valid ResourceManager ['resources'] or ClassLoader ['classloader']
         // must be defined for working properly
         if (!isset($this['resources'])) {
-            $this['resources'] = new Configuration\ResourceManager($this['classloader']);
+            $this['resources'] = new Configuration\ResourceManager($this);
             $this['resources']->compat();
         } else {
             $this['classloader'] = $this['resources']->getClassLoader();
@@ -194,7 +203,7 @@ class Application extends Silex\Application
 
     public function initLocale()
     {
-        list ($this['locale'], $this['territory']) = explode('_', $this['config']->get('general/locale'));
+        $this['locale'] = $this['config']->get('general/locale', Application::DEFAULT_LOCALE);
 
         // Set The Timezone Based on the Config, fallback to UTC
         date_default_timezone_set(
@@ -203,9 +212,11 @@ class Application extends Silex\Application
 
         // Set default locale
         $locale = array(
-            $this['config']->get('general/locale') . '.utf8',
-            $this['config']->get('general/locale'),
-            'en_GB.utf8', 'en_GB', 'en'
+            $this['locale'] . '.utf8',
+            $this['locale'],
+            Application::DEFAULT_LOCALE . '.utf8',
+            Application::DEFAULT_LOCALE,
+            substr(Application::DEFAULT_LOCALE, 0, 2)
         );
         setlocale(LC_ALL, $locale);
 
@@ -213,8 +224,8 @@ class Application extends Silex\Application
 
         // Loading stub functions for when intl / IntlDateFormatter isn't available.
         if (!function_exists('intl_get_error_code')) {
-            require_once BOLT_PROJECT_ROOT_DIR . '/vendor/symfony/locale/Symfony/Component/Locale/Resources/stubs/functions.php';
-            require_once BOLT_PROJECT_ROOT_DIR . '/vendor/symfony/locale/Symfony/Component/Locale/Resources/stubs/IntlDateFormatter.php';
+            require_once $this->app['resources']->getPath('root') . '/vendor/symfony/locale/Symfony/Component/Locale/Resources/stubs/functions.php';
+            require_once $this->app['resources']->getPath('root') . '/vendor/symfony/locale/Symfony/Component/Locale/Resources/stubs/IntlDateFormatter.php';
         }
 
         $this->register(new Provider\TranslationServiceProvider());
@@ -276,7 +287,7 @@ class Application extends Silex\Application
             }
         );
 
-        // @todo: make a provider for the Integrity checker and Random generator..
+        // @todo: make a provider for the Random generator..
     }
 
     public function initExtensions()
@@ -373,7 +384,6 @@ class Application extends Silex\Application
         $this['safe_twig']->addGlobal($this['config']->getWhichEnd(), true);
 
         $this['safe_twig']->addGlobal('user', $this['users']->getCurrentUser());
-        // $this['safe_twig']->addGlobal('config', $this['config']);
         $this['safe_twig']->addGlobal('theme', $this['config']->get('theme'));
 
         if ($response = $this['render']->fetchCachedRequest()) {
@@ -426,7 +436,7 @@ class Application extends Silex\Application
             $this->register(new Provider\TwigProfilerServiceProvider());
 
             $this['twig.loader.filesystem']->addPath(
-                BOLT_PROJECT_ROOT_DIR . '/vendor/symfony/web-profiler-bundle/Symfony/Bundle/WebProfilerBundle/Resources/views',
+                $this['resources']->getPath('root') . '/vendor/symfony/web-profiler-bundle/Symfony/Bundle/WebProfilerBundle/Resources/views',
                 'WebProfiler'
             );
 
@@ -437,7 +447,7 @@ class Application extends Silex\Application
 
             $this->after(
                 function () use ($app) {
-                    foreach (hackislyParseRegexTemplates($app['twig.loader.filesystem']) as $template) {
+                    foreach (Lib::hackislyParseRegexTemplates($app['twig.loader.filesystem']) as $template) {
                         $app['twig.logger']->collectTemplateData($template);
                     }
                 }
@@ -508,7 +518,7 @@ class Application extends Silex\Application
     public function errorHandler(\Exception $exception)
     {
         // If we are in maintenance mode and current user is not logged in, show maintenance notice.
-        // @see /app/src/Bolt/Controllers/Frontend.php, Frontend::before()
+        // @see Controllers\Frontend::before()
         if ($this['config']->get('general/maintenance_mode')) {
             $user = $this['users']->getCurrentUser();
             if ($user['userlevel'] < 2) {
@@ -534,7 +544,7 @@ class Application extends Silex\Application
 
             // Don't display the full path..
             if (isset( $trace[$key]['file'])) {
-                $trace[$key]['file'] = str_replace(BOLT_PROJECT_ROOT_DIR, '[root]', $trace[$key]['file']);
+                $trace[$key]['file'] = str_replace($this['resources']->getPath('root'), '[root]', $trace[$key]['file']);
             }
         }
 

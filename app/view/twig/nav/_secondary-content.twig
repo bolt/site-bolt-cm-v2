@@ -1,15 +1,17 @@
+{% from '_macro/_translation.twig' import trans_ct %}
+
 {% set sub_hide = [] %}
 
 {% for slug, contenttype in app.config.get('contenttypes') %}
     {% if isallowed('contenttype:' ~ slug) %}
         {% set sub_view = {
-            icon: contenttype.icon|default(contenttype.show_in_menu ? 'files-o' : 'th-list'),
-            label: __('View %contenttypes%', {'%contenttypes%': contenttype.name}),
+            icon: contenttype.icon_many|default(contenttype.show_in_menu ? 'fa:files-o' : 'fa:th-list'),
+            label: __('contenttypes.generic.view', {'%contenttypes%': contenttype.slug}),
             link: path('overview', { 'contenttypeslug': slug })
         } %}
         {% set sub_new = {
-            icon: 'plus',
-            label: __('generic.text.new-contentype', {'%contenttype%': contenttype.singular_name}),
+            icon: 'fa:plus',
+            label: __('contenttypes.generic.new', {'%contenttype%': slug}),
             link: path('editcontent', {'contenttypeslug': slug, 'id': ''}),
             isallowed: 'contenttype:' ~ slug ~ ':create'
         } %}
@@ -22,15 +24,17 @@
             {% for record in records %}
                 {% set sub = sub|merge([
                     {
-                        icon: contenttype.icon_singular|default('file-text-o'),
-                        label: record.excerpt(80, true)|trim,
+                        icon: contenttype.icon_one|default('fa:file-text-o'),
+                        label: record.excerpt(80, true)|replace({"</b>": "&nbsp;</b>"})|trim,
                         link: path('editcontent', {'contenttypeslug': slug, 'id': record.id})
                     }
                 ]) %}
             {% endfor %}
 
+            {% set label = trans_ct(contenttype.slug, 'name.plural', contenttype.name) %}
             {% set active = (page_nav == 'Content/*' and context.contenttype.slug|default == slug) %}
-            {{ nav.submenu(contenttype.icon|default(''), contenttype.name, sub, active, true) }}
+
+            {{ nav.submenu(contenttype.icon_many|default(''), label, sub, active, true) }}
 
         {# Contenttypes, where show_in_menu is set false #}
         {% else %}
@@ -41,4 +45,5 @@
     {% endif %}
 {% endfor %}
 
-{{ nav.submenu(contenttype.icon|default('th-list'), __('Other contenttypes'), sub_hide) }}
+{# Display contenttypes, that have show_in_menu set to false in a submenu #}
+{{ nav.submenu('fa:th-list', __('Other contenttypes'), sub_hide) }}

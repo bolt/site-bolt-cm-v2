@@ -2,11 +2,14 @@
 namespace Bolt;
 
 use Bolt\Extensions\ExtensionInterface;
+use Bolt\Extensions\TwigProxy;
+use Bolt\Library as Lib;
+use Bolt\Helpers\Arr;
 use Symfony\Component\Console\Command\Command;
 use Composer\Json\JsonFile;
 use utilphp\util;
 
-abstract class BaseExtension extends \Twig_Extension implements ExtensionInterface
+abstract class BaseExtension implements ExtensionInterface
 {
     protected $app;
     protected $basepath;
@@ -14,11 +17,13 @@ abstract class BaseExtension extends \Twig_Extension implements ExtensionInterfa
     protected $functionlist;
     protected $filterlist;
     protected $snippetlist;
+    protected $twigExtension;
 
     private $extensionConfig;
     private $composerJsonLoaded;
     private $composerJson;
     private $configLoaded;
+    
 
     public function __construct(Application $app)
     {
@@ -29,7 +34,6 @@ abstract class BaseExtension extends \Twig_Extension implements ExtensionInterfa
         // Don't load config just yet. Let 'Extensions' handle this when
         // activating, just clear the "configLoaded" flag to tell the
         // lazy-loading mechanism to do its thing.
-        // $this->getConfig();
         $this->configLoaded = false;
         $this->extensionConfig = null;
         $this->composerJsonLoaded = false;
@@ -51,7 +55,8 @@ abstract class BaseExtension extends \Twig_Extension implements ExtensionInterfa
     private function setBasepath()
     {
         $reflection = new \ReflectionClass($this);
-        $this->basepath = dirname($reflection->getFileName());
+        $basepath = dirname($reflection->getFileName());
+        $this->basepath = $this->app['pathmanager']->create($basepath);
         $this->namespace = basename(dirname($reflection->getFileName()));
     }
 
@@ -270,7 +275,7 @@ abstract class BaseExtension extends \Twig_Extension implements ExtensionInterfa
 
         // Don't error on empty config files
         if (is_array($new_config)) {
-            $this->config = array_merge_recursive_distinct($this->config, $new_config);
+            $this->config = Arr::mergeRecursiveDistinct($this->config, $new_config);
         }
     }
 
@@ -304,14 +309,7 @@ abstract class BaseExtension extends \Twig_Extension implements ExtensionInterfa
     {
     }
 
-    /**
-     * Return the available Twig Functions, override for \Twig_extension::getFunctions
-     * @return array
-     */
-    public function getFunctions()
-    {
-        return $this->functionlist;
-    }
+
 
     /**
      * Add a Twig Function
@@ -322,16 +320,8 @@ abstract class BaseExtension extends \Twig_Extension implements ExtensionInterfa
      */
     public function addTwigFunction($name, $callback, $options = array())
     {
-        $this->functionlist[] = new \Twig_SimpleFunction($name, array($this, $callback), $options);
-    }
-
-    /**
-     * Return the available Twig Filters, override for \Twig_extension::getFilters
-     * @return array
-     */
-    public function getFilters()
-    {
-        return $this->filterlist;
+        $this->initializeTwig();
+        $this->twigExtension->addTwigFunction(new \Twig_SimpleFunction($name, array($this, $callback), $options));
     }
 
     /**
@@ -343,7 +333,24 @@ abstract class BaseExtension extends \Twig_Extension implements ExtensionInterfa
      */
     public function addTwigFilter($name, $callback, $options = array())
     {
-        $this->filterlist[] = new \Twig_SimpleFilter($name, array($this, $callback), $options);
+        $this->initializeTwig();
+        $this->twigExtension->addTwigFilter(new \Twig_SimpleFilter($name, array($this, $callback), $options));
+    }
+    
+    protected function initializeTwig()
+    {
+        if (!$this->twigExtension) {
+            $this->twigExtension = new TwigProxy($this->getName());
+        }
+    }
+    
+    
+    public function getTwigExtensions()
+    {
+        if ($this->twigExtension) {
+            return array($this->twigExtension);
+        }
+        return array();
     }
 
     /**
@@ -402,16 +409,17 @@ abstract class BaseExtension extends \Twig_Extension implements ExtensionInterfa
      *
      * @param string $filename
      * @param bool   $late
+     * @param int    $priority
      */
-    public function addJavascript($filename, $late = false)
+    public function addJavascript($filename, $late = false, $priority = 0)
     {
         // check if the file exists.
         if (file_exists($this->basepath . "/" . $filename)) {
             // file is located relative to the current extension.
-            $this->app['extensions']->addJavascript($this->getBaseUrl() . $filename, $late);
+            $this->app['extensions']->addJavascript($this->getBaseUrl() . $filename, $late, $priority);
         } elseif (file_exists($this->app['paths']['themepath'] . "/" . $filename)) {
             // file is located relative to the theme path.
-            $this->app['extensions']->addJavascript($this->app['paths']['theme'] . $filename, $late);
+            $this->app['extensions']->addJavascript($this->app['paths']['theme'] . $filename, $late, $priority);
         } else {
             // Nope, can't add the CSS..
             $this->app['log']->add("Couldn't add Javascript '$filename': File does not exist in '" . $this->getBaseUrl() . "'.", 2);
@@ -423,16 +431,17 @@ abstract class BaseExtension extends \Twig_Extension implements ExtensionInterfa
      *
      * @param string $filename
      * @param bool   $late
+     * @param int    $priority
      */
-    public function addCSS($filename, $late = false)
+    public function addCSS($filename, $late = false, $priority = 0)
     {
         // check if the file exists.
         if (file_exists($this->basepath . "/" . $filename)) {
             // file is located relative to the current extension.
-            $this->app['extensions']->addCss($this->getBaseUrl() . $filename, $late);
+            $this->app['extensions']->addCss($this->getBaseUrl() . $filename, $late, $priority);
         } elseif (file_exists($this->app['paths']['themepath'] . "/" . $filename)) {
             // file is located relative to the theme path.
-            $this->app['extensions']->addCss($this->app['paths']['theme'] . $filename, $late);
+            $this->app['extensions']->addCss($this->app['paths']['theme'] . $filename, $late, $priority);
         } else {
             // Nope, can't add the CSS..
             $this->app['log']->add("Couldn't add CSS '$filename': File does not exist in '" . $this->getBaseUrl() . "'.", 2);
@@ -537,7 +546,7 @@ abstract class BaseExtension extends \Twig_Extension implements ExtensionInterfa
         if ($this->app['users']->isAllowed($permission)) {
             return true;
         } else {
-            simpleredirect($this->app['config']->get('general/branding/path'));
+            Lib::simpleredirect($this->app['config']->get('general/branding/path'));
 
             return false;
         }

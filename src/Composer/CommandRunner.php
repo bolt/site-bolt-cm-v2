@@ -3,6 +3,9 @@ namespace Bolt\Composer;
 
 use Silex;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Filesystem\Exception\IOExceptionInterface;
+use Bolt\Library as Lib;
 
 class CommandRunner
 {
@@ -10,7 +13,9 @@ class CommandRunner
     public $messages = array();
     public $lastOutput;
     public $packageFile;
+    public $installer;
     public $basedir;
+    private $cachedir;
 
     public function __construct(Silex\Application $app, $packageRepo = null, $readWriteMode = false)
     {
@@ -21,10 +26,13 @@ class CommandRunner
         $this->logfile = $app['resources']->getPath('cachepath') . "/composer_log";
         $this->packageRepo = $packageRepo;
         $this->packageFile = $app['resources']->getPath('root') . '/extensions/composer.json';
+        $this->installer = $app['resources']->getPath('root') . '/extensions/installer.php';
+        $this->cachedir = $this->app['resources']->getPath('cache') . '/composer';
 
         // Set up composer
         if ($readWriteMode) {
             $this->setup();
+            $this->copyInstaller();
         }
     }
 
@@ -119,7 +127,7 @@ class CommandRunner
     {
         $json = json_decode(file_get_contents($this->packageFile));
         unset($json->require->$package);
-        file_put_contents($this->packageFile, json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        file_put_contents($this->packageFile, json_encode($json, 128 | 64)); // Used integers to avoid PHP5.3 errors
         $response = $this->execute('update --prefer-dist');
         if ($response) {
             return $package . ' successfully removed';
@@ -263,7 +271,7 @@ class CommandRunner
             $configfilepath = $paths['extensionsconfig'] . '/' . $configfilename;
             if (is_readable($configfilepath)) {
                 $configfilename = 'extensions/' . $configfilename;
-                $pack['config'] = path('fileedit', array('namespace' => 'config', 'file' => $configfilename));
+                $pack['config'] = Lib::path('fileedit', array('namespace' => 'config', 'file' => $configfilename));
             }
 
             // as a bonus we add the extension title to the pack
@@ -290,7 +298,7 @@ class CommandRunner
         }
 
         $log = "";
-        $timestamp = sprintf("<span class='timestamp'>[%s]</span> ", date("H:i:s"));
+        $timestamp = sprintf("<span class='timestamp'>[%s/%s]</span> ", $type, date("H:i:s"));
 
         if (!empty($command)) {
             $log .= sprintf("%s &gt; <span class='command'>composer %s</span>\n", $timestamp, $command);
@@ -324,7 +332,20 @@ class CommandRunner
         // Set the error reporting before initializing the wrapper, to suppress them.
         $oldErrorReporting = error_reporting(E_ERROR);
 
-        $this->wrapper = \evidev\composer\Wrapper::create();
+        // Check that our Composer cache directory exists, as the wrapper will
+        // fallback to the system temp directory, which in turn breaks systems
+        // with open_basedir() restrictions in place
+        $fs = new Filesystem();
+        if (! $fs->exists($this->cachedir)) {
+            try {
+                $fs->mkdir($this->cachedir, 0777);
+            } catch (IOExceptionInterface $e) {
+                throw new LowlevelException("Unable to create the Composer cache directory:\n" . $e->getMessage());
+            }
+        }
+
+        // Create the Composer wrapper object
+        $this->wrapper = \evidev\composer\Wrapper::create($this->cachedir);
 
         // re-set error reporting to the value it should be.
         error_reporting($oldErrorReporting);
@@ -350,19 +371,19 @@ class CommandRunner
         $json->provide = new \stdClass();
         $json->provide->$basePackage = $this->app['bolt_version'];
         $json->scripts = array(
-            'post-package-install' => "Bolt\\Composer\\ScriptHandler::extensions",
-            'post-package-update' => "Bolt\\Composer\\ScriptHandler::extensions"
+            'post-package-install' => "Bolt\\Composer\\ExtensionInstaller::handle",
+            'post-package-update' => "Bolt\\Composer\\ExtensionInstaller::handle"
         );
 
         $pathToWeb = $this->app['resources']->findRelativePath($this->app['resources']->getPath('extensions'), $this->app['resources']->getPath('web'));
         $pathToRoot = $this->app['resources']->findRelativePath($this->app['resources']->getPath('extensions'), $this->app['resources']->getPath('root'));
         $json->extra = array('bolt-web-path' => $pathToWeb);
-        $json->autoload = array('files' => array($pathToRoot . "/vendor/autoload.php"));
+        $json->autoload = array('files' => array("installer.php"));
 
 
         // Write out the file, but only if it's actually changed, and if it's writable.
-        if ($jsonfile !== json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)) {
-            file_put_contents($this->packageFile, json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        if ($jsonfile !== json_encode($json, 128 | 64)) {
+            file_put_contents($this->packageFile, json_encode($json, 128 | 64));
         }
 
         try {
@@ -375,5 +396,12 @@ class CommandRunner
             );
             $this->available = array();
         }
+    }
+
+    private function copyInstaller()
+    {
+        $class = new \ReflectionClass("Bolt\\Composer\\ExtensionInstaller");
+        $filename = $class->getFileName();
+        copy($filename, $this->installer);
     }
 }

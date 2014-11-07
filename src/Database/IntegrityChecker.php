@@ -15,6 +15,8 @@ use Doctrine\DBAL\Schema\Table;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Schema\TableDiff;
 
+use Bolt\Helpers\String;
+
 class IntegrityChecker
 {
     /**
@@ -89,7 +91,7 @@ class IntegrityChecker
                 "The file '%s' exists, but couldn't be removed. Please remove this file manually, and try again.",
                 self::getValidityTimestampFilename()
             );
-            die($message);
+            $app->abort(401, $message);
         }
     }
 
@@ -103,7 +105,11 @@ class IntegrityChecker
     public static function isValid()
     {
         // compare app/cache/dbcheck-ts vs. current timestamp
-        $validityTS = intval(@file_get_contents(self::getValidityTimestampFilename()));
+        if (is_readable(self::getValidityTimestampFilename())) {
+            $validityTS = intval(file_get_contents(self::getValidityTimestampFilename()));
+        } else {
+            $validityTS = 0;
+        }
 
         return ($validityTS >= time() - self::INTEGRITY_CHECK_INTERVAL);
     }
@@ -126,7 +132,6 @@ class IntegrityChecker
         foreach ($sm->listTables() as $table) {
             if (strpos($table->getName(), $this->prefix) === 0) {
                 $this->tables[$table->getName()] = $table;
-                // $output[] = "Found table <tt>" . $table->getName() . "</tt>.";
             }
         }
 
@@ -153,18 +158,17 @@ class IntegrityChecker
     /**
      * Check if all required tables and columns are present in the DB
      *
-     * @return array Messages with errors, if any
+     * @return boolean $hinting return hints if true
+     * @return array Messages with errors, if any or array(messages, hints)
      */
-    public function checkTablesIntegrity()
+    public function checkTablesIntegrity($hinting = false)
     {
         $messages = array();
+        $hints = array();
 
         $currentTables = $this->getTableObjects();
 
         $comparator = new Comparator();
-
-        // FIXME Unnecessary I think
-        // $baseTables = $this->getBoltTablesNames();
 
         $tables = $this->getTablesSchema();
 
@@ -179,6 +183,12 @@ class IntegrityChecker
 
                 $diff = $comparator->diffTable($currentTables[$table->getName()], $table);
                 if ($diff) {
+                    if ($hinting && count($diff->removedColumns) > 0) {
+                        $hints[] = 'In table `' . $table->getName() . '` the following fields are no ' .
+                            'longer defined in the config. You could delete them manually if no longer needed: ' .
+                            '`' . join('`, `', array_keys($diff->removedColumns)) . '`';
+                    }
+
                     $diff = $this->cleanupTableDiff($diff);
 
                     // diff may be just deleted columns which we have reset above
@@ -195,10 +205,6 @@ class IntegrityChecker
                         foreach ($diff->addedIndexes as $index) {
                             $msgParts[] = 'missing index on `' . implode(', ', $index->getUnquotedColumns()) . '`';
                         }
-                        ///** @var $fk ForeignKeyConstraint */
-                        //foreach ($diff->addedForeignKeys as $fk) {
-                        //    $msgParts[] = "missing foreign key `" . $fk->getName() . "`";
-                        //}
                         /** @var $col ColumnDiff */
                         foreach ($diff->changedColumns as $col) {
                             $msgParts[] = 'invalid column `' . $col->oldColumnName . '`';
@@ -207,19 +213,12 @@ class IntegrityChecker
                         foreach ($diff->changedIndexes as $index) {
                             $msgParts[] = 'invalid index on `' . implode(', ', $index->getUnquotedColumns()) . '`';
                         }
-                        ///** @var $fk ForeignKeyConstraint */
-                        //foreach ($diff->changedForeignKeys as $fk) {
-                        //    $msgParts[] = "invalid foreign key " . $fk->getName() . "`";
-                        //}
                         foreach ($diff->removedColumns as $colName => $val) {
                             $msgParts[] = 'removed column `' . $colName . '`';
                         }
                         foreach ($diff->removedIndexes as $indexName => $val) {
                             $msgParts[] = 'removed index `' . $indexName . '`';
                         }
-                        //foreach ($diff->removedForeignKeys as $fkName => $val) {
-                        //    $msgParts[] = "removed foreign key `" . $fkName . "`";
-                        //}
                         $msg .= implode(', ', $msgParts);
                         $messages[] = $msg;
                     }
@@ -233,7 +232,7 @@ class IntegrityChecker
             self::markValid();
         }
 
-        return $messages;
+        return $hinting ? array($messages, $hints) : $messages;
     }
 
     /**
@@ -267,8 +266,6 @@ class IntegrityChecker
 
         $comparator = new Comparator();
 
-        // FIXME Unnecessary I think
-        // $baseTables = $this->getBoltTablesNames();
         $tables = $this->getTablesSchema();
 
         /** @var $table Table */
@@ -309,21 +306,12 @@ class IntegrityChecker
      * @param  TableDiff $diff
      * @return TableDiff
      */
-    // FIXME Does it do something?
     protected function cleanupTableDiff(TableDiff $diff)
     {
         $baseTables = $this->getBoltTablesNames();
 
         if (!in_array($diff->fromTable->getName(), $baseTables)) {
             // we don't remove fields from contenttype tables to prevent accidental data removal
-            if ($diff->removedColumns) {
-                //var_dump($diff->removedColumns);
-                /** @var $column Column */
-                foreach ($diff->removedColumns as $column) {
-                    //$output[] = "<i>Field <tt>" . $column->getName() . "</tt> in <tt>" . $table->getName() . "</tt> " .
-                    //    "is no longer defined in the config, delete manually if no longer needed.</i>";
-                }
-            }
             $diff->removedColumns = array();
         }
 
@@ -514,10 +502,6 @@ class IntegrityChecker
         $cronTable = $schema->createTable($this->prefix . 'cron');
         $cronTable->addColumn("id", "integer", array('autoincrement' => true));
         $cronTable->setPrimaryKey(array("id"));
-        // Note: we're keeping the 'interval' column around for backwards compatibility. We do not use
-        // it anymore, but removing it breaks Doctrine's migration.
-        // @todo: Remove this column, without the migration choking on the reserved word 'interval'.
-        $cronTable->addColumn("interval", "string", array("length" => 16));
         $cronTable->addColumn("interim", "string", array("length" => 16));
         $cronTable->addIndex(array('interim'));
         $cronTable->addColumn("lastrun", "datetime");
@@ -645,7 +629,7 @@ class IntegrityChecker
      */
     protected function getTablename($name)
     {
-        $name = str_replace("-", "_", makeSlug($name));
+        $name = str_replace("-", "_", String::slug($name));
         $tablename = sprintf("%s%s", $this->prefix, $name);
 
         return $tablename;

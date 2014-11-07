@@ -47,6 +47,28 @@ var init = {
      * @returns {undefined}
      */
     bindEditContent: function (data) {
+
+        // set handler to validate form submit
+        $('#editcontent')
+          .attr('novalidate', 'novalidate')
+          .on('submit', function(event){
+              var valid = validateContent(this);
+              $(this).data('valid', valid);
+              if ( ! valid){
+                  event.preventDefault();
+                  return false;
+              }
+              // submitting, disable warning
+              window.onbeforeunload = null;
+        });
+
+        // basic custom validation handler
+        $('#editcontent').on('boltvalidate', function(){
+            var valid = validateContent(this);
+            $(this).data('valid', valid);
+            return valid;
+        });
+
         // Save the page.
         $('#sidebarsavebutton').bind('click', function () {
             $('#savebutton').trigger('click');
@@ -70,7 +92,15 @@ var init = {
         // Clicking the 'save & continue' button either triggers an 'ajaxy' post, or a regular post which returns
         // to this page. The latter happens if the record doesn't exist yet, so it doesn't have an id yet.
         $('#sidebarsavecontinuebutton, #savecontinuebutton').bind('click', function (e) {
+
             e.preventDefault();
+
+            // trigger form validation
+            $('#editcontent').trigger('boltvalidate');
+            // check validation
+            if ( ! $('#editcontent').data('valid')) {
+                return false;
+            }
 
             var newrecord = data.newRecord,
                 savedon = data.savedon,
@@ -101,7 +131,7 @@ var init = {
                         $('p.lastsaved').find('strong').text(moment().format('MMM D, HH:mm'));
                         $('p.lastsaved').find('time').attr('datetime', moment().format());
                         $('p.lastsaved').find('time').attr('title', moment().format());
-                        updateMoments();
+                        bolt.moments.update();
 
                         $('a#lastsavedstatus strong').html(
                             '<i class="fa fa-circle status-' + $("#statusselect option:selected").val() + '"></i> ' +
@@ -364,7 +394,7 @@ var init = {
                 paragraphItems = paragraphItems.concat('-', 'Blockquote');
             }
 
-            config.language = set.language;
+            config.language = bolt.locale.short;
             config.uiColor = '#DDDDDD';
             config.resize_enabled = true;
             config.entities = false;
@@ -477,7 +507,7 @@ var init = {
             }
 
             // Parse override settings from field in contenttypes.yml
-            custom = $('textarea[name=' + this.name + ']').data('ckconfig');
+            custom = $('textarea[name=' + this.name + ']').data('field-options');
             for (key in custom) {
                 if (custom.hasOwnProperty(key)) {
                     config[key] = custom[key];
@@ -592,9 +622,26 @@ var init = {
      * @returns {undefined}
      */
     dateTimePickers: function () {
-        $(".datepicker").datepicker({
-            dateFormat: "DD, d MM yy"
+
+        $(".datepicker").each(function(){
+
+            var options = {};
+
+            // Parse override settings from field in contenttypes.yml
+            var custom = $(this).data('field-options');
+            for (key in custom) {
+                if (custom.hasOwnProperty(key)) {
+                    options[key] = custom[key];
+                }
+            }
+
+            // Reset dateFormat to Bolt internal date format
+            options.dateFormat = "DD, d MM yy";
+
+            $(this).datepicker( options );
         });
+
+
     },
 
     /*
@@ -764,15 +811,17 @@ var init = {
     },
 
     /*
-     * Initialize 'moment' timestamps.
+     * Initialize current status display setting focus on status select
      *
      * @returns {undefined}
      */
-    momentTimestamps: function () {
-        if ($('.moment').is('*')) {
-            updateMoments();
-        }
-    },
+    focusStatusSelect: function () {
+        $('#lastsavedstatus').click(function (e) {
+            e.preventDefault();
+            $('a[data-filter="meta"]').click();
+            $('#statusselect').focus();
+        });
+     },
 
     /*
      * Omnisearch
@@ -936,6 +985,6 @@ var init = {
                 });
             }
         });
-    }
+    },
 
 };

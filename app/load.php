@@ -17,7 +17,8 @@
  */
 if (version_compare(PHP_VERSION, '5.3.3', '<')) {
     require __DIR__ . '/legacy.php';
-    exit;
+
+    return false;
 }
 
 /**
@@ -35,4 +36,5 @@ if ('cli-server' == php_sapi_name()) {
 /**
  * Bring in the second stage loader.
  */
+
 return require_once __DIR__ . '/bootstrap.php';

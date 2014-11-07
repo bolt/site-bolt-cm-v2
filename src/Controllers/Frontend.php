@@ -5,19 +5,29 @@ namespace Bolt\Controllers;
 use Silex;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Bolt\Library as Lib;
+use Bolt\Helpers\String;
+use Bolt\Helpers\Input;
+use Bolt\Translation\Translator as Trans;
 use Bolt\Pager;
 
 /**
  * Standard Frontend actions
  *
- * Strictly speaking this is no longer a controller, but logically
- * it still is.
+ * This file acts as a grouping for the default front-end controllers.
+ *
+ * For overriding the default behavior here, please reference
+ * http://docs.bolt.cm/templates-routes#routing or the routing.yml
+ * file in your configuration.
  */
 class Frontend
 {
     /**
      * Perform contenttype-based permission check, aborting with a 403
      * Forbidden as appropriate.
+     *
+     * @param Silex\Application    $app     The application/container
+     * @param \Bolt\Content|string $content The content to check
      */
     private static function checkFrontendPermission(Silex\Application $app, $content)
     {
@@ -35,6 +45,15 @@ class Frontend
         }
     }
 
+    /**
+     * The default before filter for the controllers in this file.
+     *
+     * Refer to the routing.yml config file for overridding.
+     *
+     * @param Request           $request The Symfony Request
+     * @param \Bolt\Application $app     The appliction/container
+     * @return mixed
+     */
     public static function before(Request $request, \Bolt\Application $app)
     {
         // Start the 'stopwatch' for the profiler.
@@ -44,9 +63,9 @@ class Frontend
         // the DB, and let's add a new user.
         if (!$app['users']->getUsers()) {
             //!$app['storage']->getIntegrityChecker()->checkUserTableIntegrity() ||
-            $app['session']->getFlashBag()->set('info', __('There are no users in the database. Please create the first user.'));
+            $app['session']->getFlashBag()->set('info', Trans::__('There are no users in the database. Please create the first user.'));
 
-            return redirect('useredit', array('id' => ''));
+            return Lib::redirect('useredit', array('id' => ''));
         }
 
         $app['debugbar'] = true;
@@ -69,6 +88,9 @@ class Frontend
 
     /**
      * Controller for the "Homepage" route. Usually the front page of the website.
+     *
+     * @param Silex\Application $app The application/container
+     * @return mixed
      */
     public static function homepage(Silex\Application $app)
     {
@@ -94,13 +116,18 @@ class Frontend
     }
 
     /**
-     * Controller for a single record page, like '/page/about/' or '/entry/lorum'
+     * Controller for a single record page, like '/page/about/' or '/entry/lorum'.
+     *
+     * @param Silex\Application $app             The application/container
+     * @param string            $contenttypeslug The content type slug
+     * @param string            $slug            The content slug
+     * @return mixed
      */
     public static function record(Silex\Application $app, $contenttypeslug, $slug)
     {
         $contenttype = $app['storage']->getContentType($contenttypeslug);
 
-        $slug = makeSlug($slug, -1);
+        $slug = String::slug($slug, -1);
 
         // First, try to get it by slug.
         $content = $app['storage']->getContent($contenttype['slug'], array('slug' => $slug, 'returnsingle' => true));
@@ -117,7 +144,7 @@ class Frontend
             // There's one special edge-case we check for: if the request is for the backend, without trailing
             // slash and it is intercepted by custom routing, we forward the client to that location.
             if ($slug == trim($app['config']->get('general/branding/path'), '/')) {
-                simpleredirect($app['config']->get('general/branding/path') . '/');
+                Lib::simpleredirect($app['config']->get('general/branding/path') . '/');
             }
             $app->abort(404, "Page $contenttypeslug/$slug not found.");
         }
@@ -141,7 +168,7 @@ class Frontend
         // Setting the canonical path and the editlink.
         $app['canonicalpath'] = $content->link();
         $app['paths'] = $app['resources']->getPaths();
-        $app['editlink'] = path('editcontent', array('contenttypeslug' => $contenttype['slug'], 'id' => $content->id));
+        $app['editlink'] = Lib::path('editcontent', array('contenttypeslug' => $contenttype['slug'], 'id' => $content->id));
         $app['edittitle'] = $content->getTitle();
 
         // Make sure we can also access it as {{ page.title }} for pages, etc. We set these in the global scope,
@@ -153,6 +180,14 @@ class Frontend
         return $app['render']->render($template);
     }
 
+    /**
+     * The controller for previewing a content from posted data.
+     *
+     * @param Request           $request         The Symfony Request
+     * @param Silex\Application $app             The application/container
+     * @param string            $contenttypeslug The content type slug
+     * @return mixed
+     */
     public static function preview(Request $request, Silex\Application $app, $contenttypeslug)
     {
         $contenttype = $app['storage']->getContentType($contenttypeslug);
@@ -187,6 +222,13 @@ class Frontend
         return $app['render']->render($template);
     }
 
+    /**
+     * The listing page controller.
+     *
+     * @param Silex\Application $app             The application/container
+     * @param string            $contenttypeslug The content type slug
+     * @return mixed
+     */
     public static function listing(Silex\Application $app, $contenttypeslug)
     {
         $contenttype = $app['storage']->getContentType($contenttypeslug);
@@ -224,6 +266,14 @@ class Frontend
         return $app['render']->render($template);
     }
 
+    /**
+     * The taxonomy listing page controller.
+     *
+     * @param Silex\Application $app          The application/container
+     * @param string            $taxonomytype The taxonomy type slug
+     * @param string            $slug         The taxonomy slug
+     * @return mixed
+     */
     public static function taxonomy(Silex\Application $app, $taxonomytype, $slug)
     {
         // First, get some content
@@ -286,6 +336,13 @@ class Frontend
         return $app['render']->render($template);
     }
 
+    /**
+     * The search result page controller.
+     *
+     * @param Request           $request The Symfony Request
+     * @param Silex\Application $app     The application/container
+     * @return mixed
+     */
     public static function search(Request $request, Silex\Application $app)
     {
         $q = '';
@@ -296,7 +353,7 @@ class Frontend
         } elseif ($request->query->has($context)) {
             $q = $request->get($context);
         }
-        $q = cleanPostedData($q, false);
+        $q = Input::cleanPostedData($q, false);
 
         $param = Pager::makeParameterId($context);
         /* @var $query \Symfony\Component\HttpFoundation\ParameterBag */
@@ -356,6 +413,11 @@ class Frontend
     /**
      * Renders the specified template from the current theme in response to a request without
      * loading any content.
+     *
+     * @param Silex\Application $app      The application/container
+     * @param string            $template The template name
+     * @return mixed
+     * @throws \Exception
      */
     public static function template(Silex\Application $app, $template)
     {

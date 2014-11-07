@@ -11,11 +11,24 @@ use Symfony\Component\Form\FormEvent;
 use Symfony\Component\Form\FormEvents;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Yaml\Yaml;
+use Bolt\Library as Lib;
+use Bolt\Helpers\Input;
+use Bolt\Translation\Translator as Trans;
 use Bolt\Permissions;
-use Bolt\TranslationFile;
+use Bolt\Translation\TranslationFile;
 
+/**
+ * Backend controller grouping.
+ *
+ * This implements the Silex\ControllerProviderInterface to connect the controller
+ * methods here to whatever back-end route prefix was chosen in your config. This
+ * will usually be "/bolt".
+ */
 class Backend implements ControllerProviderInterface
 {
+    /**
+     * {@inheritdoc}
+     */
     public function connect(Silex\Application $app)
     {
         /** @var $ctl \Silex\ControllerCollection */
@@ -167,6 +180,9 @@ class Backend implements ControllerProviderInterface
 
     /**
      * Dashboard or "root".
+     *
+     * @param \Bolt\Application $app The application/container
+     * @return mixed
      */
     public function dashboard(\Bolt\Application $app)
     {
@@ -192,6 +208,12 @@ class Backend implements ControllerProviderInterface
         return $app['render']->render('dashboard/dashboard.twig', array('context' => $context));
     }
 
+    /**
+     * Handle a login attempt.
+     *
+     * @param Silex\Application $app     The application/container
+     * @param Request           $request The Symfony Request
+     */
     public function postLogin(Silex\Application $app, Request $request)
     {
         switch ($request->get('action')) {
@@ -204,7 +226,7 @@ class Backend implements ControllerProviderInterface
                     $retreat = $app['session']->get('retreat');
                     $redirect = !empty($retreat) && is_array($retreat) ? $retreat : array('route' => 'dashboard', 'params' => array());
 
-                    return redirect($redirect['route'], $redirect['params']);
+                    return Lib::redirect($redirect['route'], $redirect['params']);
                 }
 
                 return $this->getLogin($app, $request);
@@ -213,11 +235,11 @@ class Backend implements ControllerProviderInterface
                 // Send a password request mail, if username exists.
                 $username = trim($request->get('username'));
                 if (empty($username)) {
-                    $app['users']->session->getFlashBag()->set('error', __('Please provide a username', array()));
+                    $app['users']->session->getFlashBag()->set('error', Trans::__('Please provide a username', array()));
                 } else {
                     $app['users']->resetPasswordRequest($request->get('username'));
 
-                    return redirect('login');
+                    return Lib::redirect('login');
                 }
 
                 return $this->getLogin($app, $request);
@@ -230,11 +252,15 @@ class Backend implements ControllerProviderInterface
 
     /**
      * Login page and "Forgotten password" page.
+     *
+     * @param Silex\Application $app     The application/container
+     * @param Request           $request The Symfony Request
+     * @return string
      */
     public function getLogin(Silex\Application $app, Request $request)
     {
         if (!empty($app['users']->currentuser) && $app['users']->currentuser['enabled'] == 1) {
-            return redirect('dashboard', array());
+            return Lib::redirect('dashboard', array());
         }
 
         $context = array(
@@ -246,6 +272,9 @@ class Backend implements ControllerProviderInterface
 
     /**
      * Logout page.
+     *
+     * @param Silex\Application $app The application/container
+     * @return string
      */
     public function logout(Silex\Application $app)
     {
@@ -253,39 +282,48 @@ class Backend implements ControllerProviderInterface
 
         $app['users']->logout();
 
-        return redirect('login');
+        return Lib::redirect('login');
     }
 
     /**
      * Reset the password. This controller is normally only reached when the user
      * clicks a "password reset" link in the email.
      *
-     * @param  Silex\Application $app
-     * @param  Request           $request
+     * @param Silex\Application $app     The application/container
+     * @param Request           $request The Symfony Request
      * @return string
      */
     public function resetPassword(Silex\Application $app, Request $request)
     {
         $app['users']->resetPasswordConfirm($request->get('token'));
 
-        return redirect('login');
+        return Lib::redirect('login');
     }
 
     /**
-     * Check the database for missing tables and columns. Does not do actual repairs
+     * Check the database for missing tables and columns. Does not do actual repairs.
+     *
+     * @param \Bolt\Application $app The application/container
+     * @return mixed
      */
     public function dbCheck(\Bolt\Application $app)
     {
+        list($messages, $hints) = $app['integritychecker']->checkTablesIntegrity(true);
+
         $context = array(
             'modifications_made' => null,
-            'modifications_required' => $app['integritychecker']->checkTablesIntegrity(),
+            'modifications_required' => $messages,
+            'modifications_hints' => $hints,
         );
 
         return $app['render']->render('dbcheck/dbcheck.twig', array('context' => $context));
     }
 
     /**
-     * Check the database, create tables, add missing/new columns to tables
+     * Check the database, create tables, add missing/new columns to tables.
+     *
+     * @param Silex\Application $app The application/container
+     * @return string
      */
     public function dbUpdate(Silex\Application $app)
     {
@@ -296,18 +334,25 @@ class Backend implements ControllerProviderInterface
         $return = $app['request']->query->get('return');
         if ($return == 'edit') {
             if (empty($output)) {
-                $content = __('Your database is already up to date.');
+                $content = Trans::__('Your database is already up to date.');
             } else {
-                $content = __('Your database is now up to date.');
+                $content = Trans::__('Your database is now up to date.');
             }
             $app['session']->getFlashBag()->set('success', $content);
 
-            return redirect('fileedit', array('file' => 'app/config/contenttypes.yml'));
+            return Lib::redirect('fileedit', array('file' => 'app/config/contenttypes.yml'));
         } else {
-            return redirect('dbupdate_result', array('messages' => json_encode($output)));
+            return Lib::redirect('dbupdate_result', array('messages' => json_encode($output)));
         }
     }
 
+    /**
+     * Show the result of database updates.
+     *
+     * @param Silex\Application $app     The application/container
+     * @param Request           $request The Symfony Request
+     * @return mixed
+     */
     public function dbUpdateResult(Silex\Application $app, Request $request)
     {
         $context = array(
@@ -320,15 +365,18 @@ class Backend implements ControllerProviderInterface
 
     /**
      * Clear the cache.
+     *
+     * @param Silex\Application $app The application/container
+     * @return mixed
      */
     public function clearCache(Silex\Application $app)
     {
         $result = $app['cache']->clearCache();
 
-        $output = __("Deleted %s files from cache.", array('%s' => $result['successfiles']));
+        $output = Trans::__('Deleted %s files from cache.', array('%s' => $result['successfiles']));
 
         if (!empty($result['failedfiles'])) {
-            $output .= " " . __("%s files could not be deleted. You should delete them manually.", array('%s' => $result['failedfiles']));
+            $output .= ' ' . Trans::__('%s files could not be deleted. You should delete them manually.', array('%s' => $result['failedfiles']));
             $app['session']->getFlashBag()->set('error', $output);
         } else {
             $app['session']->getFlashBag()->set('success', $output);
@@ -339,6 +387,9 @@ class Backend implements ControllerProviderInterface
 
     /**
      * Show the activity-log.
+     *
+     * @param Silex\Application $app The application/container
+     * @return string
      */
     public function activityLog(Silex\Application $app)
     {
@@ -346,14 +397,14 @@ class Backend implements ControllerProviderInterface
 
         if ($action == 'clear') {
             $app['log']->clear();
-            $app['session']->getFlashBag()->set('success', __('The activitylog has been cleared.'));
+            $app['session']->getFlashBag()->set('success', Trans::__('The activitylog has been cleared.'));
 
-            return redirect('activitylog');
+            return Lib::redirect('activitylog');
         } elseif ($action == 'trim') {
             $app['log']->trim();
-            $app['session']->getFlashBag()->set('success', __('The activitylog has been trimmed.'));
+            $app['session']->getFlashBag()->set('success', Trans::__('The activitylog has been trimmed.'));
 
-            return redirect('activitylog');
+            return Lib::redirect('activitylog');
         }
 
         $activity = $app['log']->getActivity(16);
@@ -367,6 +418,9 @@ class Backend implements ControllerProviderInterface
 
     /**
      * Show the Omnisearch results.
+     *
+     * @param Silex\Application $app The application/container
+     * @return mixed
      */
     public function omnisearch(Silex\Application $app)
     {
@@ -387,12 +441,18 @@ class Backend implements ControllerProviderInterface
 
     /**
      * Generate some lipsum in the DB.
+     *
+     * @param Silex\Application $app     The application/container
+     * @param Request           $request The Symfony Request
+     * @return string
      */
     public function prefill(Silex\Application $app, Request $request)
     {
         $choices = array();
         foreach ($app['config']->get('contenttypes') as $key => $cttype) {
-            $choices[$key] = __('%contenttypes%', array('%contenttypes%' => $cttype['name']));
+            $namekey = 'contenttypes.' . $key . '.name.plural';
+            $name = $app['translator']->trans($namekey, array(), 'contenttypes');
+            $choices[$key] = ($name == $namekey) ? $cttype['name'] : $name;
         }
         $form = $app['form.factory']
             ->createBuilder('form')
@@ -409,7 +469,7 @@ class Backend implements ControllerProviderInterface
             $content = $app['storage']->preFill($ctypes);
             $app['session']->getFlashBag()->set('success', $content);
 
-            return redirect('prefill');
+            return Lib::redirect('prefill');
         }
 
         $context = array(
@@ -421,21 +481,30 @@ class Backend implements ControllerProviderInterface
     }
 
     /**
-     * Check the database, create tables, add missing/new columns to tables
+     * Content type overview page.
+     *
+     * @param Silex\Application $app             The application/container
+     * @param string            $contenttypeslug The content type slug
+     * @return mixed
      */
     public function overview(Silex\Application $app, $contenttypeslug)
     {
         // Make sure the user is allowed to see this page, based on 'allowed contenttypes'
         // for Editors.
         if (!$app['users']->isAllowed('contenttype:' . $contenttypeslug)) {
-            $app['session']->getFlashBag()->set('error', __('You do not have the right privileges to view that page.'));
+            $app['session']->getFlashBag()->set('error', Trans::__('You do not have the right privileges to view that page.'));
 
-            return redirect('dashboard');
+            return Lib::redirect('dashboard');
         }
 
         $contenttype = $app['storage']->getContentType($contenttypeslug);
 
-        $order = $app['request']->query->get('order', false);
+        // Order has to be set carefully. Either set it explicitly when the user
+        // sorts, or fall back to what's defined in the contenttype. The exception
+        // is a contenttype that has a "grouping taxonomy", because that should
+        // override it. The exception is handled in $app['storage']->getContent().
+        $order = $app['request']->query->get('order', $contenttype['sort']);
+
         $page = $app['request']->query->get('page');
         $filter = $app['request']->query->get('filter');
 
@@ -451,9 +520,6 @@ class Backend implements ControllerProviderInterface
             array('limit' => $limit, 'order' => $order, 'page' => $page, 'filter' => $filter, 'paging' => true, 'hydrate' => true)
         );
 
-        // @todo Do we need pager here?
-        //$app['pager'] = $pager; // $pager is not defined, so no
-
         $context = array(
             'contenttype' => $contenttype,
             'multiplecontent' => $multiplecontent,
@@ -463,15 +529,21 @@ class Backend implements ControllerProviderInterface
     }
 
     /**
-     * Get related Entries @todo
+     * Get related records @todo
+     *
+     * @param string            $contenttypeslug The content type slug
+     * @param integer           $id              The ID
+     * @param Silex\Application $app             The application/container
+     * @param Request           $request         The Symfony Request
+     * @return mixed
      */
     public function relatedTo($contenttypeslug, $id, Silex\Application $app, Request $request)
     {
         // Make sure the user is allowed to see this page, based on 'allowed contenttypes' for Editors.
         if (!$app['users']->isAllowed('contenttype:' . $contenttypeslug)) {
-            $app['session']->getFlashBag()->set('error', __('You do not have the right privileges to edit that record.'));
+            $app['session']->getFlashBag()->set('error', Trans::__('You do not have the right privileges to edit that record.'));
 
-            return redirect('dashboard');
+            return Lib::redirect('dashboard');
         }
 
         $show_contenttype = null;
@@ -497,7 +569,7 @@ class Backend implements ControllerProviderInterface
                     $show_contenttype = $relatedtype;
                 }
                 $relations[$relatedslug] = array(
-                    'name' => __($relatedtype['name']),
+                    'name' => Trans::__($relatedtype['name']),
                     'active' => ($relatedtype['slug'] == $show_slug),
                 );
             }
@@ -505,19 +577,21 @@ class Backend implements ControllerProviderInterface
             $relations = null;
         }
 
-        // TODO: Set the amount of items to show per page.
-        //if (empty($contenttype['recordsperpage'])) {
-        //    $limit = $app['config']->get('general/recordsperpage');
-        //} else {
-        //    $limit = $contenttype['recordsperpage'];
-        //}
+        /**
+         * TODO: Set the amount of items to show per page.
+         * if (empty($contenttype['recordsperpage'])) {
+         *     $limit = $app['config']->get('general/recordsperpage');
+         * } else {
+         *    $limit = $contenttype['recordsperpage'];
+         * }
+         */
 
         $content = $app['storage']->getContent($contenttypeslug, array('id' => $id));
         $related_content = $content->related($show_contenttype['slug']);
 
         $context = array(
             'id' => $id,
-            'name' => __($contenttype['singular_name']),
+            'name' => Trans::__($contenttype['singular_name']),
             'title' => $content['title'],
             'contenttype' => $contenttype,
             'relations' => $relations,
@@ -528,6 +602,15 @@ class Backend implements ControllerProviderInterface
         return $app['twig']->render('relatedto/relatedto.twig', array('context' => $context));
     }
 
+    /**
+     * Show changelog entries.
+     *
+     * @param string            $contenttype The content type slug
+     * @param integer           $contentid   The content ID
+     * @param Silex\Application $app         The application/container
+     * @param Request           $request     The Symfony Request
+     * @return mixed
+     */
     public function changelogList($contenttype, $contentid, Silex\Application $app, Request $request)
     {
         // We have to handle three cases here:
@@ -566,10 +649,10 @@ class Backend implements ControllerProviderInterface
         if (empty($contenttype)) {
             // Case 1: No content type given, show from *all* items.
             // This is easy:
-            $title = __('All content types');
+            $title = Trans::__('All content types');
             $logEntries = $app['storage']->getChangelog($options);
             // @todo: Unused in template. Leave it in for now
-            //$itemcount = $app['storage']->countChangelog($options);
+            $itemcount = $app['storage']->countChangelog($options);
         } else {
             // We have a content type, and possibly a contentid.
             $contenttypeObj = $app['storage']->getContentType($contenttype);
@@ -580,7 +663,7 @@ class Backend implements ControllerProviderInterface
             // Getting a slice of data and the total count
             $logEntries = $app['storage']->getChangelogByContentType($contenttype, $options);
             // @todo: Unused in template. Leave it in for now
-            //$itemcount = $app['storage']->countChangelogByContentType($contenttype, $options);
+            $itemcount = $app['storage']->countChangelogByContentType($contenttype, $options);
 
             // The page title we're sending to the template depends on a few
             // things: if no contentid is given, we'll use the plural form
@@ -613,7 +696,6 @@ class Backend implements ControllerProviderInterface
         // now.
         // Note that if either $limit or $pagecount is empty, the template will
         // skip rendering the pager.
-        // FIXME $itemcount is currently undefined so causes error
         $pagecount = $limit ? ceil($itemcount / $limit) : null;
 
         $context = array(
@@ -622,24 +704,31 @@ class Backend implements ControllerProviderInterface
             'content' => $content,
             'title' => $title,
             'currentpage' => $page,
-            'pagecount' => $pagecount,
-            //'itemcount' => $itemcount,
+            'pagecount' => $pagecount
         );
 
         return $app['render']->render('changeloglist/changeloglist.twig', array('context' => $context));
     }
 
+    /**
+     * Show changelog details.
+     *
+     * @param string            $contenttype The content type slug
+     * @param integer           $contentid   The content ID
+     * @param integer           $id          The changelog entry ID
+     * @param Silex\Application $app         The application/container
+     * @param Request           $request     The Symfony Request
+     * @return mixed
+     */
     public function changelogDetails($contenttype, $contentid, $id, Silex\Application $app, Request $request)
     {
         $entry = $app['storage']->getChangelogEntry($contenttype, $contentid, $id);
         if (empty($entry)) {
-            $error = __("The requested changelog entry doesn't exist.");
+            $error = Trans::__("The requested changelog entry doesn't exist.");
             $app->abort(404, $error);
         }
         $prev = $app['storage']->getPrevChangelogEntry($contenttype, $contentid, $id);
         $next = $app['storage']->getNextChangelogEntry($contenttype, $contentid, $id);
-        // @todo: Unused in template. Leave it in for now
-        //$content = $app['storage']->getContent($contenttype, array('id' => $contentid));
 
         $context = array(
             'contenttype' => array('slug' => $contenttype),
@@ -654,6 +743,12 @@ class Backend implements ControllerProviderInterface
 
     /**
      * Edit a unit of content, or create a new one.
+     *
+     * @param string            $contenttypeslug The content type slug
+     * @param integer           $id              The content ID
+     * @param Silex\Application $app             The application/container
+     * @param Request           $request         The Symfony Request
+     * @return mixed
      */
     public function editContent($contenttypeslug, $id, Silex\Application $app, Request $request)
     {
@@ -667,13 +762,19 @@ class Backend implements ControllerProviderInterface
             $new = false;
         }
         if (!$app['users']->isAllowed($perm)) {
-            $app['session']->getFlashBag()->set('error', __('You do not have the right privileges to edit that record.'));
+            $app['session']->getFlashBag()->set('error', Trans::__('You do not have the right privileges to edit that record.'));
 
-            return redirect('dashboard');
+            return Lib::redirect('dashboard');
         }
 
         // set the editreferrer in twig if it was not set yet.
-        $tmpreferrer = getReferrer($app['request']);
+        $tmp = parse_url($app['request']->server->get('HTTP_REFERER'));
+
+        $tmpreferrer = $tmp['path'];
+        if (!empty($tmp['query'])) {
+            $tmpreferrer .= "?" . $tmp['query'];
+        }
+
         if (strpos($tmpreferrer, '/overview/') !== false || ($tmpreferrer == $app['paths']['bolt'])) {
             $app['twig']->addGlobal('editreferrer', $tmpreferrer);
         }
@@ -682,21 +783,21 @@ class Backend implements ControllerProviderInterface
 
         if ($request->getMethod() == "POST") {
             if (!$app['users']->checkAntiCSRFToken()) {
-                $app->abort(400, __("Something went wrong"));
+                $app->abort(400, Trans::__('Something went wrong'));
             }
             if (!empty($id)) {
                 // Check if we're allowed to edit this content..
                 if (!$app['users']->isAllowed("contenttype:{$contenttype['slug']}:edit:$id")) {
-                    $app['session']->getFlashBag()->set('error', __('You do not have the right privileges to edit that record.'));
+                    $app['session']->getFlashBag()->set('error', Trans::__('You do not have the right privileges to edit that record.'));
 
-                    return redirect('dashboard');
+                    return Lib::redirect('dashboard');
                 }
             } else {
                 // Check if we're allowed to create content..
                 if (!$app['users']->isAllowed("contenttype:{$contenttype['slug']}:create")) {
-                    $app['session']->getFlashBag()->set('error', __('You do not have the right privileges to create a new record.'));
+                    $app['session']->getFlashBag()->set('error', Trans::__('You do not have the right privileges to create a new record.'));
 
-                    return redirect('dashboard');
+                    return Lib::redirect('dashboard');
                 }
             }
 
@@ -718,7 +819,7 @@ class Backend implements ControllerProviderInterface
                 if (!isset($request_all[$key])) {
                     switch ($values['type']) {
                         case 'select':
-                            if (isset($values['multiple']) and $values['multiple'] == true) {
+                            if (isset($values['multiple']) && $values['multiple'] == true) {
                                 $request_all[$key] = array();
                             }
                             break;
@@ -739,7 +840,7 @@ class Backend implements ControllerProviderInterface
             if (!empty($content['id']) && $id != $content['id']) {
                 $app['session']->getFlashBag()->set('error', "Don't try to spoof the id!");
 
-                return redirect('dashboard');
+                return Lib::redirect('dashboard');
             }
 
             // Save the record, and return to the overview screen, or to the record (if we clicked 'save and continue')
@@ -755,9 +856,9 @@ class Backend implements ControllerProviderInterface
                 $app['log']->add($content->getTitle(), 3, $content, 'save content');
 
                 if ($new) {
-                    $app['session']->getFlashBag()->set('success', __('The new %contenttype% has been saved.', array('%contenttype%' => $contenttype['singular_name'])));
+                    $app['session']->getFlashBag()->set('success', Trans::__('contenttypes.generic.saved-new', array('%contenttype%' => $contenttypeslug)));
                 } else {
-                    $app['session']->getFlashBag()->set('success', __('The changes to this %contenttype% have been saved.', array('%contenttype%' => $contenttype['singular_name'])));
+                    $app['session']->getFlashBag()->set('success', Trans::__('contenttypes.generic.saved-changes', array('%contenttype%' => $contenttype['slug'])));
                 }
 
                 /*
@@ -769,9 +870,9 @@ class Backend implements ControllerProviderInterface
                     $returnto = $app['request']->get('returnto');
 
                     if ($returnto == "new") {
-                        return redirect('editcontent', array('contenttypeslug' => $contenttype['slug'], 'id' => $id), '#' . $app['request']->get('returnto'));
+                        return Lib::redirect('editcontent', array('contenttypeslug' => $contenttype['slug'], 'id' => $id), '#' . $app['request']->get('returnto'));
                     } elseif ($returnto == "saveandnew") {
-                        return redirect('editcontent', array('contenttypeslug' => $contenttype['slug'], 'id' => 0), '#' . $app['request']->get('returnto'));
+                        return Lib::redirect('editcontent', array('contenttypeslug' => $contenttype['slug'], 'id' => 0), '#' . $app['request']->get('returnto'));
                     } elseif ($returnto == "ajax") {
                         /*
                          * Flush any buffers from saveConent() dispatcher hooks
@@ -802,6 +903,9 @@ class Backend implements ControllerProviderInterface
                             }
                         }
 
+                        // unset flashbag for ajax
+                        $app['session']->getFlashBag()->clear('success');
+
                         return new JsonResponse($val);
                     }
                 }
@@ -810,13 +914,13 @@ class Backend implements ControllerProviderInterface
                 // check if a pager was set in the referrer - if yes go back there
                 $editreferrer = $app['request']->get('editreferrer');
                 if ($editreferrer) {
-                    simpleredirect($editreferrer);
+                    Lib::simpleredirect($editreferrer);
                 } else {
-                    return redirect('overview', array('contenttypeslug' => $contenttype['slug']));
+                    return Lib::redirect('overview', array('contenttypeslug' => $contenttype['slug']));
                 }
 
             } else {
-                $app['session']->getFlashBag()->set('error', __('There was an error saving this %contenttype%.', array('%contenttype%' => $contenttype['singular_name'])));
+                $app['session']->getFlashBag()->set('error', Trans::__('contenttypes.generic.error-saving', array('%contenttype%' => $contenttype['slug'])));
                 $app['log']->add("Save content error", 3, $content, 'error');
             }
         }
@@ -826,22 +930,22 @@ class Backend implements ControllerProviderInterface
             $content = $app['storage']->getContent($contenttype['slug'], array('id' => $id));
 
             if (empty($content)) {
-                $app->abort(404, __('The %contenttype% you were looking for does not exist. It was probably deleted, or it never existed.', array('%contenttype%' => $contenttype['singular_name'])));
+                $app->abort(404, Trans::__('contenttypes.generic.not-existing', array('%contenttype%' => $contenttype['slug'])));
             }
 
             // Check if we're allowed to edit this content..
             if (!$app['users']->isAllowed("contenttype:{$contenttype['slug']}:edit:{$content['id']}")) {
-                $app['session']->getFlashBag()->set('error', __('You do not have the right privileges to edit that record.'));
+                $app['session']->getFlashBag()->set('error', Trans::__('You do not have the right privileges to edit that record.'));
 
-                return redirect('dashboard');
+                return Lib::redirect('dashboard');
             }
             $app['log']->add("Edit content", 1, $content, 'edit');
         } else {
             // Check if we're allowed to create content..
             if (!$app['users']->isAllowed("contenttype:{$contenttype['slug']}:create")) {
-                $app['session']->getFlashBag()->set('error', __('You do not have the right privileges to create a new record.'));
+                $app['session']->getFlashBag()->set('error', Trans::__('You do not have the right privileges to create a new record.'));
 
-                return redirect('dashboard');
+                return Lib::redirect('dashboard');
             }
 
             $content = $app['storage']->getEmptyContent($contenttype['slug']);
@@ -867,7 +971,7 @@ class Backend implements ControllerProviderInterface
             $content->setValue('datechanged', "");
             $content->setValue('username', "");
             $content->setValue('ownerid', "");
-            $app['session']->getFlashBag()->set('info', __("Content was duplicated. Click 'Save %contenttype%' to finalize.", array('%contenttype%' => $contenttype['singular_name'])));
+            $app['session']->getFlashBag()->set('info', Trans::__('contenttypes.generic.duplicated-finalize', array('%contenttype%' => $contenttype['slug'])));
         }
 
         // Set the users and the current owner of this content.
@@ -892,6 +996,11 @@ class Backend implements ControllerProviderInterface
 
     /**
      * Deletes a content item.
+     *
+     * @param Silex\Application $app             The application/container
+     * @param string            $contenttypeslug The content type slug
+     * @param integer           $id              The content ID
+     * @return string
      */
     public function deleteContent(Silex\Application $app, $contenttypeslug, $id)
     {
@@ -901,18 +1010,24 @@ class Backend implements ControllerProviderInterface
         $title = $content->getTitle();
 
         if (!$app['users']->isAllowed("contenttype:{$contenttype['slug']}:delete:$id")) {
-            $app['session']->getFlashBag()->set('error', __("Permission denied", array()));
+            $app['session']->getFlashBag()->set('error', Trans::__('Permission denied', array()));
         } elseif ($app['users']->checkAntiCSRFToken() && $app['storage']->deleteContent($contenttype['slug'], $id)) {
-            $app['session']->getFlashBag()->set('info', __("Content '%title%' has been deleted.", array('%title%' => $title)));
+            $app['session']->getFlashBag()->set('info', Trans::__("Content '%title%' has been deleted.", array('%title%' => $title)));
         } else {
-            $app['session']->getFlashBag()->set('info', __("Content '%title%' could not be deleted.", array('%title%' => $title)));
+            $app['session']->getFlashBag()->set('info', Trans::__("Content '%title%' could not be deleted.", array('%title%' => $title)));
         }
 
-        return redirect('overview', array('contenttypeslug' => $contenttype['slug']));
+        return Lib::redirect('overview', array('contenttypeslug' => $contenttype['slug']));
     }
 
     /**
      * Perform actions on content.
+     *
+     * @param Silex\Application $app             The application/container
+     * @param string            $action          The action
+     * @param string            $contenttypeslug The content type slug
+     * @param integer           $id              The content ID
+     * @return string
      */
     public function contentAction(Silex\Application $app, $action, $contenttypeslug, $id)
     {
@@ -931,31 +1046,34 @@ class Backend implements ControllerProviderInterface
             'draft' => 'draft',
         );
         if (!isset($actionStatuses[$action])) {
-            $app['session']->getFlashBag()->set('error', __('No such action for content.'));
+            $app['session']->getFlashBag()->set('error', Trans::__('No such action for content.'));
 
-            return redirect('overview', array('contenttypeslug' => $contenttype['slug']));
+            return Lib::redirect('overview', array('contenttypeslug' => $contenttype['slug']));
         }
         $newStatus = $actionStatuses[$action];
 
         if (!$app['users']->isAllowed("contenttype:{$contenttype['slug']}:edit:$id") ||
             !$app['users']->isContentStatusTransitionAllowed($content['status'], $newStatus, $contenttype['slug'], $id)) {
-            $app['session']->getFlashBag()->set('error', __('You do not have the right privileges to edit that record.'));
+            $app['session']->getFlashBag()->set('error', Trans::__('You do not have the right privileges to edit that record.'));
 
-            return redirect('overview', array('contenttypeslug' => $contenttype['slug']));
+            return Lib::redirect('overview', array('contenttypeslug' => $contenttype['slug']));
         }
 
         if ($app['storage']->updateSingleValue($contenttype['slug'], $id, 'status', $newStatus)) {
-            $app['session']->getFlashBag()->set('info', __("Content '%title%' has been changed to '%newStatus%'", array('%title%' => $title, '%newStatus%' => $newStatus)));
+            $app['session']->getFlashBag()->set('info', Trans::__("Content '%title%' has been changed to '%newStatus%'", array('%title%' => $title, '%newStatus%' => $newStatus)));
         } else {
-            $app['session']->getFlashBag()->set('info', __("Content '%title%' could not be modified.", array('%title%' => $title)));
+            $app['session']->getFlashBag()->set('info', Trans::__("Content '%title%' could not be modified.", array('%title%' => $title)));
         }
 
-        return redirect('overview', array('contenttypeslug' => $contenttype['slug']));
+        return Lib::redirect('overview', array('contenttypeslug' => $contenttype['slug']));
     }
 
 
     /**
      * Show a list of all available users.
+     *
+     * @param Silex\Application $app The application/container
+     * @return mixed
      */
     public function users(Silex\Application $app)
     {
@@ -970,6 +1088,12 @@ class Backend implements ControllerProviderInterface
         return $app['render']->render('users/users.twig', array('context' => $context));
     }
 
+    /**
+     * Show the roles page.
+     *
+     * @param \Bolt\Application $app The application/container
+     * @return mixed
+     */
     public function roles(\Bolt\Application $app)
     {
         $contenttypes = $app['config']->get('contenttypes');
@@ -991,6 +1115,14 @@ class Backend implements ControllerProviderInterface
         return $app['twig']->render('roles/roles.twig', array('context' => $context));
     }
 
+    /**
+     * Edit a user.
+     *
+     * @param integer           $id      The user ID
+     * @param \Bolt\Application $app     The application/container
+     * @param Request           $request The Symfony Request
+     * @return mixed
+     */
     public function userEdit($id, \Bolt\Application $app, Request $request)
     {
         // Get the user we want to edit (if any)
@@ -998,8 +1130,8 @@ class Backend implements ControllerProviderInterface
         $note = '';
 
         $enabledoptions = array(
-            1 => __('yes'),
-            0 => __('no')
+            1 => Trans::__('page.edit-users.activated.yes'),
+            0 => Trans::__('page.edit-users.activated.no')
         );
 
         $allRoles = $app['permissions']->getDefinedRoles($app);
@@ -1017,7 +1149,7 @@ class Backend implements ControllerProviderInterface
             // Add a note, if we're setting up the first user using SQLite..
             $dbdriver = $app['config']->get('general/database/driver');
             if ($dbdriver == 'sqlite' || $dbdriver == 'pdo_sqlite') {
-                $note = __('You are currently using SQLite to set up the first user. If you wish to use MySQL or PostgreSQL instead, edit the configuration file at <tt>\'app/config/config.yml\'</tt> and Bolt will set up the database tables for you. Be sure to reload this page before continuing.');
+                $note = Trans::__('page.edit-users.note-sqlite');
             }
 
             // If we get here, chances are we don't have the tables set up, yet.
@@ -1033,38 +1165,38 @@ class Backend implements ControllerProviderInterface
             ->add('id', 'hidden')
             ->add('username', 'text', array(
                 'constraints' => array(new Assert\NotBlank(), new Assert\Length(array('min' => 2, 'max' => 32))),
-                'label' => __('Username'),
+                'label' => Trans::__('page.edit-users.label.username'),
                 'attr' => array(
-                    'placeholder' => __('Pick a username, lowercase only')
+                    'placeholder' => Trans::__('page.edit-users.placeholder.username')
                 )
             ))
             ->add('password', 'password', array(
                 'required' => false,
-                'label' => __('Password'),
+                'label' => Trans::__('page.edit-users.label.password'),
                 'attr' => array(
-                    'placeholder' => __('Enter a password, longer than 6 chars')
+                    'placeholder' => Trans::__('page.edit-users.placeholder.password')
                 )
 
             ))
             ->add('password_confirmation', 'password', array(
                 'required' => false,
-                'label' => __('Password (confirm)'),
+                'label' => Trans::__('page.edit-users.label.password-confirm'),
                 'attr' => array(
-                    'placeholder' => __('Confirm your password')
+                    'placeholder' => Trans::__('page.edit-users.placeholder.password-confirm')
                 )
             ))
             ->add('email', 'text', array(
                 'constraints' => new Assert\Email(),
-                'label' => __('Email'),
+                'label' => Trans::__('page.edit-users.label.email'),
                 'attr' => array(
-                    'placeholder' => __('Enter a valid email address')
+                    'placeholder' => Trans::__('page.edit-users.placeholder.email')
                 )
             ))
             ->add('displayname', 'text', array(
                 'constraints' => array(new Assert\NotBlank(), new Assert\Length(array('min' => 2, 'max' => 32))),
-                'label' => __('Display name'),
+                'label' => Trans::__('page.edit-users.label.display-name'),
                 'attr' => array(
-                    'placeholder' => __('Pick a display name / alias')
+                    'placeholder' => Trans::__('page.edit-users.placeholder.displayname')
                 )
             ));
 
@@ -1078,7 +1210,7 @@ class Backend implements ControllerProviderInterface
                     'choices' => $enabledoptions,
                     'expanded' => false,
                     'constraints' => new Assert\Choice(array_keys($enabledoptions)),
-                    'label' => __('User is enabled'),
+                    'label' => Trans::__('page.edit-users.label.user-enabled'),
                 )
             )->add(
                 'roles',
@@ -1087,7 +1219,7 @@ class Backend implements ControllerProviderInterface
                     'choices' => $roles,
                     'expanded' => true,
                     'multiple' => true,
-                    'label' => __('Assigned roles'),
+                    'label' => Trans::__('page.edit-users.label.assigned-roles'),
                 )
             );
         }
@@ -1099,14 +1231,14 @@ class Backend implements ControllerProviderInterface
                 'text',
                 array(
                     'disabled' => true,
-                    'label' => __('Last seen')
+                    'label' => Trans::__('page.edit-users.label.last-seen')
                 )
             )->add(
                 'lastip',
                 'text',
                 array(
                     'disabled' => true,
-                    'label' => __('Last IP')
+                    'label' => Trans::__('page.edit-users.label.last-ip')
                 )
             );
         }
@@ -1123,30 +1255,28 @@ class Backend implements ControllerProviderInterface
                 // If adding a new user (empty $id) or if the password is not empty (indicating we want to change it),
                 // then make sure it's at least 6 characters long.
                 if ((empty($id) || !empty($pass1)) && strlen($pass1) < 6) {
-                    // screw it. Let's just not translate this message for now. Damn you, stupid non-cooperative translation thingy.
-                    //$error = new FormError("This value is too short. It should have {{ limit }} characters or more.", array('{{ limit }}' => 6), 2);
-                    $error = new FormError(__('This value is too short. It should have 6 characters or more.'));
+                    $error = new FormError(Trans::__('page.edit-users.error.password-short'));
                     $form['password']->addError($error);
                 }
 
                 // Passwords must be identical..
                 if ($pass1 != $pass2) {
-                    $form['password_confirmation']->addError(new FormError(__('Passwords must match.')));
+                    $form['password_confirmation']->addError(new FormError(Trans::__('page.edit-users.error.password-mismatch')));
                 }
 
                 // Usernames must be unique..
                 if (!$app['users']->checkAvailability('username', $form['username']->getData(), $id)) {
-                    $form['username']->addError(new FormError(__('This username is already in use. Choose another username.')));
+                    $form['username']->addError(new FormError(Trans::__('page.edit-users.error.username-used')));
                 }
 
                 // Email addresses must be unique..
                 if (!$app['users']->checkAvailability('email', $form['email']->getData(), $id)) {
-                    $form['email']->addError(new FormError(__('This email address is already in use. Choose another email address.')));
+                    $form['email']->addError(new FormError(Trans::__('page.edit-users.error.email-used')));
                 }
 
                 // Displaynames must be unique..
                 if (!$app['users']->checkAvailability('displayname', $form['displayname']->getData(), $id)) {
-                    $form['displayname']->addError(new FormError(__('This displayname is already in use. Choose another displayname.')));
+                    $form['displayname']->addError(new FormError(Trans::__('page.edit-users.error.displayname-used')));
                 }
             }
         );
@@ -1158,7 +1288,6 @@ class Backend implements ControllerProviderInterface
 
         // Check if the form was POST-ed, and valid. If so, store the user.
         if ($request->getMethod() == 'POST') {
-            //$form->bindRequest($request);
             $form->submit($app['request']->get($form->getName()));
 
             if ($form->isValid()) {
@@ -1171,22 +1300,22 @@ class Backend implements ControllerProviderInterface
                 $res = $app['users']->saveUser($user);
 
                 if ($user['id']) {
-                    $app['log']->add(__("Updated user '%s'.", array('%s' => $user['displayname'])), 3, '', 'user');
+                    $app['log']->add(Trans::__('page.edit-users.log.user-updated', array('%user%' => $user['displayname'])), 3, '', 'user');
                 } else {
-                    $app['log']->add(__("Added user '%s'.", array('%s' => $user['displayname'])), 3, '', 'user');
+                    $app['log']->add(Trans::__('page.edit-users.log.user-added', array('%user%' => $user['displayname'])), 3, '', 'user');
                 }
 
                 if ($res) {
-                    $app['session']->getFlashBag()->set('success', __('User %s has been saved.', array('%s' => $user['displayname'])));
+                    $app['session']->getFlashBag()->set('success', Trans::__('page.edit-users.message.user-saved', array('%user%' => $user['displayname'])));
                 } else {
-                    $app['session']->getFlashBag()->set('error', __('User %s could not be saved, or nothing was changed.', array('%s' => $user['displayname'])));
+                    $app['session']->getFlashBag()->set('error', Trans::__('page.edit-users.message.saving-user', array('%user%' => $user['displayname'])));
                 }
 
                 if ($firstuser) {
                     // To the dashboard, where 'login' will be triggered..
-                    return redirect('dashboard');
+                    return Lib::redirect('dashboard');
                 } else {
-                    return redirect('users');
+                    return Lib::redirect('users');
                 }
 
             }
@@ -1204,33 +1333,35 @@ class Backend implements ControllerProviderInterface
         return $app['render']->render($template, array('context' => $context));
     }
 
+    /**
+     * User profile page.
+     *
+     * @param \Bolt\Application $app     The application/container
+     * @param Request           $request The Symfony Request
+     * @return string
+     */
     public function profile(\Bolt\Application $app, Request $request)
     {
         $user = $app['users']->getCurrentUser();
 
-/*         $enabledoptions = array(
-            1 => __('yes'),
-            0 => __('no')
-        );
- */
         // Start building the form..
         $form = $app['form.factory']->createBuilder('form', $user)
             ->add('id', 'hidden')
             ->add('password', 'password', array(
                 'required' => false,
-                'label' => __('Password')
+                'label' => Trans::__('page.edit-users.label.password')
             ))
             ->add('password_confirmation', 'password', array(
                 'required' => false,
-                'label' => __("Password (confirmation)")
+                'label' => Trans::__('page.edit-users.label.password-confirm')
             ))
             ->add('email', 'text', array(
                 'constraints' => new Assert\Email(),
-                'label' => __('Email')
+                'label' => Trans::__('page.edit-users.label.email')
             ))
             ->add('displayname', 'text', array(
                 'constraints' => array(new Assert\NotBlank(), new Assert\Length(array('min' => 2, 'max' => 32))),
-                'label' => __('Display name')
+                'label' => Trans::__('page.edit-users.label.display-name')
             ));
 
         // Make sure the passwords are identical and some other check, with a custom validator.
@@ -1248,23 +1379,23 @@ class Backend implements ControllerProviderInterface
                     // screw it. Let's just not translate this message for now. Damn you, stupid non-cooperative
                     // translation thingy. $error = new FormError("This value is too short. It should have {{ limit }}
                     // characters or more.", array('{{ limit }}' => 6), 2);
-                    $error = new FormError(__('This value is too short. It should have 6 characters or more.'));
+                    $error = new FormError(Trans::__('page.edit-users.error.password-short'));
                     $form['password']->addError($error);
                 }
 
                 // Passwords must be identical.
                 if ($pass1 != $pass2) {
-                    $form['password_confirmation']->addError(new FormError(__('Passwords must match.')));
+                    $form['password_confirmation']->addError(new FormError(Trans::__('page.edit-users.error.password-mismatch')));
                 }
 
                 // Email addresses must be unique..
                 if (!$app['users']->checkAvailability('email', $form['email']->getData(), $id)) {
-                    $form['email']->addError(new FormError(__('This email address is already in use. Choose another email address.')));
+                    $form['email']->addError(new FormError(Trans::__('page.edit-users.error.email-used')));
                 }
 
                 // Displaynames must be unique..
                 if (!$app['users']->checkAvailability('displayname', $form['displayname']->getData(), $id)) {
-                    $form['displayname']->addError(new FormError(__('This displayname is already in use. Choose another displayname.')));
+                    $form['displayname']->addError(new FormError(Trans::__('page.edit-users.error.displayname-used')));
                 }
             }
         );
@@ -1276,7 +1407,6 @@ class Backend implements ControllerProviderInterface
 
         // Check if the form was POST-ed, and valid. If so, store the user.
         if ($request->getMethod() == 'POST') {
-            //$form->bindRequest($request);
             $form->submit($app['request']->get($form->getName()));
 
             if ($form->isValid()) {
@@ -1284,14 +1414,14 @@ class Backend implements ControllerProviderInterface
                 $user = $form->getData();
 
                 $res = $app['users']->saveUser($user);
-                $app['log']->add(__("Updated user '%s'.", array('%s' => $user['displayname'])), 3, '', 'user');
+                $app['log']->add(Trans::__('page.edit-users.log.user-updated', array('%user%' => $user['displayname'])), 3, '', 'user');
                 if ($res) {
-                    $app['session']->getFlashBag()->set('success', __('User %s has been saved.', array('%s' => $user['displayname'])));
+                    $app['session']->getFlashBag()->set('success', Trans::__('page.edit-users.message.user-saved', array('%user%' => $user['displayname'])));
                 } else {
-                    $app['session']->getFlashBag()->set('error', __('User %s could not be saved, or nothing was changed.', array('%s' => $user['displayname'])));
+                    $app['session']->getFlashBag()->set('error', Trans::__('page.edit-users.message.saving-user', array('%user%' => $user['displayname'])));
                 }
 
-                return redirect('profile');
+                return Lib::redirect('profile');
             }
         }
 
@@ -1307,20 +1437,25 @@ class Backend implements ControllerProviderInterface
 
     /**
      * Perform actions on users.
+     *
+     * @param Silex\Application $app    The application/container
+     * @param string            $action The action
+     * @param integer           $id     The user ID
+     * @return string
      */
     public function userAction(Silex\Application $app, $action, $id)
     {
         if (!$app['users']->checkAntiCSRFToken()) {
-            $app['session']->getFlashBag()->set('info', __('An error occurred.'));
+            $app['session']->getFlashBag()->set('info', Trans::__('An error occurred.'));
 
-            return redirect('users');
+            return Lib::redirect('users');
         }
         $user = $app['users']->getUser($id);
 
         if (!$user) {
             $app['session']->getFlashBag()->set('error', 'No such user.');
 
-            return redirect('users');
+            return Lib::redirect('users');
         }
 
         switch ($action) {
@@ -1329,18 +1464,18 @@ class Backend implements ControllerProviderInterface
                 if ($app['users']->setEnabled($id, 0)) {
                     $app['log']->add("Disabled user '" . $user['displayname'] . "'.", 3, '', 'user');
 
-                    $app['session']->getFlashBag()->set('info', __("User '%s' is disabled.", array('%s' => $user['displayname'])));
+                    $app['session']->getFlashBag()->set('info', Trans::__("User '%s' is disabled.", array('%s' => $user['displayname'])));
                 } else {
-                    $app['session']->getFlashBag()->set('info', __("User '%s' could not be disabled.", array('%s' => $user['displayname'])));
+                    $app['session']->getFlashBag()->set('info', Trans::__("User '%s' could not be disabled.", array('%s' => $user['displayname'])));
                 }
                 break;
 
             case "enable":
                 if ($app['users']->setEnabled($id, 1)) {
                     $app['log']->add("Enabled user '" . $user['displayname'] . "'.", 3, '', 'user');
-                    $app['session']->getFlashBag()->set('info', __("User '%s' is enabled.", array('%s' => $user['displayname'])));
+                    $app['session']->getFlashBag()->set('info', Trans::__("User '%s' is enabled.", array('%s' => $user['displayname'])));
                 } else {
-                    $app['session']->getFlashBag()->set('info', __("User '%s' could not be enabled.", array('%s' => $user['displayname'])));
+                    $app['session']->getFlashBag()->set('info', Trans::__("User '%s' could not be enabled.", array('%s' => $user['displayname'])));
                 }
                 break;
 
@@ -1348,47 +1483,57 @@ class Backend implements ControllerProviderInterface
 
                 if ($app['users']->checkAntiCSRFToken() && $app['users']->deleteUser($id)) {
                     $app['log']->add("Deleted user '" . $user['displayname'] . "'.", 3, '', 'user');
-                    $app['session']->getFlashBag()->set('info', __("User '%s' is deleted.", array('%s' => $user['displayname'])));
+                    $app['session']->getFlashBag()->set('info', Trans::__("User '%s' is deleted.", array('%s' => $user['displayname'])));
                 } else {
-                    $app['session']->getFlashBag()->set('info', __("User '%s' could not be deleted.", array('%s' => $user['displayname'])));
+                    $app['session']->getFlashBag()->set('info', Trans::__("User '%s' could not be deleted.", array('%s' => $user['displayname'])));
                 }
                 break;
 
             default:
-                $app['session']->getFlashBag()->set('error', __("No such action for user '%s'.", array('%s' => $user['displayname'])));
+                $app['session']->getFlashBag()->set('error', Trans::__("No such action for user '%s'.", array('%s' => $user['displayname'])));
 
         }
 
-        return redirect('users');
+        return Lib::redirect('users');
     }
 
     /**
-     * Show the 'about' page
+     * Show the 'about' page.
+     *
+     * @param Silex\Application $app The application/container
+     * @return mixed
      */
     public function about(Silex\Application $app)
     {
         return $app['render']->render('about/about.twig');
     }
 
+    /**
+     * The file browser.
+     *
+     * @param string            $namespace The filesystem namespace
+     * @param string            $path      The path prefix
+     * @param Silex\Application $app       The application/container
+     * @param Request           $request   The Symfony Request
+     * @return mixed
+     */
     public function files($namespace, $path, Silex\Application $app, Request $request)
     {
         // No trailing slashes in the path.
-        $path = stripTrailingSlash($path);
+        $path = rtrim($path, '/');
 
         $filesystem = $app['filesystem']->getManager($namespace);
         $fullPath = $filesystem->getAdapter()->applyPathPrefix($path);
 
         if (!$app['filepermissions']->authorized($fullPath)) {
-            $error = __("You don't have the correct permissions to display the file or directory '%s'.", array('%s' => $path));
+            $error = Trans::__("You don't have the correct permissions to display the file or directory '%s'.", array('%s' => $path));
             $app->abort(403, $error);
         }
 
         try {
-            $list = $filesystem->listContents($path);
             $validFolder = true;
         } catch (\Exception $e) {
-            $list = array();
-            $app['session']->getFlashBag()->set('error', __("The folder '%s' could not be found, or is not readable.", array('%s' => $path)));
+            $app['session']->getFlashBag()->set('error', Trans::__("The folder '%s' could not be found, or is not readable.", array('%s' => $path)));
             $formview = false;
             $validFolder = false;
         }
@@ -1398,10 +1543,10 @@ class Backend implements ControllerProviderInterface
             $form = $app['form.factory']
                 ->createBuilder('form')
                 ->add('FileUpload', 'file', array(
-                    'label' => __("Upload a file to this folder"),
+                    'label' => Trans::__('Upload a file to this folder'),
                     'attr' => array(
                     'data-filename-placement' => 'inside',
-                    'title' => __('Select file …'))))
+                    'title' => Trans::__('Select file …'))))
                 ->getForm();
 
             // Handle the upload.
@@ -1421,16 +1566,16 @@ class Backend implements ControllerProviderInterface
                         $filename = preg_replace('/[^a-zA-Z0-9_\\.]/', '_', basename($originalFilename));
 
                         if ($app['filepermissions']->allowedUpload($filename)) {
-
+                            $app['upload.namespace'] = $namespace;
                             $handler = $app['upload'];
                             $handler->setPrefix($path . '/');
-                            $result = $app['upload']->process($fileToProcess);
+                            $result = $handler->process($fileToProcess);
 
                             if ($result->isValid()) {
 
                                 $app['session']->getFlashBag()->set(
                                     'info',
-                                    __("File '%file%' was uploaded successfully.", array('%file%' => $filename))
+                                    Trans::__("File '%file%' was uploaded successfully.", array('%file%' => $filename))
                                 );
 
                                 // Add the file to our stack..
@@ -1446,7 +1591,7 @@ class Backend implements ControllerProviderInterface
                             $extensionList = implode(' ', $extensionList);
                             $app['session']->getFlashBag()->set(
                                 'error',
-                                __("File '%file%' could not be uploaded (wrong/disallowed file type). Make sure the file extension is one of the following:", array('%file%' => $filename))
+                                Trans::__("File '%file%' could not be uploaded (wrong/disallowed file type). Make sure the file extension is one of the following:", array('%file%' => $filename))
                                 . $extensionList
                             );
                         }
@@ -1455,11 +1600,11 @@ class Backend implements ControllerProviderInterface
                 } else {
                     $app['session']->getFlashBag()->set(
                         'error',
-                        __("File '%file%' could not be uploaded.", array('%file%' => $filename))
+                        Trans::__("File '%file%' could not be uploaded.", array('%file%' => $filename))
                     );
                 }
 
-                return redirect('files', array('path' => $path));
+                return Lib::redirect('files', array('path' => $path, 'namespace' => $namespace));
             }
 
             $formview = $form->createView();
@@ -1498,6 +1643,15 @@ class Backend implements ControllerProviderInterface
         return $app['render']->render($twig, array('context' => $context));
     }
 
+    /**
+     * File editor.
+     *
+     * @param string            $namespace The filesystem namespace
+     * @param string            $file      The file path
+     * @param Silex\Application $app       The application/container
+     * @param Request           $request   The Symfony Request
+     * @return mixed
+     */
     public function fileEdit($namespace, $file, Silex\Application $app, Request $request)
     {
         if ($namespace == 'app' && dirname($file) == "config") {
@@ -1509,9 +1663,11 @@ class Backend implements ControllerProviderInterface
             try {
                 // Catch-22: If namespace is 'theme', we actually want to have 'themebase'.
                 if ($namespace == "theme") {
-                    $namespace = "themebase";
+                    $path = $app['resources']->getPath("themebase");
+                } else {
+                    $path = $app['resources']->getPath($namespace);
                 }
-                $path = $app['resources']->getPath($namespace);
+                
                 $filename = realpath($path . "/" . $file);
             } catch (\Exception $e) {
                 $path = $app['resources']->getPath('files');
@@ -1520,11 +1676,11 @@ class Backend implements ControllerProviderInterface
         }
 
         if (! $app['filepermissions']->authorized($filename)) {
-            $error = __("You don't have correct permissions to edit the file '%s'.", array('%s' => $file));
+            $error = Trans::__("You don't have correct permissions to edit the file '%s'.", array('%s' => $file));
             $app->abort(403, $error);
         }
 
-        $type = getExtension($filename);
+        $type = Lib::getExtension($filename);
 
         // Get the pathsegments, so we can show the path..
         $path = dirname($file);
@@ -1538,14 +1694,14 @@ class Backend implements ControllerProviderInterface
         }
 
         if (!file_exists($filename) || !is_readable($filename)) {
-            $error = __("The file '%s' doesn't exist, or is not readable.", array('%s' => $file));
+            $error = Trans::__("The file '%s' doesn't exist, or is not readable.", array('%s' => $file));
             $app->abort(404, $error);
         }
 
         if (!is_writable($filename)) {
             $app['session']->getFlashBag()->set(
                 'info',
-                __(
+                Trans::__(
                     "The file '%s' is not writable. You will have to use your own editor to make modifications to this file.",
                     array('%s' => $file)
                 )
@@ -1582,7 +1738,7 @@ class Backend implements ControllerProviderInterface
             if ($form->isValid()) {
 
                 $data = $form->getData();
-                $contents = cleanPostedData($data['contents']) . "\n";
+                $contents = Input::cleanPostedData($data['contents']) . "\n";
 
                 $ok = true;
 
@@ -1593,20 +1749,20 @@ class Backend implements ControllerProviderInterface
                         $ok = $yamlparser->parse($contents);
                     } catch (\Symfony\Component\Yaml\Exception\ParseException $e) {
                         $ok = false;
-                        $app['session']->getFlashBag()->set('error', __("File '%s' could not be saved:", array('%s' => $file)) . $e->getMessage());
+                        $app['session']->getFlashBag()->set('error', Trans::__("File '%s' could not be saved:", array('%s' => $file)) . $e->getMessage());
                     }
                 }
 
                 if ($ok) {
                     if (file_put_contents($filename, $contents)) {
-                        $app['session']->getFlashBag()->set('info', __("File '%s' has been saved.", array('%s' => $file)));
+                        $app['session']->getFlashBag()->set('info', Trans::__("File '%s' has been saved.", array('%s' => $file)));
                         // If we've saved a translation, back to it
                         if (preg_match('#resources/translations/(..)/(.*)\.yml$#', $filename, $m)) {
-                            return redirect('translation', array('domain' => $m[2], 'tr_locale' => $m[1]));
+                            return Lib::redirect('translation', array('domain' => $m[2], 'tr_locale' => $m[1]));
                         }
-                        redirect('fileedit', array('file' => $file), '');
+                        Lib::redirect('fileedit', array('file' => $file), '');
                     } else {
-                        $app['session']->getFlashBag()->set('error', __("File '%s' could not be saved, for some reason.", array('%s' => $file)));
+                        $app['session']->getFlashBag()->set('error', Trans::__("File '%s' could not be saved, for some reason.", array('%s' => $file)));
                     }
                 }
                 // If we reach this point, the form will be shown again, with the error
@@ -1638,6 +1794,12 @@ class Backend implements ControllerProviderInterface
 
     /**
      * Prepare/edit/save a translation
+     *
+     * @param string            $domain    The domain
+     * @param string            $tr_locale The translation locale
+     * @param Silex\Application $app       The application/container
+     * @param Request           $request   The Symfony Request
+     * @return mixed
      */
     public function translation($domain, $tr_locale, Silex\Application $app, Request $request)
     {
@@ -1666,25 +1828,25 @@ class Backend implements ControllerProviderInterface
             if ($form->isValid()) {
 
                 $data = $form->getData();
-                $contents = cleanPostedData($data['contents']) . "\n";
+                $contents = Input::cleanPostedData($data['contents']) . "\n";
 
                 // Before trying to save a yaml file, check if it's valid.
                 try {
                     $ok = Yaml::parse($contents);
                 } catch (\Symfony\Component\Yaml\Exception\ParseException $e) {
                     $ok = false;
-                    $msg = __("File '%s' could not be saved:", array('%s' => $shortPath));
+                    $msg = Trans::__("File '%s' could not be saved:", array('%s' => $shortPath));
                     $app['session']->getFlashBag()->set('error', $msg . $e->getMessage());
                 }
 
                 if ($ok) {
                     if (file_put_contents($path, $contents)) {
-                        $msg = __("File '%s' has been saved.", array('%s' => $shortPath));
+                        $msg = Trans::__("File '%s' has been saved.", array('%s' => $shortPath));
                         $app['session']->getFlashBag()->set('info', $msg);
 
-                        return redirect('translation', array('domain' => $domain, 'tr_locale' => $tr_locale));
+                        return Lib::redirect('translation', array('domain' => $domain, 'tr_locale' => $tr_locale));
                     } else {
-                        $msg = __("File '%s' could not be saved, for some reason.", array('%s' => $shortPath));
+                        $msg = Trans::__("File '%s' could not be saved, for some reason.", array('%s' => $shortPath));
                         $app['session']->getFlashBag()->set('error', $msg);
                     }
                 }
@@ -1704,6 +1866,10 @@ class Backend implements ControllerProviderInterface
 
     /**
      * Middleware function to check whether a user is logged on.
+     *
+     * @param Request           $request The Symfony Request
+     * @param \Bolt\Application $app     The application/container
+     * @return mixed
      */
     public function before(Request $request, \Bolt\Application $app)
     {
@@ -1728,9 +1894,9 @@ class Backend implements ControllerProviderInterface
         // the DB, and let's add a new user.
         if (!$app['integritychecker']->checkUserTableIntegrity() || !$app['users']->getUsers()) {
             $app['integritychecker']->repairTables();
-            $app['session']->getFlashBag()->set('info', __('There are no users in the database. Please create the first user.'));
+            $app['session']->getFlashBag()->set('info', Trans::__('There are no users in the database. Please create the first user.'));
 
-            return redirect('useredit', array('id' => ""));
+            return Lib::redirect('useredit', array('id' => ""));
         }
 
         // Check if there's at least one 'root' user, and otherwise promote the current user.
@@ -1738,13 +1904,13 @@ class Backend implements ControllerProviderInterface
 
         // Most of the 'check if user is allowed' happens here: match the current route to the 'allowed' settings.
         if (!$app['users']->isValidSession() && !$app['users']->isAllowed($route)) {
-            $app['session']->getFlashBag()->set('info', __('Please log on.'));
+            $app['session']->getFlashBag()->set('info', Trans::__('Please log on.'));
 
-            return redirect('login');
+            return Lib::redirect('login');
         } elseif (!$app['users']->isAllowed($route)) {
-            $app['session']->getFlashBag()->set('error', __('You do not have the right privileges to view that page.'));
+            $app['session']->getFlashBag()->set('error', Trans::__('You do not have the right privileges to view that page.'));
 
-            return redirect('dashboard');
+            return Lib::redirect('dashboard');
         }
         // Stop the 'stopwatch' for the profiler.
         $app['stopwatch']->stop('bolt.backend.before');

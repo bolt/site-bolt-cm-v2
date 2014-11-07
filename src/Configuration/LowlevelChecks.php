@@ -1,6 +1,8 @@
 <?php
 namespace Bolt\Configuration;
 
+use Bolt\Library as Lib;
+
 /**
  * A class to perform several 'low level' checks. Since we're doing it (by design)
  * _before_ the autoloader gets initialized, we can't use autoloading.
@@ -15,7 +17,6 @@ class LowlevelChecks
         'magicQuotes',
         'safeMode',
         'cache',
-        'extensions',
         'apache'
     );
 
@@ -60,7 +61,6 @@ class LowlevelChecks
             $this->$method();
         }
 
-
         // If the config folder is OK, but the config files are missing, attempt to fix it.
         $this->lowlevelConfigFix('config');
         $this->lowlevelConfigFix('menu');
@@ -69,7 +69,6 @@ class LowlevelChecks
         $this->lowlevelConfigFix('routing');
         $this->lowlevelConfigFix('permissions');
 
-        // throw new LowlevelException("Done");
     }
 
     public function checkMagicQuotes()
@@ -121,14 +120,6 @@ class LowlevelChecks
     }
 
     /**
-     * Check if there is a writable extension path
-     */
-    public function checkExtensions()
-    {
-        // $this->assertWritableDir($this->config->getPath('extensions'));
-    }
-
-    /**
      * This check looks for the presence of the .htaccess file inside the web directory.
      * It is here only as a convenience check for users that install the basic version of Bolt.
      *
@@ -137,6 +128,9 @@ class LowlevelChecks
      **/
     public function checkApache()
     {
+        if ($this->disableApacheChecks) {
+            return;
+        }
         if (isset($_SERVER['SERVER_SOFTWARE']) && strpos($_SERVER['SERVER_SOFTWARE'], 'Apache') !== false) {
             if (!is_readable($this->config->getPath('web') . '/.htaccess')) {
                 throw new LowlevelException(
@@ -204,7 +198,7 @@ class LowlevelChecks
         }
 
         $filename = isset($cfg['databasename']) ? basename($cfg['databasename']) : 'bolt';
-        if (getExtension($filename) != 'db') {
+        if (Lib::getExtension($filename) != 'db') {
             $filename .= '.db';
         }
 

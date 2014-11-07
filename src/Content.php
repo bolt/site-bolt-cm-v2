@@ -4,6 +4,10 @@ namespace Bolt;
 
 use Silex;
 use Symfony\Component\Filesystem\Filesystem;
+use Bolt\Library as Lib;
+use Bolt\Helpers\String;
+use Bolt\Helpers\Input;
+use Bolt\Helpers\Html;
 
 class Content implements \ArrayAccess
 {
@@ -38,8 +42,6 @@ class Content implements \ArrayAccess
                     if (isset($options) &&
                             isset($default_value) &&
                             array_search($default_value, array_keys($options)) !== false ) {
-                            // FIXME it is a remainder of something, remove next revision if really is
-                            // $name = $this->app['config']->get('taxonomy/'.$taxonomytype.'/options/'.$default_value);
                             $this->setTaxonomy($taxonomytype, $default_value);
                             $this->sortTaxonomy();
                     }
@@ -154,7 +156,7 @@ class Content implements \ArrayAccess
         foreach ($this->values as $key => $value) {
             if (in_array($this->fieldtype($key), $serialized_field_types)) {
                 if (!empty($value) && is_string($value) && (substr($value, 0, 2) == "a:" || $value[0] === '[' || $value[0] === '{')) {
-                    $unserdata = @smart_unserialize($value);
+                    $unserdata = @Lib::smart_unserialize($value);
                     if ($unserdata !== false) {
                         $this->values[$key] = $unserdata;
                     }
@@ -206,7 +208,7 @@ class Content implements \ArrayAccess
     {
         // Check if the value need to be unserialized..
         if (is_string($value) && substr($value, 0, 2) == "a:") {
-            $unserdata = @smart_unserialize($value);
+            $unserdata = @Lib::smart_unserialize($value);
             if ($unserdata !== false) {
                 $value = $unserdata;
             }
@@ -245,7 +247,7 @@ class Content implements \ArrayAccess
 
     public function setFromPost($values, $contenttype)
     {
-        $values = cleanPostedData($values);
+        $values = Input::cleanPostedData($values);
 
         if (!$this->id) {
             // this is a new record: current user becomes the owner.
@@ -324,9 +326,9 @@ class Content implements \ArrayAccess
                     '%s/files/%s/%s',
                     $this->app['paths']['rootpath'],
                     date('Y-m'),
-                    safeString($file['name'][0], false, '[]{}()')
+                    String::makeSafe($file['name'][0], false, '[]{}()')
                 );
-                $basename = sprintf('/%s/%s', date('Y-m'), safeString($file['name'][0], false, "[]{}()"));
+                $basename = sprintf('/%s/%s', date('Y-m'), String::makeSafe($file['name'][0], false, "[]{}()"));
 
                 if ($file['error'][0] != UPLOAD_ERR_OK) {
                     $this->app['log']->add('Upload: Error occured during upload: ' . $file['error'][0] . ' - ' . $filename, 2);
@@ -779,7 +781,7 @@ class Content implements \ArrayAccess
         $perm = "contenttype:" . $this->contenttype['slug'] . ":edit:" . $this->id;
 
         if ($this->app['users']->isAllowed($perm)) {
-            return path('editcontent', array('contenttypeslug' => $this->contenttype['slug'], 'id' => $this->id ));
+            return Lib::path('editcontent', array('contenttypeslug' => $this->contenttype['slug'], 'id' => $this->id ));
         } else {
             return false;
         }
@@ -997,7 +999,7 @@ class Content implements \ArrayAccess
     public function excerpt($length = 200, $includetitle = false)
     {
         if ($includetitle) {
-            $title = trimText(strip_tags($this->getTitle()), $length);
+            $title = Html::trimText(strip_tags($this->getTitle()), $length);
             $length = $length - strlen($title);
         }
 
@@ -1015,7 +1017,7 @@ class Content implements \ArrayAccess
             }
 
             $excerpt = str_replace('>', '> ', implode(' ', $excerptParts));
-            $excerpt = trimText(strip_tags($excerpt), $length);
+            $excerpt = Html::trimText(strip_tags($excerpt), $length);
         } else {
             $excerpt = '';
         }
@@ -1054,16 +1056,18 @@ class Content implements \ArrayAccess
                 // Completely remove style and script blocks
                 $maid = new \Maid\Maid(
                     array(
+                        'output-format' => 'html',
                         'allowed-tags' => array('a', 'b', 'br', 'hr', 'h1', 'h2', 'h3', 'h4', 'p', 'strong', 'em', 'i', 'u', 'strike', 'ul', 'ol', 'li', 'img'),
-                        'output-format' => 'html'
+                        'allowed-attribs' => array('id', 'class', 'name', 'value', 'href', 'src')
                     )
                 );
+
                 $result .= $maid->clean($this->values[$field]);
             }
         }
 
         if ($excerptLength > 0) {
-            $result .= trimText($result, $excerptLength, false, true, false);
+            $result .= Html::trimText($result, $excerptLength);
         }
 
         return '<![CDATA[ ' . $result . ' ]]>';

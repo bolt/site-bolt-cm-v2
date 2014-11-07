@@ -4,7 +4,7 @@ DirectoryIndex index.php index.html index.htm
 # Prevent directory listing
 Options -Indexes -MultiViews
 
-<FilesMatch "\.(yml|db|twig)$">
+<FilesMatch "\.(yml|db|twig|md)$">
   <IfModule mod_authz_core.c>
     Require all denied
   </IfModule>
@@ -20,7 +20,7 @@ Options -Indexes -MultiViews
   RewriteRule cache/ - [F]
 
   # Some servers require the RewriteBase to be set. If so, set to the correct folder.
-  RewriteBase /
+  # RewriteBase /
 
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteCond %{REQUEST_FILENAME} !-d

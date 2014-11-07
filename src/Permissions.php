@@ -2,6 +2,8 @@
 
 namespace Bolt;
 
+use Bolt\Translation\Translator as Trans;
+
 /**
  * This class implements role-based permissions.
  */
@@ -70,7 +72,11 @@ class Permissions
     public function getDefinedRoles()
     {
         $roles = $this->app['config']->get('permissions/roles');
-        $roles[self::ROLE_ROOT] = array('label' => 'Root', 'description' => __('Built-in superuser role, automatically grants all permissions'), 'builtin' => true);
+        $roles[self::ROLE_ROOT] = array(
+            'label' => 'Root',
+            'description' => Trans::__('Built-in superuser role, automatically grants all permissions'),
+            'builtin' => true
+        );
 
         return $roles;
     }
@@ -89,13 +95,25 @@ class Permissions
     {
         switch ($roleName) {
             case self::ROLE_ANONYMOUS:
-                return array('label' => __('Anonymous'), 'description' => __('Built-in role, automatically granted at all times, even if no user is logged in'), 'builtin' => true);
+                return array(
+                    'label' => Trans::__('Anonymous'),
+                    'description' => Trans::__('Built-in role, automatically granted at all times, even if no user is logged in'),
+                    'builtin' => true,
+                );
 
             case self::ROLE_EVERYONE:
-                return array('label' => __('Everybody'), 'description' => __('Built-in role, automatically granted to every registered user'), 'builtin' => true);
+                return array(
+                    'label' => Trans::__('Everybody'),
+                    'description' => Trans::__('Built-in role, automatically granted to every registered user'),
+                    'builtin' => true,
+                );
 
             case self::ROLE_OWNER:
-                return array('label' => __('Owner'), 'description' => __('Built-in role, only valid in the context of a resource, and automatically assigned to the owner of that resource.'), 'builtin' => true);
+                return array(
+                    'label' => Trans::__('Owner'),
+                    'description' => Trans::__('Built-in role, only valid in the context of a resource, and automatically assigned to the owner of that resource.'),
+                    'builtin' => true,
+                );
 
             default:
                 $roles = $this->getDefinedRoles();
@@ -396,7 +414,6 @@ class Permissions
 
         switch ($parts[0]) {
             case 'overview':
-                list ($_) = $parts;
                 $contenttype = null;
                 if (isset($parts[1])) {
                     $contenttype = $parts[1];
@@ -417,7 +434,7 @@ class Permissions
                 break;
 
             case 'relatedto':
-                list ($_, $contenttype) = $parts;
+                $contenttype = isset($parts[1]) ? $parts[1] : '';
                 if (empty($contenttype)) {
                     $this->audit("Granting 'relatedto' globally (hard-coded override)");
 
@@ -428,7 +445,7 @@ class Permissions
                 break;
 
             case 'contenttype':
-                list($_, $contenttype) = $parts;
+                $contenttype = $parts[1];
                 $permission = $contentid = null;
                 if (isset($parts[2])) {
                     $permission = $parts[2];

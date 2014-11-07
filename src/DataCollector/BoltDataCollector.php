@@ -5,6 +5,8 @@ namespace Bolt\DataCollector;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\DataCollector\DataCollector;
+use Bolt\Library as Lib;
+use Bolt\Translation\Translator as Trans;
 
 /**
  * BoltDataCollector.
@@ -37,9 +39,9 @@ class BoltDataCollector extends DataCollector
         $this->data = array(
             'version' => $this->app['bolt_version'],
             'name' => $this->app['bolt_name'],
-            'fullversion' => sprintf('%s %s %s', __('Version:'), $this->app['bolt_version'], $this->app['bolt_name']),
-            'payoff' => __('Sophisticated, lightweight & simple CMS'),
-            'aboutlink' => sprintf("<a href=\"%s\">%s</a>", path('about'), __('About')),
+            'fullversion' => sprintf('%s %s %s', Trans::__('Version:'), $this->app['bolt_version'], $this->app['bolt_name']),
+            'payoff' => Trans::__('Sophisticated, lightweight & simple CMS'),
+            'aboutlink' => sprintf("<a href=\"%s\">%s</a>", Lib::path('about'), Trans::__('About')),
             'branding' => null,
             'editlink' => null,
             'edittitle' => null
@@ -48,7 +50,7 @@ class BoltDataCollector extends DataCollector
         if ($this->app['config']->get('general/branding/provided_by/0')) {
             $this->data['branding'] = sprintf(
                 "%s <a href=\"mailto:%s\">%s</a>",
-                __("Provided by:"),
+                Trans::__('Provided by:'),
                 $this->app['config']->get('general/branding/provided_by/0'),
                 $this->app['config']->get('general/branding/provided_by/1')
             );

@@ -15,8 +15,8 @@ pages:
     name: Pages
     singular_name: Page
     description: |
-      The **Pages** contentype can be used for the more 'static' pages on your site. Things like
-      _'about us'_, _'contact'_ or a _'disclaimer'_.  
+      The **Pages** contenttype can be used for the more 'static' pages on your site. Things like
+      _'about us'_, _'contact'_ or a _'disclaimer'_.
       To change the fields that are in this contenttype, edit the file `contenttypes.yml` in the
       folder `app/config/`, using the editor of your choice, or by going to 'Configuration' »
       'Contenttypes' in the menu on the left.
@@ -58,9 +58,9 @@ entries:
     name: Entries
     singular_name: Entry
     description: |
-      The **Entries** contentype can be used for things like _'news'_ or _'blogpostings'_. They
+      The **Entries** contenttype can be used for things like _'news'_ or _'blogpostings'_. They
       have a teaser, which can be used for a short blurb on listing-pages, allowing visitors to
-      click-through to the rest of the entry. It also has fields for an image and an optional video.  
+      click-through to the rest of the entry. It also has fields for an image and an optional video.
       To change the fields that are in this contenttype, edit the file `contenttypes.yml` in the
       folder `app/config/`, using the editor of your choice, or by going to 'Configuration' »
       'Contenttypes' in the menu on the left.
@@ -108,9 +108,9 @@ showcases:
     singular_name: Showcase
     singular_slug: showcase
     description: |
-      The **Showcases** contentype is used to show all of the available common field types.
+      The **Showcases** contenttype is used to show all of the available common field types.
       In practice, its uses are limited, but be sure to take a look to see which fields are
-      available for use.  
+      available for use.
       To change (or delete) the fields that are in this contenttype, edit the file `contenttypes.yml`
       in the folder `app/config/`, using the editor of your choice, or by going to 'Configuration' »
       'Contenttypes' in the menu on the left.
@@ -119,7 +119,8 @@ showcases:
             type: text
             class: large
             required: true
-            pattern: "*{2,255}" # see: http://html5pattern.com/
+            pattern: ".{2,255}" # see: http://html5pattern.com/
+            error: "The Title field is required, and must contain at least 2 characters"
             group: Text
         slug:
             type: slug
@@ -194,8 +195,8 @@ showcases:
     show_on_dashboard: true
     default_status: publish
     searchable: false
-    icon: cubes
-    icon_singular: cube
+    icon_many: "fa:cubes"
+    icon_one: "fa:cube"
 
 
 # possible field types:

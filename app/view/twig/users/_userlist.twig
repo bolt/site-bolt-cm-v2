@@ -1,7 +1,7 @@
-<table class='table table-striped dashboardlisting'>
+<table class="table-striped dashboardlisting userlist">
     <thead>
         <tr>
-            <th>#</th>
+            <th>{{ __('Id') }}</th>
             <th>{{ __('Username') }}</th>
             <th>{{ __('Last seen') }}</th>
             <th>{{ __('Roles') }}</th>
@@ -13,13 +13,13 @@
         {% for user in context.users %}
 
             <tr>
-                <td class='id'>
+                <td class="id">
                     {% if user.enabled == 0 %}<s>{% endif %}
                     № {{user.id}}
                     {% if user.enabled == 0 %}</s>{% endif %}
                 </td>
 
-                <td>
+                <td class="username">
                     {% if user.enabled == 0 %}<s>{% endif %}
                     <strong>{{ user.displayname }}</strong> ({{ user.username}})
                     {% if user.enabled == 0 %}</s>{% endif %}
@@ -33,7 +33,7 @@
                     {% endif %}
                 </td>
 
-                <td class='contenttypes'>
+                <td class="contenttypes">
                     {% if 'root' in user.roles %}
                         <strong><em>root</em></strong>
                     {% else %}
@@ -41,7 +41,7 @@
                     {% endif %}
                 </td>
 
-                <td class='actions'>
+                <td class="actions">
                     {% include 'users/_userlist-actions.twig' %}
                 </td>
             </tr>

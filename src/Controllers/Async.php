@@ -2,6 +2,8 @@
 
 namespace Bolt\Controllers;
 
+use Bolt\Translation\Translator as Trans;
+
 use Guzzle\Http\Exception\RequestException;
 use Silex;
 use Silex\ControllerProviderInterface;
@@ -207,10 +209,10 @@ class Async implements ControllerProviderInterface
 
         // don't allow viewing of anything but "readme.md" files.
         if (strtolower(basename($filename)) != 'readme.md') {
-            die('Not allowed');
+            $app->abort(401, 'Not allowed');
         }
         if (!is_readable($filename)) {
-            die('Not readable');
+            $app->abort(401, 'Not readable');
         }
 
         $readme = file_get_contents($filename);
@@ -382,7 +384,7 @@ class Async implements ControllerProviderInterface
     public function browse($namespace, $path, Silex\Application $app, Request $request)
     {
         // No trailing slashes in the path.
-        $path = stripTrailingSlash($path);
+        $path = rtrim($path, '/');
 
         $filesystem = $app['filesystem']->getManager($namespace);
 
@@ -401,14 +403,12 @@ class Async implements ControllerProviderInterface
         }
 
         try {
-            $list = $filesystem->listContents($path);
-            $validFolder = true;
+            $filesystem->listContents($path);
         } catch (\Exception $e) {
-            $app['session']->getFlashBag()->set('error', __("Folder '%s' could not be found, or is not readable.", array('%s' => $path)));
-            $validFolder = false;
+            $app['session']->getFlashBag()->set('error', Trans::__("Folder '%s' could not be found, or is not readable.", array('%s' => $path)));
         }
 
-        $app['twig']->addGlobal('title', __("Files in %s", array('%s' => $path)));
+        $app['twig']->addGlobal('title', Trans::__('Files in %s', array('%s' => $path)));
 
         list($files, $folders) = $filesystem->browse($path, $app);
 
@@ -438,7 +438,8 @@ class Async implements ControllerProviderInterface
 
         $context = array(
             'stack' => $app['stack']->listitems($count),
-            'filetypes' => $app['stack']->getFileTypes()
+            'filetypes' => $app['stack']->getFileTypes(),
+            'namespace' => $app['upload.namespace']
         );
 
         switch ($options) {
@@ -632,8 +633,6 @@ class Async implements ControllerProviderInterface
     public function createfolder(Silex\Application $app, Request $request)
     {
         $namespace = $request->request->get('namespace', 'files');
-        // FIXME seems it never used
-        // $base = $app['resources']->getPath($namespace);
 
         $parentPath = $request->request->get('parent');
         $folderName = $request->request->get('foldername');
