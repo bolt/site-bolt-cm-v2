@@ -617,6 +617,9 @@ footer {
     li {
         h3 {
             margin-bottom: 1em;
+            @media #{$large-up} {
+                text-align: left;
+            }
         }
         padding-left: 3%;
         padding-right: 3%;
