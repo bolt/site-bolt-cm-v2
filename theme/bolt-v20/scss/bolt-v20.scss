@@ -336,10 +336,15 @@ header {
             border-bottom: 2px solid $white;
         }
     }
-    .is-sticky & { //when sticky
+    &.is-sticky  { //when sticky
         margin-top: 0px;
         z-index: 50;
-        background: rgba($black,0.6); 
+        background: rgba($black,0.6);
+        position: fixed;
+        top: 0;
+        left: 50%;
+        margin-left: -600px;
+        //margin-top: -22px;
     }
 }
 

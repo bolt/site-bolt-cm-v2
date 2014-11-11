@@ -10,19 +10,29 @@ jQuery(function($) {
     });
     
 
-    $(window).unbind("scroll").scroll(function () {
+    $(window).scroll(function () {
         $('header').css('backgroundPosition', '0px ' + (document.documentElement.scrollTop / 2) + 'px');
     });
 
    
     if($(window).width() > 801) { // ONLY LARGE-UP 
         
-       // $(".main-nav").sticky({
-       //    topSpacing:0,
-       //     center:true
-       // });
-       // TODO : couldn't get it to work with negative margins on the main-nav
-        
+        $(window).scroll(function () { 
+            var nav = $(".main-nav");
+            var navwidth = nav.width();
+            var halfwidth = Math.round(navwidth/2);
+    
+            // make main-nav sticky when scrolled lower then header height
+            if (document.documentElement.scrollTop > ($('header').height()-44)){
+                nav.addClass('is-sticky');
+                nav.css({ 'margin-left':'-'+halfwidth+'px' });
+            };
+            // make main-nav UNsticky when scrolled up again
+            if (document.documentElement.scrollTop <= ($('header').height()-44)){
+                nav.removeClass('is-sticky');
+                nav.css({'margin-left':'auto'})
+            };
+        });     
     }
     
     
