@@ -45,12 +45,16 @@ section, container {
 
 header, footer {
     @extend .row;
-    max-width: 100%;
+    @media #{$large-up} {
+        max-width: 100%;
+        }
     .inner {
         max-width: 75rem;
         margin-left: auto;
         margin-right: auto;
-        position: relative; 
+        @media #{$large-up} {
+            position: relative; 
+        }
     }
     &:after {
       content: "";
@@ -330,6 +334,9 @@ header {
         li:hover a {
             border-bottom: 2px solid $white;
         }
+    }
+    .is-sticky & { //when sticky
+        margin-top: 0px;   
     }
 }
 
