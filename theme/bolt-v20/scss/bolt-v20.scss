@@ -45,6 +45,7 @@ section, container {
 
 header, footer {
     @extend .row;
+    background-position: fixed;
     @media #{$large-up} {
         max-width: 100%;
         }
@@ -336,7 +337,9 @@ header {
         }
     }
     .is-sticky & { //when sticky
-        margin-top: 0px;   
+        margin-top: 0px;
+        z-index: 50;
+        background: rgba($black,0.6); 
     }
 }
 
@@ -630,8 +633,12 @@ footer {
 /* -------------- TYPOGRAPHY --------------- */
 
 p {
+    a {
+        border-bottom: 1px solid lighten($red, 25%)
+    }
     a:hover {
-        text-decoration: underline;
+        text-decoration: none;
+        border-bottom: 1px solid $red;
     }
     &.meta {
         font-size: 0.8125rem;
@@ -733,7 +740,7 @@ button span.sub, .button span.sub {
 /* -------------- DEBUG --------------- */
 
 
-//* --- add a slash at the beginning of this line to enable!
+/* --- add a slash at the beginning of this line to enable!
 // --- Debug
 // --- From: http://bueltge.de/test/media-query-debugger.php
 @media all {

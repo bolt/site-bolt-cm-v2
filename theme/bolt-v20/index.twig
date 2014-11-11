@@ -45,10 +45,10 @@
 
     {% for item in primaryblocks %}
     <article class="column">
-        <h2>{{item.title}}</h2>
-        <h3 class="subheader">{{item.subtitle}}</h3>
-        {{item.body | slice(0,300)}}
-        <a href="{{item.sitelink}}" class="button">{{item.calltoaction}}</a>          
+        <h2>{{ item.title }}</h2>
+        <h3 class="subheader">{{ item.subtitle }}</h3>
+        {{ item.body }}
+        <a href="{{item.sitelink}}" class="button">{{ item.calltoaction }}</a>          
     </article>
     {% endfor %}
     
