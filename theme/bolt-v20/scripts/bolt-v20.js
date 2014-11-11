@@ -9,9 +9,10 @@ jQuery(function($) {
         $(this).toggleClass('active');
     });
     
+    console.log('hoi');
 
     $(window).scroll(function () {
-        $('header').css('backgroundPosition', '0px ' + (document.documentElement.scrollTop / 2) + 'px');
+        $('header').css('backgroundPosition', '0px ' + (posTop() / 2) + 'px');
     });
 
    
@@ -23,19 +24,21 @@ jQuery(function($) {
             var halfwidth = Math.round(navwidth/2);
     
             // make main-nav sticky when scrolled lower then header height
-            if (document.documentElement.scrollTop > ($('header').height()-44)){
+            if (posTop() > ($('header').height()-44)){
                 nav.addClass('is-sticky');
                 nav.css({ 'margin-left':'-'+halfwidth+'px' });
             };
             // make main-nav UNsticky when scrolled up again
-            if (document.documentElement.scrollTop <= ($('header').height()-44)){
+            if (posTop() <= ($('header').height()-44)){
                 nav.removeClass('is-sticky');
                 nav.css({'margin-left':'auto'})
             };
         });     
     }
     
-    
+    function posTop() {
+        return typeof window.pageYOffset != 'undefined' ? window.pageYOffset: document.documentElement.scrollTop? document.documentElement.scrollTop: document.body.scrollTop? document.body.scrollTop:0;
+    }    
     
     //move aside blok on homepage, mobile only, to bottom
     /*
