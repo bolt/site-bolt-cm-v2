@@ -30,7 +30,7 @@ body {
     font-family: $sans-serif;
 }
 
-footer, section, container {
+section, container {
     @extend .row;
     background: $white;
     &.fullwidth {
@@ -43,9 +43,22 @@ footer, section, container {
     }
 }
 
-header {
+header, footer {
     @extend .row;
+    max-width: 100%;
+    .inner {
+        max-width: 75rem;
+        margin-left: auto;
+        margin-right: auto;
+        position: relative; 
+    }
+    &:after {
+      content: "";
+      display: table;
+      clear: both;
+    }
 }
+
 
 
 .inner {
