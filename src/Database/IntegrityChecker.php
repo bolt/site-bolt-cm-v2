@@ -38,6 +38,12 @@ class IntegrityChecker
      */
     private $tables;
 
+    /**
+     * Array of callables that produce table definitions
+     * @var array
+     */
+    protected $extension_table_generators = array();
+
     const INTEGRITY_CHECK_INTERVAL = 1800; // max. validity of a database integrity check, in seconds
     const INTEGRITY_CHECK_TS_FILENAME = 'dbcheck_ts'; // filename for the check timestamp file
 
@@ -63,8 +69,6 @@ class IntegrityChecker
         }
 
         $this->tables = null;
-
-        $this->extension_table_generators = array();
 
         self::$integrityCachePath = $this->app['resources']->getPath('cache');
     }
@@ -309,6 +313,16 @@ class IntegrityChecker
     protected function cleanupTableDiff(TableDiff $diff)
     {
         $baseTables = $this->getBoltTablesNames();
+
+        // Work around reserved column name removal
+        if ($diff->fromTable->getName() == $this->prefix . 'cron') {
+            foreach ($diff->renamedColumns as $key => $col) {
+                if ($col->getName() == 'interim') {
+                    $diff->addedColumns[] = $col;
+                    unset($diff->renamedColumns[$key]);
+                }
+            }
+        }
 
         if (!in_array($diff->fromTable->getName(), $baseTables)) {
             // we don't remove fields from contenttype tables to prevent accidental data removal

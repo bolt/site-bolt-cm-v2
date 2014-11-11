@@ -61,13 +61,32 @@
             {# only if we have grouping tabs. #}
             {% if context.contenttype.groups|default is not empty %}
                 <ul class="nav nav-tabs" id="filtertabs">
+
+                    {# Add an extra tab, if there are "ungrouped" fields #}
+                    {% set firstfield = context.contenttype.fields|first %}
+                    {% if firstfield.group is empty %}
+                        <li><a class="filter" data-filter="ungrouped">{{ __("Ungrouped") }}</a></li>
+                    {% endif %}
+
+                    {# Defined groups #}
                     {% for groups in context.contenttype.groups %}
                         <li><a class="filter" data-filter="{{ groups }}">{{ __(groups|capitalize) }}</a></li>
                     {% endfor %}
-                    {% if context.contenttype.relations is defined or context.contenttype.taxonomy is defined %}
+
+                    {# Relationships and/or Taxonomy #}
+                    {% if context.contenttype.relations is defined and context.contenttype.taxonomy is defined %}
+                        <li><a class="filter" data-filter="taxonomy">{{ __('Relationships') }} / {{ __('Taxonomy') }}</a></li>
+                    {% endif %}
+                    {% if context.contenttype.relations is defined and context.contenttype.taxonomy is not defined %}
+                        <li><a class="filter" data-filter="taxonomy">{{ __('Relationships') }}</a></li>
+                    {% endif %}
+                    {% if context.contenttype.relations is not defined and context.contenttype.taxonomy is defined %}
                         <li><a class="filter" data-filter="taxonomy">{{ __('Taxonomy') }}</a></li>
                     {% endif %}
+
+                    {# Finally, a tab for Meta #}
                     <li><a class="filter" data-filter="meta">{{ __('Meta') }}</a></li>
+
                 </ul>
             {% endif %}
 

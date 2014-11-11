@@ -161,6 +161,7 @@ class Extensions
             $finder = new Finder();
             $finder->files()
                    ->in($this->basefolder . '/local')
+                   ->followLinks()
                    ->name('init.php')
                    ->depth('== 2');
 
@@ -267,7 +268,7 @@ class Extensions
             try {
                 foreach ($extension->getTwigExtensions() as $extension) {
                     $this->app['twig']->addExtension($extension);
-                    if (!empty($info['allow_in_user_content'])) {
+                    if (is_callable(array($extension, 'isSafe')) && $extension->isSafe() === true) {
                         $this->app['safe_twig']->addExtension($extension);
                     }
                 }

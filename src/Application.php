@@ -25,7 +25,7 @@ class Application extends Silex\Application
     public function __construct(array $values = array())
     {
         $values['bolt_version'] = '2.0.0';
-        $values['bolt_name'] = 'beta 3-pl1';
+        $values['bolt_name'] = 'beta 3-pl3';
 
         parent::__construct($values);
 
@@ -84,9 +84,6 @@ class Application extends Silex\Application
 
     public function initialize()
     {
-        // Register our shutdown handler
-        $this->shutdown();
-
         // Set up locale and translations.
         $this->initLocale();
 
@@ -116,14 +113,6 @@ class Application extends Silex\Application
 
         // Initialise the 'error' handler.
         $this->error(array($this, 'errorHandler'));
-    }
-
-    /**
-     * Register a PHP shutdown function to catch fatal error
-     */
-    public function shutdown()
-    {
-        register_shutdown_function(array('Bolt\Configuration\LowlevelException', 'catchFatalErrors'), $this);
     }
 
     /**

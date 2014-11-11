@@ -23,7 +23,7 @@ abstract class BaseExtension implements ExtensionInterface
     private $composerJsonLoaded;
     private $composerJson;
     private $configLoaded;
-    
+
 
     public function __construct(Application $app)
     {
@@ -194,7 +194,7 @@ abstract class BaseExtension implements ExtensionInterface
 
         // Load local config
         if ($this->isConfigValid($basefile . '_local.yml', false)) {
-            $this->loadConfigFile($basefile . '.yml');
+            $this->loadConfigFile($basefile . '_local.yml');
         }
 
         $this->configLoaded = true;
@@ -336,15 +336,14 @@ abstract class BaseExtension implements ExtensionInterface
         $this->initializeTwig();
         $this->twigExtension->addTwigFilter(new \Twig_SimpleFilter($name, array($this, $callback), $options));
     }
-    
+
     protected function initializeTwig()
     {
         if (!$this->twigExtension) {
             $this->twigExtension = new TwigProxy($this->getName());
         }
     }
-    
-    
+
     public function getTwigExtensions()
     {
         if ($this->twigExtension) {

@@ -37,10 +37,13 @@ a:active {
     color: $linkactive;
 }
 
-
 strong, b {
     font-weight: 600;
     line-height: normal;
+}
+
+em, i {
+    font-style: italic;
 }
 
 tt, code, .source-code {
@@ -95,3 +98,4 @@ h1 span {
 .status-draft {
     color: #0569E2; // #99F;
 }
+
