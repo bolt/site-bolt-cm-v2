@@ -105,6 +105,7 @@ class Extend implements ControllerProviderInterface, ServiceProviderInterface
         return array(
                 'messages' => $app['extend.runner']->messages,
                 'enabled' => $this->readWriteMode,
+                'offline' => $app['extend.runner']->offline,
                 'extensionsPath' => $extensionsPath,
                 'site' => $app['extend.site']
             );
@@ -252,12 +253,11 @@ class Extend implements ControllerProviderInterface, ServiceProviderInterface
      */
     public function before(Request $request, \Bolt\Application $app)
     {
-        
         // This disallows extensions from adding any extra snippets to the output
         if ($request->get("_route") !== 'extend') {
             $app['htmlsnippets'] = false;
         }
-        
+
         // Start the 'stopwatch' for the profiler.
         $app['stopwatch']->start('bolt.backend.before');
 
@@ -270,7 +270,6 @@ class Extend implements ControllerProviderInterface, ServiceProviderInterface
 
         // Stop the 'stopwatch' for the profiler.
         $app['stopwatch']->stop('bolt.backend.before');
-
     }
 
     public function boot(Silex\Application $app)

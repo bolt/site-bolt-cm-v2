@@ -890,6 +890,8 @@ class Backend implements ControllerProviderInterface
                         // Get our record after POST_SAVE hooks are dealt with and return the JSON
                         $content = $app['storage']->getContent($contenttype['slug'], array('id' => $id, 'returnsingle' => true));
 
+                        $val = array();
+
                         foreach ($content->values as $key => $value) {
                             // Some values are returned as \Twig_Markup and JSON can't deal with that
                             if (is_array($value)) {
@@ -1667,7 +1669,7 @@ class Backend implements ControllerProviderInterface
                 } else {
                     $path = $app['resources']->getPath($namespace);
                 }
-                
+
                 $filename = realpath($path . "/" . $file);
             } catch (\Exception $e) {
                 $path = $app['resources']->getPath('files');
@@ -1845,13 +1847,14 @@ class Backend implements ControllerProviderInterface
                     // we'll set an error if someone still submits the form and write is not allowed
                     $app['session']->getFlashBag()->clear('warning');
 
-                    if ( ! $writeallowed){
+                    if (!$writeallowed) {
                         $msg = Trans::__("The file '%s' is not writable. You will have to use your own editor to make modifications to this file.", array('%s' => $shortPath));
                         $app['session']->getFlashBag()->set('error', $msg);
-                    }else{
+                    } else {
                         file_put_contents($path, $contents);
                         $msg = Trans::__("File '%s' has been saved.", array('%s' => $shortPath));
                         $app['session']->getFlashBag()->set('info', $msg);
+
                         return Lib::redirect('translation', array('domain' => $domain, 'tr_locale' => $tr_locale));
                     }
                 }
