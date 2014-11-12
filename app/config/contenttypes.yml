@@ -38,6 +38,9 @@ features:
         slug:
             type: slug
             uses: title
+        frontpage:
+            type: checkbox
+            label: Tonen op homepage?
         image:
             type: image             
         text:
@@ -48,33 +51,6 @@ features:
     taxonomy: [ chapters ]
     recordsperpage: 100
     
-
-homepage:
-    name: Homepage
-    singular_name: Home
-    fields:
-        title:
-            type: text
-            class: large
-        slug:
-            type: slug
-            uses: title
-        subtitle:
-            label: Ondertitel
-            type: text
-            class: wide
-        block1:
-            type: html
-            height: 150px
-        block2:
-            type: html
-            height: 150px
-        block3:
-            type: html
-            height: 150px
-    template: index.twig
-
-
 pages:
     name: Pages
     singular_name: Page
@@ -174,7 +150,34 @@ blocks:
             label: Linkt naar
     record_template: newsitem.twig
     listing_template: showcase.twig
-    
+ 
+# UITFASEREN!:
+homepage:
+    name: Homepage
+    singular_name: Home
+    fields:
+        title:
+            type: text
+            class: large
+        slug:
+            type: slug
+            uses: title
+        subtitle:
+            label: Ondertitel
+            type: text
+            class: wide
+        block1:
+            type: html
+            height: 150px
+        block2:
+            type: html
+            height: 150px
+        block3:
+            type: html
+            height: 150px
+    template: index.twig
+
+   
 
 # possible field types:
 # text - varchar(256) - input type text

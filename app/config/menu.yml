@@ -12,8 +12,8 @@ main:
     link: http://docs.bolt.cm
   - label: News
     path: page/news
-  - label: IRC/Chat
-    path: pages/irc
+  - label: Community
+    path: pages/community
   - label: Download
     path: pages/download
 #    class: last
