@@ -438,7 +438,8 @@ section.hero {
 
 /* -------------- SHORTTEXTS SECTION--------------- */
 
-section.shorttexts {
+section.shorttexts,
+section.logos {
 	article {
 		@include grid-column(
             $columns: 6
@@ -475,8 +476,13 @@ section.shorttexts {
 	
 }
 
-
-
+section.logos {
+	article {
+		@include grid-column(
+            $columns: 2
+            );
+    }
+}
 /* -------------- SLIDER SECTION--------------- */
 
 .slider{
@@ -630,6 +636,10 @@ footer {
 }
 
 /* --------------- FEATURES ---------------*/
+
+section.features {
+    
+}
 
 .featurelist {
     @include block-grid(1);

@@ -56,14 +56,12 @@
     
 <section class="features">
    <div class="maincolumn">
-       <h1>Features</h1> 
-       {% setcontent features = 'features' where {'frontpage':'0'} %}
+       <h1>Features that make Bolt an awesome CMS</h1> 
+       {% setcontent features = 'features' where {'frontpage':'0'} limit '6'%}
        <ul class="featurelist">
             {% for item in features %}
             <li>
-                <h3><i class="fa fa-bolt"></i>{{ item.title }} -{{item.frontpage}}-
-            </h3>
-                {{ item.text }} 
+                <h3><i class="fa fa-bolt"></i>{{ item.title }} -{{item.frontpage}}-</h3> 
             </li>
             {% endfor %}
         </ul>
@@ -114,7 +112,22 @@
     {% endfor %}
 </section>
 
-<section class="shorttexts">
+<section class="showcases">
+   <div class="maincolumn">
+       <h1>Smaller or bigger sites, bolt fits every one of them</h1> 
+       {% setcontent showcases = 'showcases/latest/6' %}
+       <ul class="featurelist">
+            {% for item in showcases %}
+            <li>
+                <h3>{{ item.title }}</h3> 
+                <img src="{{ thumbnail(item.image, 398, 270,"c") }}">                
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</section>
+
+<section class="logos">
 	<article>
 		<div class="icon"><a href="http://symfony.com/"><img src="{{paths.theme}}images/symfony_logo.png" width="100" alt="Symfony logo" /></a></div>
 		<h3>Built on Silex/Symfony</h3>
@@ -129,8 +142,26 @@
 	</article>
 	<article>
 		<div class="icon"><a href="#"><img src="{{paths.theme}}images/octocat.png" width="100" alt="Github" alt="Here be logo" /></a></div>
-		<h3>Debug bar</h3>
+		<h3>jQuery</h3>
 	</article>
+	
+	<article>
+		<div class="icon"><a href="#"><img src="{{paths.theme}}images/octocat.png" width="100" alt="Github" alt="Here be logo" /></a></div>
+		<h3>Doctrine</h3>
+	</article>
+	<article>
+		<div class="icon"><a href="#"><img src="{{paths.theme}}images/octocat.png" width="100" alt="Github" alt="Here be logo" /></a></div>
+		<h3>Composer</h3>
+	</article>
+	<article>
+		<div class="icon"><a href="#"><img src="{{paths.theme}}images/octocat.png" width="100" alt="Github" alt="Here be logo" /></a></div>
+		<h3>Swiftmailer</h3>
+	</article>
+	<article>
+		<div class="icon"><a href="#"><img src="{{paths.theme}}images/octocat.png" width="100" alt="Github" alt="Here be logo" /></a></div>
+		<h3>CKeditor</h3>
+	</article>
+	
 </section>
 
 {% endblock content %}
