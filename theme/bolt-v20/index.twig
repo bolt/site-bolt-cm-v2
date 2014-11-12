@@ -9,8 +9,8 @@
 	<div class="maincolumn">
 
 		<article class="row">
-            <h1>Easy for editors and a developers wet dream</h1>
-            <h2 class="subheader articlebody">Bolt is an open source Content Management Tool, which strives to be as simple and straightforward as possible. It is quick to set up, easy to configure, uses elegant templates, and above all: It’s a joy to use.</h2>
+            <h1>{{ record.title}}</h1>
+            <h2 class="subheader articlebody">{{ record.subtitle }}</h2>
         </article>
     
     </div>
@@ -37,18 +37,18 @@
 
 <section class="maininfo">
     
-    {% setcontent aboutblock = 'blocks/about-bolt' %}
-    {% setcontent whoblock = 'blocks/who-needs-bolt' %}
-    {% setcontent featureblock = 'blocks/features' %}
+    {% setcontent devblock = 'blocks/developers' %}
+    {% setcontent frontendblock = 'blocks/frontend-designers' %}
+    {% setcontent editorblock = 'blocks/content-editors' %}
     
-    {% set primaryblocks = [aboutblock,whoblock,featureblock] %}
+    {% set primaryblocks = [devblock,frontendblock,editorblock] %}
 
     {% for item in primaryblocks %}
     <article class="column">
         <h2>{{ item.title }}</h2>
         <h3 class="subheader">{{ item.subtitle }}</h3>
         {{ item.body }}
-        <a href="{{item.sitelink}}" class="button">{{ item.calltoaction }}</a>          
+        <!-- a href="{{item.sitelink}}" class="button">{{ item.calltoaction }}</a -->          
     </article>
     {% endfor %}
     
@@ -111,7 +111,7 @@
 		<h3>Github</h3>
 	</article>
 	<article>
-		<div class="icon"><a href="#"><img src="{{paths.theme}}images/logo.png" alt="Here be logo" /></a></div>
+		<div class="icon"><a href="#"><img src="{{paths.theme}}images/octocat.png" width="100" alt="Github" alt="Here be logo" /></a></div>
 		<h3>Debug bar</h3>
 	</article>
 </section>
