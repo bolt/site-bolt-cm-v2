@@ -430,6 +430,7 @@ section.hero {
 	padding-top: 4em;
 	h1 {
 		margin-bottom: 1em;
+		font-weight: 400;
 	}
 	h2 {
 		font-size: 1.25rem;
@@ -438,8 +439,7 @@ section.hero {
 
 /* -------------- SHORTTEXTS SECTION--------------- */
 
-section.shorttexts,
-section.logos {
+section.shorttexts{
 	article {
 		@include grid-column(
             $columns: 6
@@ -477,11 +477,40 @@ section.logos {
 }
 
 section.logos {
-	article {
+    background: $lightgrey;
+	h1{
+    	font-size: 1.6875em;
+    	text-align: center;
+	}
+	ul.logolist{
+    	@include block-grid(4);
+    	@media #{$large-up} {
+    	    @include block-grid(9);
+    	}
+    	li{
+        	padding-bottom: 0;
+        	&.sec{
+                display: none;
+                @media #{$large-up}{
+                    display: block;
+                }	
+        	}
+    	}
+    	h3{
+        	display: none;
+    	}
+	}
+	
+	/*article {
 		@include grid-column(
-            $columns: 2
+            $columns: 4
             );
-    }
+		@media #{$medium-up} {
+    		@include grid-column(
+            $columns: 1
+            );
+        }
+    }*/
 }
 /* -------------- SLIDER SECTION--------------- */
 
@@ -613,11 +642,11 @@ footer {
         }
     }
     nav {
+        display: none;
         @include grid-column(
             $columns: 12
             );
         //background: rgba(0, 0, 0, 0.4);
-        display: block;
         height: 44px;
         margin: 1em auto 2rem;
         max-width: 75rem;
@@ -632,13 +661,16 @@ footer {
                 text-shadow: 1px 1px 1px rgba(0,0,0,.8);
             }
         }
+        @media #{$large-up}{
+            display: block;
+        }
     }
 }
 
 /* --------------- FEATURES ---------------*/
 
 section.features {
-    
+    background: $lightgrey;     
 }
 
 .featurelist {
@@ -665,6 +697,17 @@ section.features {
     .fa {
             color: $red;
             font-size: 80%;
+    }
+}
+
+
+/* --------------- SHOWCASES ---------------*/
+
+section.showcases {
+    background: $lightgrey;
+    h1{
+        margin-bottom: 2rem;
+        text-align: center;
     }
 }
 
@@ -806,7 +849,7 @@ a.topbutton {
 /* -------------- DEBUG --------------- */
 
 
-/* --- add a slash at the beginning of this line to enable!
+//* --- add a slash at the beginning of this line to enable!
 // --- Debug
 // --- From: http://bueltge.de/test/media-query-debugger.php
 @media all {
