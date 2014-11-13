@@ -61,11 +61,13 @@
        <ul class="featurelist">
             {% for item in features %}
             <li>
-                <h3><i class="fa fa-bolt"></i>{{ item.title }} -{{item.frontpage}}-</h3> 
+                <h3><i class="fa fa-bolt"></i>{{ item.title }}</h3> 
+                <!-- {{item.frontpage}} -->
+                {{ item.text }}
             </li>
             {% endfor %}
         </ul>
-        <a href="/pages/features" class="button">See more features</a>
+        <a href="/pages/features" class="button">Explore the features</a>
     </div>
 </section>
 

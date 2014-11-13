@@ -477,8 +477,9 @@ section.shorttexts{
 }
 
 section.logos {
-    background: $lightgrey;
-	h1{
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+    h1{
     	font-size: 1.6875em;
     	text-align: center;
 	}
@@ -515,7 +516,7 @@ section.logos {
 /* -------------- SLIDER SECTION--------------- */
 
 .slider{
-    background: $darkblue;
+    background: #8b664f;
     padding-top: 2em;
     padding-bottom: 4em;
     //max-width: none;
@@ -670,10 +671,26 @@ footer {
 /* --------------- FEATURES ---------------*/
 
 section.features {
-    background: $lightgrey;     
+    background: $lightgrey; 
+    h1{
+        font-weight: 400;
+        margin-bottom: 1em;
+    }
+    a.button{
+        display: block;
+        margin: 0 auto;
+        max-width: 200px;
+    }
+    ul > li p {
+        display: none;
+        @media #{$large-up} {
+            display: block;
+        }
+    }    
 }
 
 .featurelist {
+    margin-top: 1rem;
     @include block-grid(1);
     // MEDIUM //
     @media #{$medium-up} {
@@ -700,6 +717,17 @@ section.features {
     }
 }
 
+.body-features {
+    h1{
+        font-weight: 400;
+        margin-bottom: 1em;
+    }
+    h2.subheader {
+        font-size: 1.25rem;
+        text-align: center;
+    }
+}
+
 
 /* --------------- SHOWCASES ---------------*/
 
@@ -708,6 +736,16 @@ section.showcases {
     h1{
         margin-bottom: 2rem;
         text-align: center;
+        font-weight: 400;
+    }
+    ul.featurelist {
+        li:nth-child(3){
+            display: none;
+            @media #{$large-up} {
+                display: block;
+            }
+        }
+        
     }
 }
 
