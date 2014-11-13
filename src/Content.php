@@ -113,29 +113,6 @@ class Content implements \ArrayAccess
             $this->setValue($key, $value);
         }
 
-        $now = date("Y-m-d H:i:s");
-
-        if (!isset($this->values['datecreated']) ||
-            !preg_match("/(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})/", $this->values['datecreated'])) {
-            $this->values['datecreated'] = $now;
-        }
-
-        if (!isset($this->values['datepublish']) || ($this->values['datepublish'] < "1971-01-01 01:01:01") ||
-            !preg_match("/(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})/", $this->values['datepublish'])) {
-            $this->values['datepublish'] = $now;
-        }
-
-        if (!isset($this->values['datechanged']) || ($this->values['datepublish'] < "1971-01-01 01:01:01") ||
-            !preg_match("/(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})/", $this->values['datechanged'])) {
-            $this->values['datechanged'] = $now;
-        }
-
-        if (!isset($this->values['datedepublish']) ||
-            !preg_match("/(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})/", $this->values['datecreated'])) {
-            // Not all DB-engines can handle a date like '0000-00-00', so we pick a safe date, that's far enough in the past.
-            $this->values['datedepublish'] = "1900-01-01 00:00:00";
-        }
-
         // If default status is set in contentttype..
         if (empty($this->values['status'])) {
             $this->values['status'] = $this->contenttype['default_status'];
@@ -156,7 +133,7 @@ class Content implements \ArrayAccess
         foreach ($this->values as $key => $value) {
             if (in_array($this->fieldtype($key), $serialized_field_types)) {
                 if (!empty($value) && is_string($value) && (substr($value, 0, 2) == "a:" || $value[0] === '[' || $value[0] === '{')) {
-                    $unserdata = @Lib::smart_unserialize($value);
+                    $unserdata = @Lib::smartUnserialize($value);
                     if ($unserdata !== false) {
                         $this->values[$key] = $unserdata;
                     }
@@ -208,7 +185,7 @@ class Content implements \ArrayAccess
     {
         // Check if the value need to be unserialized..
         if (is_string($value) && substr($value, 0, 2) == "a:") {
-            $unserdata = @Lib::smart_unserialize($value);
+            $unserdata = @Lib::smartUnserialize($value);
             if ($unserdata !== false) {
                 $value = $unserdata;
             }
@@ -230,10 +207,15 @@ class Content implements \ArrayAccess
             return;
         }
 
-        if ($key == 'datecreated' || $key == 'datechanged' || $key == 'datepublish' || $key == 'datedepublish') {
+        if (in_array($key, array('datecreated', 'datechanged', 'datepublish', 'datedepublish'))) {
             if (!preg_match("/(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})/", $value)) {
-                // @todo Try better date-parsing, instead of just setting it to 'now'..
-                $value = date("Y-m-d H:i:s");
+                // @todo Try better date-parsing, instead of just setting it to 
+                // 'now' (or 'the past' for datedepublish)
+                if ($key == 'datedepublish') {
+                    $value = date("1900-01-01 00:00:00");
+                } else {
+                    $value = date("Y-m-d H:i:s");
+                }
             }
         }
 
@@ -274,15 +256,6 @@ class Content implements \ArrayAccess
                 $values['status'] = "draft";
             }
         }
-
-        // If we set a 'publishdate' in the future, and the status is 'published', set it to 'timed' instead.
-        if ($values['datepublish'] > date("Y-m-d H:i:s") && $values['status'] == "published") {
-            $values['status'] = "timed";
-        }
-
-        // Get the taxonomies from the POST-ed values. We don't support 'order' for taxonomies that
-        // can have multiple values.
-        // @todo use $this->setTaxonomy() for this
 
         if (!empty($values['taxonomy'])) {
             foreach ($values['taxonomy'] as $taxonomytype => $value) {
