@@ -156,6 +156,7 @@ header {
         color: $white;
         margin-left: 40px;
         font-size: 1em;
+        text-shadow: 1px 1px 8px rgba(0,0,0,0.8);
         // MEDIUM //
        @media #{$medium-up} {
             font-size: 2em;

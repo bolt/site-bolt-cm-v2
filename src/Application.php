@@ -25,7 +25,7 @@ class Application extends Silex\Application
     public function __construct(array $values = array())
     {
         $values['bolt_version'] = '2.0.0';
-        $values['bolt_name'] = 'beta 3-pl3';
+        $values['bolt_name'] = 'beta 4';
 
         parent::__construct($values);
 
@@ -209,7 +209,10 @@ class Application extends Silex\Application
         );
         setlocale(LC_ALL, $locale);
 
-        $this->register(new Silex\Provider\TranslationServiceProvider(), array());
+        $this->register(
+            new Silex\Provider\TranslationServiceProvider(),
+            array('locale_fallbacks' => array(Application::DEFAULT_LOCALE))
+        );
 
         // Loading stub functions for when intl / IntlDateFormatter isn't available.
         if (!function_exists('intl_get_error_code')) {
