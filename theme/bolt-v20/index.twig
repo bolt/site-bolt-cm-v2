@@ -57,7 +57,7 @@
 <section class="features">
    <div class="maincolumn">
        <h1>Features that make Bolt an awesome CMS</h1> 
-       {% setcontent features = 'features' where {'frontpage':'0'} limit '6'%}
+       {% setcontent features = 'features' where {'frontpage':'1'} limit '6'%}
        <ul class="featurelist">
             {% for item in features %}
             <li>

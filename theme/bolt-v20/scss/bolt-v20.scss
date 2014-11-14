@@ -156,7 +156,7 @@ header {
         color: $white;
         margin-left: 40px;
         font-size: 1em;
-        text-shadow: 1px 1px 8px rgba(0,0,0,0.8);
+        text-shadow: 1px 1px 8px rgba(0,0,0,1);
         // MEDIUM //
        @media #{$medium-up} {
             font-size: 2em;
@@ -682,10 +682,12 @@ section.features {
         margin: 0 auto;
         max-width: 200px;
     }
-    ul > li p {
-        display: none;
-        @media #{$large-up} {
-            display: block;
+    ul > li {
+            p {
+            display: none;
+            @media #{$large-up} {
+                display: block;
+            }
         }
     }    
 }
