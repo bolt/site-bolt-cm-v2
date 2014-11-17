@@ -1,23 +1,44 @@
 jQuery(function($) {
     
-    // hiding the mobile navigation
+    // HIDING MOBILE NAVIGATION
     $('.main-nav').removeClass('expanded');
-    
     // and toggling it again with a button
     $('.menu-toggle').click(function() {
         $('.main-nav').toggleClass('expanded');
         $(this).toggleClass('active');
     });
     
-    console.log('hoi');
-
+   
+    // MAKE TOPIMAGE SCROLL SLOWER FOR PARALLAX EFFECT
     $(window).scroll(function () {
         $('header').css('backgroundPosition', '0px ' + (posTop() / 2) + 'px');
     });
+    
+    
+    //initialize Cycle 2 slideshow.
+    $('.bolt-slideshow').cycle();
+    
+    if($(window).width() < 801) { // ONLY MEDIUM-DOWN
+    
+        $('.bolt-slideshow').on('cycle-after', function(event, opts) {
 
-   
-    if($(window).width() > 801) { // ONLY LARGE-UP 
+            //$('.slider .pager').css('margin-left', '0px');
+            var offset = $('.cycle-pager-active').offset().left - 30;
+            var margin =  $('.slider .pager').css('margin-left').replace(/[^-\d\.]/g, '');
+            var offsetdef = -margin + offset;
+            console.log('A:', offset, 'margin:',margin, 'def', offsetdef);
+            $('.slider .pager').animate({'margin-left': '-' + offsetdef + 'px'});
+
+            
+        });
+    
+    
+    }
         
+   
+    if($(window).width() > 800) { // ONLY LARGE-UP 
+        
+        // STICKY MAIN-NAV
         $(window).scroll(function () { 
             var nav = $(".main-nav");
             var navwidth = nav.width();
@@ -36,23 +57,10 @@ jQuery(function($) {
         });     
     }
     
+    // FIX FOR SCROLLPOS IN ALL BROWSERS
     function posTop() {
         return typeof window.pageYOffset != 'undefined' ? window.pageYOffset: document.documentElement.scrollTop? document.documentElement.scrollTop: document.body.scrollTop? document.body.scrollTop:0;
     }    
-    
-    //move aside blok on homepage, mobile only, to bottom
-    /*
-    if($(window).width() < 641) {
-        $('.body-home aside').prependTo("#asidemoved");
-    }
-    //*/
-    
-    //make li's clickable
-    /*
-    $('.clickable').click(function (){
-      location.href = $(this).find('a').attr('href');
-    });
-    //*/
     
 
     

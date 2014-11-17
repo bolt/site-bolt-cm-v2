@@ -520,6 +520,7 @@ section.logos {
     background: $darkblue;
     padding-top: 2em;
     padding-bottom: 4em;
+    overflow: hidden;
     //max-width: none;
     // MEDIUM  //
     @media #{$medium-up} {

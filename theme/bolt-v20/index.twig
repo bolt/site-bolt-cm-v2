@@ -75,12 +75,13 @@
     <div class="inner">
     {% setcontent slideshow = 'slides' %}
     <div class='pager'></div> {# automatically filled #}
-    <div class="cycle-slideshow"
+    <div class="bolt-slideshow"
         data-cycle-swipe='true'
         data-cycle-fx='scrollHorz'
         data-cycle-timeout='0'
         data-cycle-pager=".pager"
         data-cycle-slides="> div"
+        data-cycle-log="false"
         >
         {% for item in slideshow %}
         <div class="slide" data-cycle-pager-template="<a href=#>{{item.title}}</a> ">
