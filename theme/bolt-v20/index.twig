@@ -116,9 +116,10 @@
 </section>
 
 <section class="showcases">
+    <div class="maincolumn">   
        <h1>Smaller or bigger sites, Bolt fits every one of them</h1> 
        {% setcontent showcases = 'showcases/latest/3' %}
-       <ul class="featurelist">
+       <ul class="showcaselist">
             {% for item in showcases %}
             <li>
                 <h3>{{ item.title }}</h3> 
@@ -126,9 +127,11 @@
             </li>
             {% endfor %}
         </ul>
+    </div>    
 </section>
 
 <section class="logos">
+    <div class="maincolumn">
     <h1>Full of proven technologies</h1>
 	<ul class="logolist">
     	<li>
@@ -167,9 +170,8 @@
     		<div class="icon"><a href="http://swiftmailer.org/"><img src="{{paths.theme}}images/swiftmailer_logo.png" width="100" alt="Swiftmailer" alt="Swiftmailer" title="Swiftmailer"/></a></div>
     		<h3>Swiftmailer</h3>
     	</li>
-    	
 	</ul>
-	
+    </div>
 </section>
 
 {% endblock content %}

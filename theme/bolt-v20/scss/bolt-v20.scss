@@ -480,12 +480,14 @@ section.shorttexts{
 section.logos {
     padding-top: 1rem;
     padding-bottom: 1rem;
+    //overflow: hidden;
     h1{
     	font-size: 1.6875em;
     	text-align: center;
 	}
 	ul.logolist{
     	@include block-grid(4);
+    	margin: 0 -0.9375rem;
     	@media #{$large-up} {
     	    @include block-grid(9);
     	}
@@ -495,8 +497,12 @@ section.logos {
                 display: none;
                 @media #{$large-up}{
                     display: block;
-                }	
-        	}
+                }
+            }
+            &:nth-child(4){
+                //padding-right: 0px;
+                //background: #f09;
+            }
     	}
     	h3{
         	display: none;
@@ -742,11 +748,32 @@ section.showcases {
         text-align: center;
         font-weight: 400;
     }
-    ul.featurelist {
+    ul.showcaselist {
+        margin-top: 1rem;
+        @include block-grid(1);
+        // MEDIUM //
+        @media #{$medium-up} {
+            @include block-grid(2);
+        }
+        // LARGE //
+        @media #{$large-up} {
+            @include block-grid(3);
+        }
+        li{
+            padding-left: 3%;
+            padding-right: 3%;
+            padding-bottom: 3em;
+        }
         li:nth-child(3){
             display: none;
             @media #{$large-up} {
                 display: block;
+            }
+        }
+        h3 {
+            margin-bottom: 1em;
+            @media #{$large-up} {
+                text-align: left;
             }
         }
         
