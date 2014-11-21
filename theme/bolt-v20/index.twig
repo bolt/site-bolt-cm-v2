@@ -86,8 +86,8 @@
         {% for item in slideshow %}
         <div class="slide" data-cycle-pager-template="<a href=#>{{item.title}}</a> ">
             <div class="slideimg">
-                <img class="large" src="{{ thumbnail(item.image, 700, 530,"c") }}">
-                <img class="mobile" src="{{ thumbnail(item.imagemobile, 250, 435,"c") }}">
+                <img class="large" src="{{ thumbnail(item.image, 700, 430,"c") }}">
+                <img class="mobile" width="260" src="{{ thumbnail(item.imagemobile, 520, 400,"c") }}">
             </div>
             <div class="highlights">
             {{item.body}}
@@ -118,13 +118,16 @@
 <section class="showcases">
     <div class="maincolumn">   
        <h1>Smaller or bigger sites, Bolt fits every one of them</h1> 
-       {% setcontent showcases = 'showcases/latest/3' %}
+       {% setcontent showcases = 'showcases' where {'frontpage':'1'} %}
+       {% set showcases = showcases|shuffle %}
        <ul class="showcaselist">
             {% for item in showcases %}
+            {% if loop.index <= 3 %}
             <li>
                 <h3>{{ item.title }}</h3> 
-                <img src="{{ thumbnail(item.image, 398, 270,"c") }}">                
+                <a href="{{ item.sitelink }}"><img src="{{ thumbnail(item.image, 398, 270,"c") }}"></a>                
             </li>
+            {% endif %}
             {% endfor %}
         </ul>
     </div>    

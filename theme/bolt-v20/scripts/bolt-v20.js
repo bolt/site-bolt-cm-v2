@@ -26,7 +26,7 @@ jQuery(function($) {
             var offset = $('.cycle-pager-active').offset().left - 30;
             var margin =  $('.slider .pager').css('margin-left').replace(/[^-\d\.]/g, '');
             var offsetdef = -margin + offset;
-            console.log('A:', offset, 'margin:',margin, 'def', offsetdef);
+            //console.log('A:', offset, 'margin:',margin, 'def', offsetdef);
             $('.slider .pager').animate({'margin-left': '-' + offsetdef + 'px'});
 
             

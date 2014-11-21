@@ -116,6 +116,9 @@ showcases:
         slug:
             type: slug
             uses: title
+        frontpage:
+            type: checkbox
+            label: Tonen op homepage?
         image:
             type: image             
         sitelink:
