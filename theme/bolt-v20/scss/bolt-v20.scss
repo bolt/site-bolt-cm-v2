@@ -339,7 +339,7 @@ header {
     }
     &.is-sticky  { //when sticky
         margin-top: 0px;
-        z-index: 100; // to go over sliderimg
+        z-index: 160; // to go over sliderimg
         background: rgba($black,0.6);
         position: fixed;
         top: 0;
