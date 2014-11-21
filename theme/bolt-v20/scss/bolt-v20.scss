@@ -339,7 +339,7 @@ header {
     }
     &.is-sticky  { //when sticky
         margin-top: 0px;
-        z-index: 50;
+        z-index: 100; // to go over sliderimg
         background: rgba($black,0.6);
         position: fixed;
         top: 0;
@@ -519,10 +519,11 @@ section.logos {
 /* -------------- SLIDER SECTION--------------- */
 
 .slider{
-    background: $darkblue;
+    background: $browngrey;
     padding-top: 2em;
-    padding-bottom: 4em;
+    padding-bottom: 2em;
     overflow: hidden;
+    margin-bottom: 3em;
     //max-width: none;
     // MEDIUM  //
     @media #{$medium-up} {
@@ -555,7 +556,7 @@ section.logos {
         
         a{
             display: inline-block;
-            color: $mediumblue;
+            color: $black;
             margin-right: 2em;
             font-size: 1.25rem;
             line-height: 2;
@@ -616,7 +617,6 @@ section.logos {
             margin-bottom: 1em;
             line-height: 1.4;
             @media #{$large-up}{
-                font-size: 1.25rem;
                 margin-bottom: 1em;
             }   
             &:before {
@@ -927,7 +927,7 @@ a.topbutton {
 /* -------------- DEBUG --------------- */
 
 
-//* --- add a slash at the beginning of this line to enable!
+/* --- add a slash at the beginning of this line to enable!
 // --- Debug
 // --- From: http://bueltge.de/test/media-query-debugger.php
 @media all {
@@ -946,7 +946,7 @@ a.topbutton {
     }
 }
 
-@media #{$small-up}      { body::before { content: "$widthS"; background: rgba( 165,  42,  42, 0.8 ); } }
+@media #{$small-up}     { body::before { content: "$widthS"; background: rgba( 165,  42,  42, 0.8 ); } }
 @media #{$medium-up}    { body::before { content: "$widthM" ; background: rgba( 255,   0,   0, 0.8 ); } }
 @media #{$large-up}     {  body::before { content: "$widthL" ; background: rgba(   0, 153, 153, 0.8 ); } }
 @media #{$xlarge-up}    {  body::before { content: "$widthXL" ; background: rgba( 159, 238,   0, 0.8 ); } }
