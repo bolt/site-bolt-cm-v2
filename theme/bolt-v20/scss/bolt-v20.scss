@@ -156,7 +156,7 @@ header {
         color: $white;
         margin-left: 40px;
         font-size: 1em;
-        text-shadow: 1px 1px 8px rgba(0,0,0,1);
+        text-shadow: 2px 2px 3px #000;
         // MEDIUM //
        @media #{$medium-up} {
             font-size: 2em;
@@ -416,6 +416,9 @@ section{   // was .maininfo, .secinfo
                 );
             }
         }
+        h2 {
+            margin: 2rem 0 1rem 0;
+        }
     }
 }
 
@@ -429,6 +432,7 @@ section{   // was .maininfo, .secinfo
 
 section.hero {
 	padding-top: 4em;
+	padding-bottom: 0em;
 	h1 {
 		margin-bottom: 1em;
 		font-weight: 400;
@@ -744,6 +748,9 @@ section.features {
         font-size: 1.25rem;
         text-align: center;
     }
+    section {
+        padding-bottom: 0;
+    }
 }
 
 
@@ -818,6 +825,9 @@ h1 a, h2 a, h3 a, h4 a, h5 a {
     @media #{$large-up}{
         text-align: left;
     }
+    &.subheader {
+        text-align: center;
+    }
 }
 
 
@@ -834,7 +844,7 @@ h3.subheader {
 i {
     margin-right: .5em;
 }
-h1, h2, h3, h4 {
+h2, h3, h4 {
     font-weight: 300;
 }
 
@@ -872,7 +882,7 @@ h1, h2, h3, h4 {
               max-width: 200px;
               margin: 2rem 0 1rem;
         }      
-    }   
+    } 
 }
 
 .maininfo .maincolumn {
@@ -881,7 +891,7 @@ h1, h2, h3, h4 {
          @media #{$large-up}{
               margin-top: 2em;
         }      
-    }   
+    } 
 }
 
 
@@ -913,6 +923,36 @@ a.topbutton {
         clear: both;
         }
         
+}
+
+//Buttonlist, possibly in content.
+
+.maininfo .maincolumn ul.buttonlist {
+    margin: 2rem 0 1rem 0;
+    list-style: none;
+    clear: both;
+    li{
+        height: 52px;
+        @media #{$medium-up}{
+        float: left;
+        width: 28%;
+        margin-left: 5%;
+        margin-right: 0;
+        }
+        a.button {
+            margin-left: auto;
+            margin-right: auto;
+            @media #{$medium-up}{
+                margin: 0;
+            }
+        
+        }    
+    }
+    &:after {
+      content: "";
+      display: table;
+      clear: both;
+    }
 }
 
 

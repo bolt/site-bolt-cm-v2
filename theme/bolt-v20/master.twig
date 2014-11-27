@@ -43,23 +43,24 @@
 <body class="{%- block bodyclass -%}{%- endblock -%}">
     {% setcontent home = 'pages/homepage' %}
     <header style="background-image: url({{ thumbnail(home.image, 1900, 800,"c") }});">
+        
+        <!--span class="mainimg" data-picture data-alt="An awesome bolt image">
+            <span data-src="{{ thumbnail(home.image, 640, 400,"c") }}"></span>
+            <span data-src="{{ thumbnail(home.image, 800, 350,"c") }}" data-media="(min-width: 640px)"></span>
+            <span data-src="{{ thumbnail(home.image, 1024, 430,"c") }}"  data-media="(min-width: 800px)"></span>
+            <span data-src="{{ thumbnail(home.image, 1200, 450,"c") }}"  data-media="(min-width: 1000px)"></span>
+            <!-- Fallback content for non-JS browsers. Same img src as the initial, unqualified source element. -->
+            <!--[if (lte IE 9) & (!IEMobile)]>
+                <span data-src="{{ thumbnail(home.image, 1400, 430,"c") }}"></span>
+            <![endif]-->
+          
+          <!-- <noscript>
+               <img src="{{ thumbnail(home.image, 1024, 430,"c") }}" alt="Bolt">
+            </noscript>
+        </span -->
+        
         <div class="inner">
         {% block header %}
-        <!--
-        <span data-picture data-alt="An awesome bolt image">
-                <span data-src="{{ thumbnail(record.image, 640, 400,"c") }}"></span>
-                <span data-src="{{ thumbnail(record.image, 800, 350,"c") }}" data-media="(min-width: 640px)"></span>
-                <span data-src="{{ thumbnail(record.image, 1024, 430,"c") }}"  data-media="(min-width: 800px)"></span>
-                <span data-src="{{ thumbnail(record.image, 1200, 450,"c") }}"  data-media="(min-width: 1000px)"></span>
-                <!-- Fallback content for non-JS browsers. Same img src as the initial, unqualified source element. -->
-                <!--[if (lte IE 9) & (!IEMobile)]>
-                    <span data-src="{{ thumbnail(record.image, 1400, 430,"c") }}"></span>
-                <![endif]-->
-        <!--        <noscript>
-                   <img src="{{ thumbnail(record.image, 1024, 430,"c") }}" alt="De skyline van rotterdam">
-                </noscript>
-            </span>
-        -->
         
             <nav class="meta-nav">
                 <ul>
@@ -67,7 +68,7 @@
                     <li class="fork"><a href="#" title="To Bolt on Github">Fork bolt on github</a></li>
                 </ul>
             </nav>
-            <h1 id="logo"><a href="/"><img src="{{paths.theme}}images/bolt.png" width='200' alt="{{ app.config.get('general/sitename') }}" /></a></h1>
+            <h1 id="logo"><a href="/"><img src="{{paths.theme}}images/bolt.png" width='245' alt="{{ app.config.get('general/sitename') }}" /></a></h1>
             <h2 class="payoff">{{ app.config.get('general/payoff') }}</h2>
             <a class="button download" href="/pages/download">
                 <span class="desktop"><i class="fa fa-download"></i>Download Bolt</span><span class="mobile">View download options</span>
@@ -112,6 +113,7 @@
 
 <script src="{{ paths.theme }}scripts/jquery-1.10.2.min.js"></script>
 <script src="{{ paths.theme }}scripts/rem.min.js" type="text/javascript"></script>
+<script src="{{ paths.theme }}scripts/picturefill.js" type="text/javascript"></script>
 {% block footer_extra_scripts %}
 {% endblock %}
 <script src="{{ paths.theme }}scripts/bolt-v20.js" type="text/javascript"></script>
