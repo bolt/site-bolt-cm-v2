@@ -950,7 +950,7 @@ var Navpopups = Backbone.Model.extend({
                         menuTimeout = window.setTimeout(function () {
                             $('#navpage-secondary a.menu-pop').not(item).popover('hide');
                             $(item).popover('show');
-                        }, 400);
+                        }, 600);
                     }
                 )
                 .on('mouseenter focus', '.popover', function () {
@@ -961,7 +961,7 @@ var Navpopups = Backbone.Model.extend({
                         window.clearTimeout(menuTimeout);
                         menuTimeout = window.setTimeout(function () {
                             $('#navpage-secondary a.menu-pop').popover('hide');
-                        }, 800);
+                        }, 400);
                     }
                 );
         }
@@ -1413,17 +1413,15 @@ bolt.datetimes = function () {
             field.data.val('');
         }
 
-        // If data is a valid datetime
-        match = field.data.val().match(/^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})$/);
+        // If data is a valid date(time)
+        match = field.data.val().match(/^(\d{4}-\d{2}-\d{2})( \d{2}:\d{2}:\d{2})?$/);
         if (match) {
             date = match[1];
             time = match[2];
         }
 
         // Set date field
-        if (date != "0000-00-00") {
-            field.date.datepicker('setDate', (date === '') ? '' : $.datepicker.parseDate('yy-mm-dd', date));
-        }
+        field.date.datepicker('setDate', (date === '' || date === '0000-00-00') ? '' : $.datepicker.parseDate('yy-mm-dd', date));
         
         // Set time field
         if (field.time.length) {
@@ -1677,28 +1675,32 @@ var init = {
             $('#editcontent').attr('action', '').attr('target', "_self");
         });
 
-        // Only if we have grouping tabs.
+        // Only if we have grouping tabs. We add a tiny delay, so that fields not
+        // currently in view, still have time to initialize. (Like "Geolocation" fields)
         if (data.hasGroups) {
-            // Filter for tabs
-            var allf = $('.tabgrouping');
-            allf.hide();
-            // Click function
-            $(".filter").click(function() {
-                var customType = $(this).data('filter');
-                allf
-                    .hide()
-                    .filter(function () {
-                        return $(this).data('tab') === customType;
-                    })
-                    .show();
-                $('#filtertabs li').removeClass('active');
-                $(this).parent().attr('class', 'active');
-            });
+            window.setTimeout(function() {
+                // Filter for tabs
+                var allf = $('.tabgrouping');
+                allf.hide();
+                // Click function
+                $(".filter").click(function() {
+                    var customType = $(this).data('filter');
+                    allf
+                        .hide()
+                        .filter(function () {
+                            return $(this).data('tab') === customType;
+                        })
+                        .show();
+                    $('#filtertabs li').removeClass('active');
+                    $(this).parent().attr('class', 'active');
+                });
 
-            $(document).ready(function () {
-                $('#filtertabs li a:first').trigger('click');
-            });
+                $(document).ready(function () {
+                    $('#filtertabs li a:first').trigger('click');
+                });
+            }, 100);
         }
+        
     },
 
     /*
@@ -2163,24 +2165,24 @@ var init = {
             $(item).parent().on('show.bs.dropdown', function (e) {
 
                 // Prevent breakage on old IE.
-                if (typeof mouseEvt === "undefined" || mouseEvt === null) {
-                    return false;
-                }
-
-                var self = $(this).find('[data-toggle="dropdown"]'),
+                if (typeof mouseEvt !== "undefined" && mouseEvt !== null) {
+                    var self = $(this).find('[data-toggle="dropdown"]'),
                     menu = self.next('.dropdown-menu'),
                     mousey = mouseEvt.pageY + 20,
                     menuHeight = menu.height(),
                     menuVisY = $(window).height() - (mousey + menuHeight), // Distance from the bottom of viewport
                     profilerHeight = 37; // The size of the Symfony Profiler Bar is 37px.
 
-                // The whole menu must fit when trying to 'dropup', but always prefer to 'dropdown' (= default).
-                if ((mousey - menuHeight) > 20 && menuVisY < profilerHeight) {
-                    menu.css({
-                        top: 'auto',
-                        bottom: '100%'
-                    });
+                    // The whole menu must fit when trying to 'dropup', but always prefer to 'dropdown' (= default).
+                    if ((mousey - menuHeight) > 20 && menuVisY < profilerHeight) {
+                        menu.css({
+                            top: 'auto',
+                            bottom: '100%'
+                        });
+                    }
                 }
+
+                
             });
         });
     },

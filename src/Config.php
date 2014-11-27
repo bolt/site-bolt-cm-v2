@@ -25,6 +25,8 @@ class Config
         'id', 'slug', 'datecreated', 'datechanged', 'datepublish', 'datedepublish', 'ownerid', 'username', 'status', 'link'
     );
 
+    private $cachetimestamp;
+
     public $fields;
 
     private static $yamlParser;
@@ -42,6 +44,13 @@ class Config
 
             // if we have to reload the config, we will also want to make sure the DB integrity is checked.
             Database\IntegrityChecker::invalidate();
+        } else {
+
+            // In this case the cache is loaded, but because the path of the theme
+            // folder is defined in the congif itself, we still need to check 
+            // retrospectively if we need to invalidate it. 
+            $this->checkValidCache();
+
         }
 
         $this->setTwigPath();
@@ -186,7 +195,8 @@ class Config
         $config['permissions'] = $this->parseConfigYaml('permissions.yml');
         $config['extensions']  = array();
 
-        // fetch the theme config. requires special treatment due to the path
+        // fetch the theme config. requires special treatment due to the path being dynamic
+
         $this->app['resources']->initializeConfig($config);
         $paths = $this->app['resources']->getPaths();
         $themeConfigFile = $paths['themepath'] . '/config.yml';
@@ -706,12 +716,12 @@ class Config
             file_exists($dir . '/config_local.yml') ? filemtime($dir . '/config_local.yml') : 0,
         );
         if (file_exists($this->app['resources']->getPath('cache') . '/config_cache.php')) {
-            $cachetimestamp = filemtime($this->app['resources']->getPath('cache') . '/config_cache.php');
+            $this->cachetimestamp = filemtime($this->app['resources']->getPath('cache') . '/config_cache.php');
         } else {
-            $cachetimestamp = 0;
+            $this->cachetimestamp = 0;
         }
 
-        if ($cachetimestamp > max($timestamps)) {
+        if ($this->cachetimestamp > max($timestamps)) {
             $this->data = Lib::loadSerialize($this->app['resources']->getPath('cache') . '/config_cache.php');
 
             // Check if we loaded actual data.
@@ -749,6 +759,22 @@ class Config
 
         @unlink($this->app['resources']->getPath('cache') . '/config_cache.php');
     }
+
+    private function checkValidCache()
+    {
+
+        // Check the timestamp for the theme's config.yml
+        $paths = $this->app['resources']->getPaths();
+        $themeConfigFile = $paths['themepath'] . '/config.yml';
+        $configTimestamp = file_exists($themeConfigFile) ? filemtime($themeConfigFile) : 10000000000;
+
+        if ($this->cachetimestamp <= $configTimestamp) {
+            // Invalidate cache for next request. 
+            @unlink($paths['cache'] . '/config_cache.php');
+        }
+
+    }
+
 
     /**
      * Get an associative array with the correct options for the chosen database type.
@@ -895,10 +921,11 @@ class Config
             $scripturi = '/' . $scripturi;
         }
 
-        // If the request URI starts with '/bolt' or '/async' in the URL, we assume we're in the backend or in async.
-        if ((substr($scripturi, 0, strlen($mountpoint)) == $mountpoint)) {
+        // If the request URI is '/bolt' or '/async' (or starts with '/bolt/' etc.), assume backend or async.
+        $mountpoint = '/'.ltrim($mountpoint, '/');
+        if ($scripturi === $mountpoint || strpos($scripturi, $mountpoint.'/') === 0) {
             $end = 'backend';
-        } elseif ((substr($scripturi, 0, 6) == 'async/') || (strpos($scripturi, '/async/') !== false)) {
+        } elseif ($scripturi === '/async' || strpos($scripturi, '/async/') === 0 ) {
             $end = 'async';
         } else {
             $end = 'frontend';
@@ -907,5 +934,31 @@ class Config
         $this->app['end'] = $end;
 
         return $end;
+    }
+
+    /**
+     * Get a timestamp, corrected to the timezone.
+     *
+     * @return string timestamp
+     */
+    public function getTimestamp($when)
+    {
+        $timezone = $this->get('general/timezone');
+        $now = date_format(new \DateTime($when, new \DateTimeZone($timezone)), 'Y-m-d H:i:s');
+
+        return $now;
+    }
+
+    /**
+     * Get the current timestamp, corrected to the timezone.
+     *
+     * @return string current timestamp
+     */
+    public function getCurrentTimestamp()
+    {
+        $timezone = $this->get('general/timezone');
+        $now = date_format(new \DateTime($timezone), 'Y-m-d H:i:s');
+
+        return $now;
     }
 }

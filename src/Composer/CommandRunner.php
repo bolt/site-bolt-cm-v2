@@ -10,6 +10,7 @@ use Composer\Console\Application as ComposerApp;
 use Guzzle\Http\Client as GuzzleClient;
 use Guzzle\Http\Exception\RequestException;
 use Bolt\Library as Lib;
+use Bolt\Translation\Translator as Trans;
 
 class CommandRunner
 {
@@ -196,7 +197,7 @@ class CommandRunner
         // @see https://github.com/composer/composer/issues/2146#issuecomment-35478940
         putenv("DYLD_LIBRARY_PATH=''");
 
-        $command .= ' -d ' . $this->basedir . ' -n --no-ansi';
+        $command .= ' -d "' . $this->basedir . '" -n --no-ansi';
         $this->writeLog('command', $command);
 
         // Create an InputInterface object to pass to Composer
@@ -393,6 +394,7 @@ class CommandRunner
         $json->repositories->packagist = false;
         $json->{'minimum-stability'} = "dev";
         $json->{'prefer-stable'} = true;
+        $json->config = array('discard-changes' => true, 'preferred-install' => 'dist');
         $basePackage = "bolt/bolt";
         $json->provide = new \stdClass();
         $json->provide->$basePackage = $this->app['bolt_version'];
@@ -415,9 +417,9 @@ class CommandRunner
             $json = json_decode((file_get_contents($this->packageRepo)));
             $this->available = $json->packages;
         } catch (\Exception $e) {
-            $this->messages[] = sprintf(
-                $this->app['translator']->trans("The Bolt extensions Repo at %s is currently unavailable. Check your connection and try again shortly."),
-                $this->packageRepo
+            $this->messages[] = Trans::__(
+                'The Bolt extensions Repo at %repository% is currently unavailable. Check your connection and try again shortly.',
+                array('%repository%' => $this->packageRepo)
             );
             $this->available = array();
         }

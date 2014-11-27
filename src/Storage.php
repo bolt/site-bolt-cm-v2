@@ -648,7 +648,7 @@ class Storage
                     break;
 
                 case 'geolocation':
-                    if (!empty($fieldvalues[$key]['address'])) {
+                    if ( !empty($fieldvalues[$key]['latitude']) && !empty($fieldvalues[$key]['longitude']) ) {
                         $fieldvalues[$key] = json_encode($fieldvalues[$key]);
                     } else {
                         $fieldvalues[$key] = '';
@@ -1048,7 +1048,9 @@ class Storage
             $contenttypes = array_filter(
                 $contenttypes,
                 function ($ct) use ($app_ct) {
-                    if (isset($app_ct[$ct]['searchable']) && ($app_ct[$ct]['searchable'] == false)) {
+                    if (($app_ct[$ct]['searchable'] === false) ||
+                        (isset($app_ct[$ct]['viewless']) && $app_ct[$ct]['viewless'] === true)
+                    ) {
                         return false;
                     }
 
@@ -1294,7 +1296,7 @@ class Storage
         // Set up the $pager array with relevant values..
         $rowcount = $this->app['db']->executeQuery($pagerquery)->fetch();
         $pager = array(
-            'for' => $taxonomytype['slug'] . "_" . $slug,
+            'for' => $taxonomytype['singular_slug'] . "_" . $slug,
             'count' => $rowcount['count'],
             'totalpages' => ceil($rowcount['count'] / $limit),
             'current' => $page,
@@ -1302,7 +1304,7 @@ class Storage
             'showing_to' => ($page - 1) * $limit + count($taxorows)
         );
 
-        $this->app['storage']->setPager($taxonomytype['slug'] . "_" . $slug, $pager);
+        $this->app['storage']->setPager($taxonomytype['singular_slug'] . "_" . $slug, $pager);
 
         return $content;
     }

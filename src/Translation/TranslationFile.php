@@ -357,8 +357,10 @@ class TranslationFile
             foreach ($translations as $key => $tdata) {
                 // Key
                 if ($type == 'DoneKey') {
+                    $differs = false;
                     for ($level = 0, $end = count($tdata['key']) - 1; $level < $end; $level++) {
-                        if ($level >= count($lastKey) - 1 || $lastKey[$level] != $tdata['key'][$level]) {
+                        if ($differs || $level >= count($lastKey) - 1 || $lastKey[$level] != $tdata['key'][$level]) {
+                            $differs = true;
                             if ($level == 0) {
                                 $content .= $linebreak;
                                 $linebreak = "\n";
@@ -373,7 +375,7 @@ class TranslationFile
                 }
                 // Value
                 if ($tdata['trans'] === '') {
-                    $thint = $this->app['translator']->trans($key);
+                    $thint = Trans::__($key);
                     if ($thint == $key) {
                         $thint = isset($hinting[$key]) ? $hinting[$key] : '';
                     }
@@ -419,7 +421,7 @@ class TranslationFile
 
                 return $flattened;
             } catch (ParseException $e) {
-                $this->app['session']->getFlashBag()->set('error', '<strong>Unable to parse the YAML translations</strong><br>' . $e->getMessage());
+                $this->app['session']->getFlashBag()->add('error', '<strong>Unable to parse the YAML translations</strong><br>' . $e->getMessage());
                 // Todo: do something better than just returning an empty array
             }
         }
@@ -442,13 +444,13 @@ class TranslationFile
             list($path) = $this->buildPath('infos', \Bolt\Application::DEFAULT_LOCALE);
 
             if (!file_exists($path)) {
-                $this->app['session']->getFlashBag()->set('error', 'Locale infos yml file not found. Fallback also not found.');
+                $this->app['session']->getFlashBag()->add('error', 'Locale infos yml file not found. Fallback also not found.');
 
                 // fallback failed
                 return null;
             }
             // we got the fallback, notify user we loaded the fallback
-            $this->app['session']->getFlashBag()->set('warning', 'Locale infos yml file not found, loading the default one.');
+            $this->app['session']->getFlashBag()->add('warning', 'Locale infos yml file not found, loading the default one.');
         }
 
         return file_get_contents($path);
@@ -486,63 +488,14 @@ class TranslationFile
      */
     private function contentContenttypes()
     {
-        $ctypes = $this->app['config']->get('contenttypes');
-        $hinting = array();
-        $ctnames = array();
-        $newTranslations = array();
-
         $savedTranslations = $this->readSavedTranslations();
         $this->gatherTranslatableStrings();
 
-        // Add names, labels, …
-        foreach ($ctypes as $ctname => $ctype) {
-            $keyprefix = 'contenttypes.' . strtolower($ctname) . '.';
+        $keygen = new ContenttypesKeygen($this->app, $this->translatables, $savedTranslations);
+        $keygen->generate();
 
-            // Names & description
-            $setkeys = array(
-                'name.plural' => 'name',
-                'name.singular' => 'singular_name',
-                //'description' => 'description',
-            );
-            foreach ($setkeys as $setkey => $getkey) {
-                $key = $keyprefix . $setkey;
-
-                if (isset($savedTranslations[$key]) && $savedTranslations[$key] !== '') {
-                    $newTranslations[$key] = $savedTranslations[$key];
-                } else {
-                    if (isset($ctype[$getkey]) && $ctype[$getkey] !== '') {
-                        $hinting[$key] = $ctype[$getkey];
-                    }
-                    $newTranslations[$key] = '';
-                }
-                // Remember names for later usage
-                if ($setkey == 'name.plural') {
-                    $ctnames[$ctname]['%contenttypes%'] = $newTranslations[$key];
-                } elseif ($setkey == 'name.singular') {
-                    $ctnames[$ctname]['%contenttype%'] = $newTranslations[$key];
-                }
-            }
-        }
-
-        // Generate strings for contenttypes
-        foreach (array_keys($this->translatables) as $key) {
-            if (substr($key, 0, 21) == 'contenttypes.generic.') {
-                foreach ($ctypes as $ctname => $ctype) {
-                    $setkey = 'contenttypes.' . $ctname . '.text.' . substr($key, 21);
-                    $newTranslations[$setkey] = isset($savedTranslations[$setkey]) ? $savedTranslations[$setkey] : '';
-                    if ($newTranslations[$setkey] === '') {
-                        $generic = $this->app['translator']->trans($key);
-                        if ($generic != $key) {
-                            foreach ($ctnames[$ctname] as $placeholder => $replace) {
-                                $generic = str_replace($placeholder, $replace, $generic);
-                            }
-                            $hinting[$setkey] = $generic;
-                        }
-                    }
-                }
-            }
-        }
-
+        $newTranslations = $keygen->translations();
+        $hinting = $keygen->hints();
         ksort($newTranslations);
 
         return $this->buildNewContent($newTranslations, $savedTranslations, $hinting);
@@ -580,7 +533,7 @@ class TranslationFile
                 "The translations file '%s' can't be created. You will have to use your own editor to make modifications to this file.",
                 $msgRepl
             );
-            $this->app['session']->getFlashBag()->set('warning', $msg);
+            $this->app['session']->getFlashBag()->add('warning', $msg);
 
         // Have a file, but not writable
         } elseif (file_exists($this->absPath) && !is_writable($this->absPath)) {
@@ -588,7 +541,7 @@ class TranslationFile
                 "The file '%s' is not writable. You will have to use your own editor to make modifications to this file.",
                 $msgRepl
             );
-            $this->app['session']->getFlashBag()->set('warning', $msg);
+            $this->app['session']->getFlashBag()->add('warning', $msg);
 
         // File is not readable: abort
         } elseif (file_exists($this->absPath) && !is_readable($this->absPath)) {
