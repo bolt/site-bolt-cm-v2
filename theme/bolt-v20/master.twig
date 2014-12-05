@@ -64,9 +64,23 @@
         
             <nav class="meta-nav">
                 <ul>
-                    <li class="counter"><a href="#" title="octocat"><i class="fa fa-lg fa-github"></i>836</a></li>
-                    <li class="fork"><a href="#" title="To Bolt on Github">Fork bolt on github</a></li>
+                    <li class="counter"><a href="http://github.com/bolt/bolt/" title="Starred on github"><i class="fa fa-lg fa-github"></i>836</a></li>
+                    <li class="fork"><a href="http://github.com/bolt/bolt/" title="Bolt on Github">Fork bolt on github</a></li>
                 </ul>
+                
+                {#
+                $.ajax({
+                  dataType: 'jsonp',
+                  url: 'https://api.github.com/repos/zurb/foundation?callback=foundationGithub&access_token=8e0dfc559d22265208b2924266c8b15b60fd9b85',
+                  success: function (response) {
+                    if (response && response.data.watchers) {
+                      var watchers = (Math.round((response.data.watchers / 100), 10) / 10).toFixed(1);
+                      $('#stargazers a').html(watchers + 'k stargazers');
+                    }
+                  }
+                });
+                #}
+                
             </nav>
             <h1 id="logo"><a href="/"><img src="{{paths.theme}}images/bolt.png" width='245' alt="{{ app.config.get('general/sitename') }}" /></a></h1>
             <h2 class="payoff">{{ app.config.get('general/payoff') }}</h2>

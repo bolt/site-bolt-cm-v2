@@ -397,7 +397,7 @@ section{   // was .maininfo, .secinfo
         text-align: center;    
     }
     article {
-        margin-bottom: 4em; //too specific, needs other place
+        margin-bottom: 2em; //was 4 - but too big for featurespage // too specific, needs other place
         padding-bottom: 2em; //too specific, needs other place
         //border-bottom: 1px solid #ccc; //too specific, needs other place
         &:last-child {
@@ -702,10 +702,10 @@ section.features {
         max-width: 200px;
     }
     ul > li {
-            p {
-            display: none;
-            @media #{$large-up} {
-                display: block;
+        p, .imgcontainer {
+        display: none;
+        @media #{$large-up} {
+            display: block;
             }
         }
     }    

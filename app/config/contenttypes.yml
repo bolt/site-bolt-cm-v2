@@ -41,6 +41,10 @@ features:
         frontpage:
             type: checkbox
             label: Tonen op homepage?
+        frontpageorder:
+            type: integer
+            label: Volgorde homepage
+            class: small
         image:
             type: image             
         text:
