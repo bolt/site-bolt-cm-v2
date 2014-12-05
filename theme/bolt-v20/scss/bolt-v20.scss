@@ -723,15 +723,34 @@ section.features {
         @include block-grid(3);
     }
     li {
+        padding-left: 3%;
+        padding-right: 3%;
+        padding-bottom: 3em;
         h3 {
             margin-bottom: 1em;
             @media #{$large-up} {
                 text-align: left;
             }
         }
-        padding-left: 3%;
-        padding-right: 3%;
-        padding-bottom: 3em;
+        .imgcontainer {
+            text-align: center;    
+        }
+        img {
+            margin-bottom: 1.8em;
+            &.feature-img-2 {
+            display: none;
+            @media #{$medium-up} { //Only show second image when wider then medium!
+                display: block;
+                }   
+            }
+            &.feature-img-3 {
+            display: none;  
+            @media #{$large-up} { //Only show third image when wider then large!
+                display: block;
+                }  
+            }
+        }
+        
     }
     .fa {
             color: $red;
