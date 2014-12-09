@@ -192,7 +192,7 @@ class Backend implements ControllerProviderInterface
         $latest = array();
         // get the 'latest' from each of the content types.
         foreach ($app['config']->get('contenttypes') as $key => $contenttype) {
-            if ($app['users']->isAllowed('contenttype:' . $key) && $contenttype['show_on_dashboard'] == true) {
+            if ($app['users']->isAllowed('contenttype:' . $key) && $contenttype['show_on_dashboard'] === true) {
                 $latest[$key] = $app['storage']->getContent($key, array('limit' => $limit, 'order' => 'datechanged DESC', 'hydrate' => false));
                 if (!empty($latest[$key])) {
                     $total += count($latest[$key]);
@@ -819,7 +819,7 @@ class Backend implements ControllerProviderInterface
                 if (!isset($request_all[$key])) {
                     switch ($values['type']) {
                         case 'select':
-                            if (isset($values['multiple']) && $values['multiple'] == true) {
+                            if (isset($values['multiple']) && $values['multiple'] === true) {
                                 $request_all[$key] = array();
                             }
                             break;
@@ -1103,7 +1103,7 @@ class Backend implements ControllerProviderInterface
     public function roles(\Bolt\Application $app)
     {
         $contenttypes = $app['config']->get('contenttypes');
-        $permissions = array('view', 'edit', 'create', 'publish', 'depublish', 'change-owner');
+        $permissions = array('view', 'edit', 'create', 'publish', 'depublish', 'change-ownership');
         $effectivePermissions = array();
         foreach ($contenttypes as $contenttype) {
             foreach ($permissions as $permission) {
@@ -1730,12 +1730,10 @@ class Backend implements ControllerProviderInterface
 
         $data['contents'] = file_get_contents($filename);
 
-        $form = $app['form.factory']->createBuilder('form', $data)
-            ->add('contents', 'textarea', array(
-                'constraints' => array(new Assert\NotBlank(), new Assert\Length(array('min' => 10)))
-            ));
-
-        $form = $form->getForm();
+        $form = $app['form.factory']
+            ->createBuilder('form', $data)
+            ->add('contents', 'textarea')
+            ->getForm();
 
         // Check if the form was POST-ed, and valid. If so, store the user.
         if ($request->getMethod() == "POST") {

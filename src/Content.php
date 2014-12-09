@@ -170,12 +170,10 @@ class Content implements \ArrayAccess
                 $this->values[$key] = $video;
             }
 
-            // Make sure 'date' and 'datetime' don't end in " :00".
-            if ($this->fieldtype($key) == "datetime") {
-                if (strpos($this->values[$key], ":") === false) {
-                    $this->values[$key] = trim($this->values[$key]) . " 00:00:00";
+            if ($this->fieldtype($key) == "date" || $this->fieldtype($key) == "datetime") {
+                if ($this->values[$key] === "") {
+                    $this->values[$key] = null;
                 }
-                $this->values[$key] = str_replace(" :00", " 00:00", $this->values[$key]);
             }
 
         }
@@ -411,7 +409,7 @@ class Content implements \ArrayAccess
         }
 
         // Make sure sortorder is set correctly;
-        if ($this->app['config']->get('taxonomy/' . $taxonomytype . '/has_sortorder') == false) {
+        if ($this->app['config']->get('taxonomy/' . $taxonomytype . '/has_sortorder') === false) {
             $sortorder = false;
         } else {
             $sortorder = (int) $sortorder;
@@ -808,7 +806,7 @@ class Content implements \ArrayAccess
                     $params[$fieldName] = substr($this->values[$fieldName], 0, 10);
                 } elseif (isset($this->taxonomy[$fieldName])) {
                     // Turn something like '/chapters/meta' to 'meta'. Note: we use
-                    // two temp vars here, to prevent "Only variables should be passed 
+                    // two temp vars here, to prevent "Only variables should be passed
                     // by reference"-notices.
                     $tempKeys = array_keys($this->taxonomy[$fieldName]);
                     $tempValues = explode('/', array_shift($tempKeys));
@@ -921,16 +919,22 @@ class Content implements \ArrayAccess
             if (!empty($filtercontenttype) && ($contenttype != $filtercontenttype)) {
                 continue; // Skip other contenttypes, if we requested a specific type.
             }
-            foreach ($ids as $id) {
-                if (!empty($filterid) && ($id != $filterid)) {
-                    continue; // Skip other ids, if we requested a specific id.
-                }
 
-                $record = $this->app['storage']->getContent($contenttype . '/' . $id);
+            $params = array('hydrate' => true);
+            $where = array('id' => implode(" || ", $ids));
+            $dummy = false;
 
-                if (!empty($record)) {
-                    $records[] = $record;
-                }
+            $temp_result = $this->app['storage']->getContent($contenttype, $params, $dummy, $where);
+
+            if (empty($temp_result)) {
+                continue; // Go ahead if content not found.
+            }
+            
+            // Variable $temp_result can be an array of object.
+            if (is_array($temp_result)) {
+                $records = array_merge($records, $temp_result);
+            } else {
+                $records[] = $temp_result;
             }
         }
 
@@ -985,11 +989,19 @@ class Content implements \ArrayAccess
 
             if (!empty($this->contenttype['fields'])) {
                 foreach ($this->contenttype['fields'] as $key => $field) {
-                    if (in_array($field['type'], array('text', 'html', 'textarea', 'markdown'))
-                        && isset($this->values[$key])
-                        && !in_array($key, array('title', 'name')) ) {
+                    // Skip empty fields, and fields called 'title' or 'name'..
+                    if (!isset($this->values[$key]) || in_array($key, array('title', 'name'))) {
+                        continue;
+                    }
+                    // add 'text', 'html' and 'textarea' fields.
+                    if (in_array($field['type'], array('text', 'html', 'textarea'))) {
                         $excerptParts[] = $this->values[$key];
                     }
+                    // add 'markdown' field
+                    if ($field['type'] === 'markdown') {
+                        $excerptParts[] = \ParsedownExtra::instance()->text($this->values[$key]);
+                    }
+
                 }
             }
 

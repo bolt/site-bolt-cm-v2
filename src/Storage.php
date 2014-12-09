@@ -648,7 +648,7 @@ class Storage
                     break;
 
                 case 'geolocation':
-                    if ( !empty($fieldvalues[$key]['latitude']) && !empty($fieldvalues[$key]['longitude']) ) {
+                    if (!empty($fieldvalues[$key]['latitude']) && !empty($fieldvalues[$key]['longitude'])) {
                         $fieldvalues[$key] = json_encode($fieldvalues[$key]);
                     } else {
                         $fieldvalues[$key] = '';
@@ -1048,7 +1048,7 @@ class Storage
             $contenttypes = array_filter(
                 $contenttypes,
                 function ($ct) use ($app_ct) {
-                    if (($app_ct[$ct]['searchable'] === false) ||
+                    if ((isset($app_ct[$ct]['searchable']) && $app_ct[$ct]['searchable'] === false) ||
                         (isset($app_ct[$ct]['viewless']) && $app_ct[$ct]['viewless'] === true)
                     ) {
                         return false;
@@ -1334,7 +1334,7 @@ class Storage
             $stmt->execute();
 
             // If there's a result, we need to set these to 'publish'..
-            if ($stmt->fetch() != false) {
+            if ($stmt->fetch() !== false) {
                 $query = "UPDATE $tablename SET status = 'published', datechanged = :now  WHERE status = 'timed' and datepublish < :now";
                 $stmt = $this->app['db']->prepare($query);
                 $stmt->bindValue("now", $now);
@@ -1373,7 +1373,7 @@ class Storage
             $stmt->execute();
 
             // If there's a result, we need to set these to 'held'..
-            if ($stmt->fetch() != false) {
+            if ($stmt->fetch() !== false) {
                 $query = "UPDATE $tablename SET status = 'held', datechanged = :now WHERE status = 'published' and datedepublish <= :now and datedepublish > '1900-01-01 00:00:01' and datechanged < datedepublish";
                 $stmt = $this->app['db']->prepare($query);
                 $stmt->bindValue("now", $now);
@@ -1560,7 +1560,7 @@ class Storage
             $decoded['self_paginated'] = false;
         }
 
-        if (($decoded['order_callback'] !== false) || ($decoded['return_single'] == true)) {
+        if (($decoded['order_callback'] !== false) || ($decoded['return_single'] === true)) {
             // Callback sorting disables pagination
             $decoded['self_paginated'] = false;
         }
@@ -2007,7 +2007,7 @@ class Storage
         // Perform pagination if necessary, but never paginate when 'returnsingle' is used.
         $offset = 0;
         $limit = false;
-        if (($decoded['self_paginated'] == false) && (isset($decoded['parameters']['page'])) && (!$decoded['return_single'])) {
+        if (($decoded['self_paginated'] === false) && (isset($decoded['parameters']['page'])) && (!$decoded['return_single'])) {
             $offset = ($decoded['parameters']['page'] - 1) * $decoded['parameters']['limit'];
             $limit = $decoded['parameters']['limit'];
         }
@@ -2703,7 +2703,7 @@ class Storage
      *   [
      *      0 => str(2) "22"
      *   ]
-     *   "kitchensinks" => arr(3)
+     *   "showcases" => arr(3)
      *   [
      *      0 => str(2) "15"
      *      1 => str(1) "9"
@@ -2717,13 +2717,13 @@ class Storage
      *   0 => arr(3)
      *   [
      *     "id"             => str(1) "5"
-     *     "to_contenttype" => str(12) "kitchensinks"
+     *     "to_contenttype" => str(12) "showcases"
      *     "to_id"          => str(2) "15"
      *   ]
      *   1 => arr(3)
      *   [
      *     "id"             => str(1) "6"
-     *     "to_contenttype" => str(12) "kitchensinks"
+     *     "to_contenttype" => str(12) "showcases"
      *     "to_id"          => str(1) "9"
      *   ]
      * ]
