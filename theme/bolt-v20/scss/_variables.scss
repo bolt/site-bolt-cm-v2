@@ -3,9 +3,10 @@ $lightgrey      : #eae6dc;
 $mediumblue     : #3478a7;
 $darkblue       : #152833;
 $red            : #F6350C; //was #FF4934;
+$lessred        : desaturate(lighten($red, 20), 40);
 $black          : #000;
 $mediumgrey		: #6f6f6f;
-$browngrey      : #7d7b76;  
+$boltblue       : #204499;
 
 $sans-serif     : 'Source Sans Pro', arial, sans-serif;
 
