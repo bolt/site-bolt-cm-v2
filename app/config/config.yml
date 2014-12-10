@@ -149,11 +149,11 @@ branding:
 # the debugbar is only shown to logged-in users. Use the 'debug_show_loggedoff'
 # option to show it to all users. You probably do not want to use this in a
 # production environment.
-debug: true
+debug: false
 developer_notices: false
 debug_show_loggedoff: false
 debug_permission_audit_mode: false
-debug_error_level: 6135 # equivalent to E_ALL &~ E_NOTICE &~ E_DEPRECATED &~ E_USER_DEPRECATED
+debug_error_level: -1 # 6135 # equivalent to E_ALL &~ E_NOTICE &~ E_DEPRECATED &~ E_USER_DEPRECATED
 #debug_error_level: 30719 # equivalent to E_ALL
 debug_enable_whoops: true # change this to false to use PHP's built-in error handling instead of Whoops
 
@@ -164,7 +164,7 @@ debug_enable_whoops: true # change this to false to use PHP's built-in error han
 
 # Use strict variables. This will make Bolt complain if you use {{ foo }},
 # when foo doesn't exist.
-strict_variables: false
+strict_variables: true
 
 # There are several options for giving editors more options to insert images, video,
 # etc in the Wysiwyg areas. But, as you give them more options, that means they also have

@@ -765,7 +765,7 @@ class Config
         // Check the timestamp for the theme's config.yml
         $paths = $this->app['resources']->getPaths();
         $themeConfigFile = $paths['themepath'] . '/config.yml';
-        $configTimestamp = file_exists($themeConfigFile) ? filemtime($themeConfigFile) : 10000000000;
+        $configTimestamp = file_exists($themeConfigFile) ? filemtime($themeConfigFile) : 0;
 
         if ($this->cachetimestamp <= $configTimestamp) {
             // Invalidate cache for next request.
