@@ -30,7 +30,7 @@
             {% for item in features %}
             <li>
                 {% if loop.index < 4 %}
-                <div class="imgcontainer"><img src="{{ thumbnail(item.image,606,400, r) }}" alt="{{ item.title }}" width="303" class="feature-img-{{ loop.index }}"/></div>
+                <div class="imgcontainer"><img src="{{ thumbnail(item.image, 606, 400, 'r') }}" alt="{{ item.title }}" width="303" class="feature-img-{{ loop.index }}"/></div>
                 {% endif %}
                 <h3><i class="fa fa-bolt"></i>{{ item.title }}</h3>
                 {{ item.text }} 

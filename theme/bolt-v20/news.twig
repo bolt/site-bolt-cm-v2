@@ -9,7 +9,7 @@
         {% setcontent news = 'news' orderby '-datepublish' %}
         {% for item in news %}
         <article class="row">
-            <h1><a href="{{record.link}}">{{item.title}}</a></h1>
+            <h1><a href="{{item.link}}">{{item.title}}</a></h1>
             <h2 class="subheader">{{item.subtitle}}</h2>
             <p class="meta">Published: {{ item.datepublish|date("l j F - H:i") }}</p>
             <div class="articlebody">

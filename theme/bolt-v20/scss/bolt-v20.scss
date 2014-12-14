@@ -353,8 +353,8 @@ header {
 /* -------------- MAIN --------------- */
 
 section{   // was .maininfo, .secinfo
-	padding-top: 3em;
-	padding-bottom: 3em;
+	padding-top: 2em;
+	padding-bottom: 2em;
     // MEDIUM  //
     @media #{$medium-up} {
          padding-left: 10%;
@@ -375,7 +375,7 @@ section{   // was .maininfo, .secinfo
 
 .maininfo .column,
 .secinfo .column {
-    margin-bottom: 2em;
+    margin-bottom: 0em;
     @media #{$large-up} {
         @extend .large-4;
     }
@@ -391,14 +391,14 @@ section{   // was .maininfo, .secinfo
     @extend .column;
    // LARGE //
     @media #{$large-up} {
-        padding-top: 2em;
+        padding-top: 1em;
     }
     h1, h2, h3, p.meta {
         text-align: center;    
     }
     article {
-        margin-bottom: 2em; //was 4 - but too big for featurespage // too specific, needs other place
-        padding-bottom: 2em; //too specific, needs other place
+        margin-bottom: 1em; //was 4 - but too big for featurespage // too specific, needs other place
+        padding-bottom: 1em; //too specific, needs other place
         //border-bottom: 1px solid #ccc; //too specific, needs other place
         &:last-child {
 	        margin-bottom: 0;
@@ -416,8 +416,12 @@ section{   // was .maininfo, .secinfo
                 );
             }
         }
+        h1 {
+            margin-bottom: 1rem;
+        }
         h2 {
-            margin: 2rem 0 1rem 0;
+            margin-bottom: 1rem;
+            font-weight: 400;
         }
     }
 }
@@ -431,7 +435,7 @@ section{   // was .maininfo, .secinfo
 /* -------------- HERO SECTION--------------- */
 
 section.hero {
-	padding-top: 4em;
+	padding-top: 1em;
 	padding-bottom: 0em;
 	h1 {
 		margin-bottom: 1em;
@@ -445,6 +449,9 @@ section.hero {
 /* -------------- SHORTTEXTS SECTION--------------- */
 
 section.shorttexts {
+
+    padding-bottom: 0;
+
 	article {
 		@include grid-column(
             $columns: 6
@@ -482,8 +489,8 @@ section.shorttexts {
 }
 
 section.logos {
-    padding-top: 1rem;
-    padding-bottom: 1rem;
+    padding-top: 1em;
+    padding-bottom: 3em;
     //overflow: hidden;
     h1{
     	font-size: 1.6875em;
@@ -691,6 +698,9 @@ footer {
 /* --------------- FEATURES ---------------*/
 
 section.features {
+    padding-top: 1em;
+    padding-bottom: 3em;
+
     background: $lightgrey; 
     h1{
         font-weight: 400;
@@ -725,7 +735,6 @@ section.features {
     li {
         padding-left: 3%;
         padding-right: 3%;
-        padding-bottom: 3em;
         h3 {
             margin-bottom: 1em;
             @media #{$large-up} {
@@ -776,6 +785,8 @@ section.features {
 /* --------------- SHOWCASES ---------------*/
 
 section.showcases {
+    padding-top: 1em;
+    padding-bottom: 1em;
     background: $lightgrey;
     h1{
         margin-bottom: 2rem;
@@ -828,7 +839,7 @@ p {
         border-bottom: 1px solid $red;
     }
     &.meta {
-        font-size: 0.8125rem;
+        font-size: 1rem;
         color: $red;
     }
 }
@@ -899,7 +910,7 @@ h2, h3, h4 {
         // LARGE  //
          @media #{$large-up}{
               max-width: 200px;
-              margin: 2rem 0 1rem;
+              margin: 2rem 0 0;
         }      
     } 
 }

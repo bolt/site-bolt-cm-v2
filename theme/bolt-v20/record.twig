@@ -5,14 +5,16 @@
 {% block content %}
 
 {% if record.contenttype.slug =='news' %}
-{% set news = "1" %}
+    {% set news = true %}
+{% else %}
+    {% set news = false %}
 {% endif %}
 
 <section class="maininfo">
     <div class="maincolumn ">
         <article class="row">
             <h1><a href="{{record.link}}">{{record.title}}</a></h1>
-            <h2 class="subheader">{{record.subtitle}}</h2>
+            {# <h2 class="subheader">{{record.subtitle}}</h2> #}
             {% if news %}<p class="meta">Published: {{ record.datepublish|date("l j F - H:i") }}</p>{% endif %}
             <div class="articlebody">
                 {% if record.image %}
