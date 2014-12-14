@@ -142,7 +142,7 @@ accept_file_types: [ twig, html, js, css, scss, gif, jpg, jpeg, png, ico, zip, t
 # 'path'. Keep the path simple: lowercase only, no extra slashes or other special characters.
 branding:
 #  name: SuperCMS
-  path: /beheer
+  path: /backend
 #  provided_by: [ supercool@example.org, "Supercool Webdesign Co." ]
 
 # Show the 'debug' nut in the lower right corner for logged-in user. By default,
