@@ -371,8 +371,8 @@ header {
 /* -------------- MAIN --------------- */
 
 section{   // was .maininfo, .secinfo
-	padding-top: 2em;
-	padding-bottom: 2em;
+	padding-top: 3em;
+	padding-bottom: 3em;
     // MEDIUM  //
     @media #{$medium-up} {
          padding-left: 10%;
@@ -393,7 +393,7 @@ section{   // was .maininfo, .secinfo
 
 .maininfo .column,
 .secinfo .column {
-    margin-bottom: 0em;
+    margin-bottom: 1em;
     @media #{$large-up} {
         @extend .large-4;
     }
@@ -467,10 +467,8 @@ section.hero {
 /* -------------- SHORTTEXTS SECTION--------------- */
 
 section.shorttexts {
-
-    padding-bottom: 0;
-
-	article {
+    padding-bottom: 1em;
+    article {
 		@include grid-column(
             $columns: 6
             );
