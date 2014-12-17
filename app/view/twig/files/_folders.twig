@@ -12,7 +12,7 @@
                 <td>
                     <i class="fa fa-fw fa-folder-open-o"></i>
                     <a href="{{ url('files', {'path': folder.newpath, 'namespace': context.namespace}) }}">
-                        <b>{{ folder.foldername|shy }}/</b>
+                        <b>{{ folder.foldername|excerpt(60)|shy }}/</b>
                     </a>
                 </td>
                 <td>
@@ -21,6 +21,7 @@
                     </time>
                 </td>
                 <td class="actions">
+                {% if context.form != false %}
                     <div class="btn-group">
                     {% if folder.writable %}
 
@@ -63,6 +64,7 @@
                         </a>
                     {% endif %}
                     </div>
+                {% endif %}
                 </td>
             </tr>
         {% endfor %}

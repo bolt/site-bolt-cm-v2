@@ -1,9 +1,9 @@
 <table class="dashboardlisting">
     <thead>
         <tr>
-            <th>{{ __('Files') }}</th>
-            <th colspan="2">{{ __('Filesize') }}</th>
-            <th colspan="3">{{ __('Modified') }}</th>
+            <th>{{ __('page.ckeditor-browse-server.files') }}</th>
+            <th colspan="2" class="hidden-xs hidden-sm">{{ __('page.ckeditor-browse-server.size') }}</th>
+            <th colspan="3"><span class="hidden-xs hidden-sm">{{ __('page.ckeditor-browse-server.modified') }}</span></th>
         </tr>
     </thead>
 
@@ -19,10 +19,10 @@
                             <a href="{{file.newpath|thumbnail(1000, 1000, 'r') }}"
                                class="magnific"
                                title="Image: {{ file.filename }}">
-                                <b>{{ file.filename|shy }}</b>
+                                <b>{{ file.filename|excerpt(80)|shy }}</b>
                             </a>
                         {% else %}
-                            <b>{{ file.filename|shy }} </b>
+                            <b>{{ file.filename|excerpt(80)|shy }} </b>
                             <i class="fa fa-lock"></i>
                         {% endif %}
 
@@ -32,10 +32,10 @@
 
                         {% if file.readable %}
                             <a href="{{ path('fileedit', {'namespace': context.namespace, 'file': file.newpath}) }}">
-                                <b>{{ file.filename|shy }}</b>
+                                <b>{{ file.filename|excerpt(80)|shy }}</b>
                             </a>
                         {% else %}
-                            <b>{{ file.filename|shy }}</b>
+                            <b>{{ file.filename|excerpt(80)|shy }}</b>
                         {% endif %}
 
                         {% if not file.readable or not file.writable %}
@@ -48,23 +48,21 @@
 
                         {% if file.readable %}
                             <a href="{{ file.url }}" target="_blank">
-                                <b>{{ file.filename|shy }}</b>
+                                <b>{{ file.filename|excerpt(80)|shy }}</b>
                             </a>
                         {% else %}
-                            <b>{{ file.filename|shy }} </b>
+                            <b>{{ file.filename|excerpt(80)|shy }} </b>
                             <i class="fa fa-lock"></i>
                         {% endif %}
                     {% endif %}
                 </td>
-                <td style="min-width: 90px;">
+                <td style="min-width: 120px;"class="hidden-xs hidden-sm">
                     {{ file.filesize }}.
-                </td>
-                <td style="min-width: 100px;">
                     {% if file.imagesize is defined %}
-                        {{ file.imagesize }} px.
+                       <br> {{ file.imagesize }} px.
                     {% endif %}
                 </td>
-                <td style="min-width: 140px;">
+                <td style="min-width: 140px;" class="hidden-xs hidden-sm">
                     <time class="moment"
                           datetime="{{ file.modified|date("c") }}"
                           title="{{ file.modified }}">
@@ -76,54 +74,57 @@
                         {{ file.newpath|showimage(54, 40, 'c') }}
                     {% endif %}
                 </td>
-                <td class="actions" style="min-width: 196px;">
-
+                <td class="actions" style="min-width: 16px;">
+                    
                     <div class="btn-group">
 
                         {{ macro.stackbutton(file) }}
 
-                        <a class="btn dropdown-toggle btn-default btn-sm" data-toggle="dropdown">
-                            <i class="fa fa-info-circle"></i>
-                            {{ __('Options') }}
-                            <span class="caret"></span>
-                        </a>
+                        {% if context.form != false %}
+                            <a class="btn dropdown-toggle btn-default btn-sm hidden-xs" data-toggle="dropdown">
+                                <i class="fa fa-info-circle"></i>
+                                {{ __('Options') }}
+                                <span class="caret"></span>
+                            </a>
 
-                        <ul class="dropdown-menu pull-right">
-                            <li>
-                                <a href="#"
-                                   data-action="bolt.files.renameFile('{{__("Please enter a new file name")}}',
-                                                                    '{{ context.namespace }}',
-                                                                    '{{ file.path }}',
-                                                                    '{{ file.filename }}',
-                                                                    this);">
+                            <ul class="dropdown-menu pull-right hidden-xs">
+                                <li>
+                                    <a href="#"
+                                       data-action="bolt.files.renameFile('{{__("Please enter a new file name")}}',
+                                                                        '{{ context.namespace }}',
+                                                                        '{{ file.path }}',
+                                                                        '{{ file.filename }}',
+                                                                        this);">
 
-                                    <i class="fa fa-keyboard-o"></i>
-                                    {{ __('Rename %foldername%', { '%foldername%': file.filename }) }}
-                                </a>
-                            </li>
-                            <li>
-                                <a href="#" data-action="bolt.files.deleteFile('{{ context.namespace }}', '{{ file.newpath }}', this);">
-                                    <i class="fa fa-ban"></i>
-                                    {{ __('Delete %filename%',
-                                          {'%filename%': file.filename }) }}
-                                </a>
-                            </li>
-                            <li>
-                                <a href="#" data-action="bolt.files.duplicateFile('{{ context.namespace }}', '{{ file.newpath }}')">
-                                    <i class="fa fa-files-o"></i>
-                                    {{ __('Duplicate %filename%',
-                                          {'%filename%': file.filename }) }}
-                                </a>
-                            </li>
-                            <li class="divider"></li>
-                            <li>
-                                <a class="nolink">
-                                    {{ __('Permissions') }}:
-                                    <strong><code>{{ file.permissions }}</code></strong>
-                                </a>
-                            </li>
-                        </ul>
+                                        <i class="fa fa-keyboard-o"></i>
+                                        {{ __('Rename %foldername%', { '%foldername%': file.filename }) }}
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="#" data-action="bolt.files.deleteFile('{{ context.namespace }}', '{{ file.newpath }}', this);">
+                                        <i class="fa fa-ban"></i>
+                                        {{ __('Delete %filename%',
+                                              {'%filename%': file.filename }) }}
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="#" data-action="bolt.files.duplicateFile('{{ context.namespace }}', '{{ file.newpath }}')">
+                                        <i class="fa fa-files-o"></i>
+                                        {{ __('Duplicate %filename%',
+                                              {'%filename%': file.filename }) }}
+                                    </a>
+                                </li>
+                                <li class="divider"></li>
+                                <li>
+                                    <a class="nolink">
+                                        {{ __('Permissions') }}:
+                                        <strong><code>{{ file.permissions }}</code></strong>
+                                    </a>
+                                </li>
+                            </ul>
+                        {% endif %}
                     </div>
+                    
                 </td>
             </tr>
         {% endfor %}

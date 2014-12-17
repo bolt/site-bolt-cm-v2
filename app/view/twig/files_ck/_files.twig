@@ -4,10 +4,8 @@
     <thead>
         <tr>
             <th>{{ __('page.ckeditor-browse-server.files') }}</th>
-            <th>{{ __('page.ckeditor-browse-server.size') }}</th>
+            <th style="min-width: 102px;">{{ __('page.ckeditor-browse-server.size') }}</th>
             <th>&nbsp;</th>
-            <th>&nbsp;</th>
-            {# <th>&nbsp;</th> #}
         </tr>
     </thead>
 
@@ -22,10 +20,10 @@
 
                         {% if file.readable %}
                             <a class="filebrowserCallbackLink" href="{{ file.url }}">
-                                <b>{{ file.filename|trimtext(40) }}</b>
+                                <b>{{ file.filename|excerpt(60)|shy }}</b>
                             </a>
                         {% else %}
-                            <b>{{ file.filename|trimtext(40) }} </b><i class="fa fa-lock"></i>
+                            <b>{{ file.filename|excerpt(60)|shy }} </b><i class="fa fa-lock"></i>
                         {% endif %}
                     </td>
                     <td>{{ file.filesize }}.</td>

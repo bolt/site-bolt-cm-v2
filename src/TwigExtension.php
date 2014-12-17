@@ -292,7 +292,7 @@ class TwigExtension extends \Twig_Extension
      */
     public function trim($content, $length = 200)
     {
-        return $this->excerpt($content);
+        return $this->excerpt($content, $length);
     }
 
     /**
@@ -702,7 +702,7 @@ class TwigExtension extends \Twig_Extension
         $results = $this->app['storage']->getContent($contenttype, $options);
 
         // Loop the array, set records in 'current' to have a 'selected' flag.
-        if (!empty($current)) {
+        if (!empty($current) && !empty($results)) {
             foreach ($results as $key => $result) {
                 if (in_array($result->id, $current)) {
                     $results[$key]['selected'] = true;
@@ -849,7 +849,7 @@ class TwigExtension extends \Twig_Extension
 
         // After v1.5.1 we store image data as an array
         if (is_array($filename)) {
-            $filename = $filename['filename'];
+            $filename = isset($filename['filename']) ? $filename['filename'] : $filename['file'];
         }
 
         $path = sprintf(
@@ -958,7 +958,7 @@ class TwigExtension extends \Twig_Extension
 
         // After v1.5.1 we store image data as an array
         if (is_array($filename)) {
-            $filename = $filename['filename'];
+            $filename = isset($filename['filename']) ? $filename['filename'] : $filename['file'];
         }
 
         $image = sprintf(
