@@ -5,6 +5,10 @@
 # ------------------------------------------------------------------------------
 # Place your own routes here, that have a HIGHER priority than the default routes.
 
+pagebinding:
+  path: /{slug}
+  defaults: { _controller: 'Bolt\Controllers\Frontend::record', 'contenttypeslug': 'page' }
+  contenttype: pages
 
 
 # ------------------------------------------------------------------------------
@@ -70,12 +74,6 @@ contentlisting:
 
 
 # Example override for a specific contenttype
-
-#pagebinding:
-#  path: /{slug}
-#  defaults: { _controller: 'Bolt\Controllers\Frontend::record', 'contenttypeslug': 'page' }
-#  contenttype: pages
-#
 
 
 # Example single record override
