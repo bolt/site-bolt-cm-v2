@@ -19,7 +19,7 @@
             <div class="articlebody">
                 {% if record.image %}
                 <a href="{{ record.image|image() }}" class="fancybox">
-                    <img src="{{ record.image|thumbnail(700,300) }}">
+                    <img src="{{ record.image|thumbnail(700,3000,'r') }}">
                 </a>
                 {% endif %}
                 {{  record.introduction }}
