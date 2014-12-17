@@ -17,6 +17,7 @@ payoff: Sophisticated, Lightweight and Simple
 # they _will_ get updated in next releases
 theme: bolt-v20
 
+canonical: bolt.cm 
 
 # The locale that'll be used by the application. If no locale is set the
 # fallback locale is 'en_GB'. For available options, see: http://docs.bolt.cm/locales
@@ -149,7 +150,7 @@ branding:
 # the debugbar is only shown to logged-in users. Use the 'debug_show_loggedoff'
 # option to show it to all users. You probably do not want to use this in a
 # production environment.
-debug: false
+debug: true
 developer_notices: false
 debug_show_loggedoff: false
 debug_permission_audit_mode: false
