@@ -27,7 +27,17 @@
         
     <link href='//fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,600italic,400italic' rel='stylesheet' type='text/css'>
     <link rel="stylesheet" href="{{ paths.theme }}styles/bolt-v20.css" type="text/css" media="all" />
-    <script src="{{ paths.theme }}scripts/modernizr.js"></script>
+    
+    <link rel="shortcut icon" href="/app/view/img/favicon-bolt.ico">
+    <link rel="apple-touch-icon" sizes="57x57" href="/app/view/img/apple-touch-icon.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="/app/view/img/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="/app/view/img/apple-touch-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="/app/view/img/apple-touch-icon-144x144.png">
+    
+    <meta property="og:site_name" content="{{ app.config.get('general/sitename') }}" />
+    <meta property="og:url" content="{{ paths.canonicalurl }}" />
+    <meta property="og:title" content="{{ record.title }}" />
+    <meta property="og:image" content="{{ paths.theme }}images/og_boltimg.png" />
     
     <!--[if lt IE 9]>
     <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.6.2/html5shiv.js"></script>
@@ -41,23 +51,9 @@
 </head>
 
 <body class="{%- block bodyclass -%}{%- endblock -%}">
-    {% setcontent home = 'pages/homepage' %}
+
+{% setcontent home = 'pages/homepage' %}
     <header style="background-image: url({{ thumbnail(home.image, 1900, 800,"c") }});">
-        
-        <!--span class="mainimg" data-picture data-alt="An awesome bolt image">
-            <span data-src="{{ thumbnail(home.image, 640, 400,"c") }}"></span>
-            <span data-src="{{ thumbnail(home.image, 800, 350,"c") }}" data-media="(min-width: 640px)"></span>
-            <span data-src="{{ thumbnail(home.image, 1024, 430,"c") }}"  data-media="(min-width: 800px)"></span>
-            <span data-src="{{ thumbnail(home.image, 1200, 450,"c") }}"  data-media="(min-width: 1000px)"></span>
-            <!-- Fallback content for non-JS browsers. Same img src as the initial, unqualified source element. -->
-            <!--[if (lte IE 9) & (!IEMobile)]>
-                <span data-src="{{ thumbnail(home.image, 1400, 430,"c") }}"></span>
-            <![endif]-->
-          
-          <!-- <noscript>
-               <img src="{{ thumbnail(home.image, 1024, 430,"c") }}" alt="Bolt">
-            </noscript>
-        </span -->
         
         <div class="inner">
         {% block header %}
@@ -84,7 +80,6 @@
                 });
                 #}
                 
-            </nav>
             <h1 id="logo"><a href="/"><img src="{{paths.theme}}images/bolt.png" width='245' alt="{{ app.config.get('general/sitename') }}" /></a></h1>
             <h2 class="payoff">{{ app.config.get('general/payoff') }}</h2>
             <a class="button download" href="/pages/download">
@@ -124,8 +119,8 @@
                 <p>This site is built with Bolt</p>
             </div>
             <div class="socials">
-                <a class="tw" href="//twitter.com/boltcm"><i class="fa fa-lg fa-twitter"></i>Bolt on twitter</a>
-                <a class="gh" href="//github.com/bolt/bolt"><i class="fa fa-lg fa-github"></i>Bolt on github</a>
+                <a class="tw" href="//twitter.com/boltcm"><i class="fa fa-lg fa-twitter"></i>Bolt on Twitter</a>
+                <a class="gh" href="//github.com/bolt/bolt"><i class="fa fa-lg fa-github"></i>Bolt on Github</a>
             </div>
             {% endblock footer %}
         </div>
@@ -138,5 +133,22 @@
 {% endblock %}
 <script src="{{ paths.theme }}scripts/bolt-v20.js" type="text/javascript"></script>
 
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-34977638-1']);
+  _gaq.push(['_setDomainName', 'bolt.cm']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+
+
+    
 </body>
 </html>
