@@ -38,7 +38,7 @@
     <meta property="og:site_name" content="{{ app.config.get('general/sitename') }}" />
     <meta property="og:url" content="{{ paths.canonicalurl }}" />
     <meta property="og:title" content="{{ record.title }}" />
-    <meta property="og:image" content="{{ paths.theme }}images/og_boltimg.png" />
+    <meta property="og:image" content="{{ paths.canonicalurl }}{{ paths.theme }}images/og_boltimg.png" />
     
     <!--[if lt IE 9]>
     <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.6.2/html5shiv.js"></script>
