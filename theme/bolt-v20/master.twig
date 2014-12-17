@@ -89,7 +89,11 @@
             <h2 class="payoff">{{ app.config.get('general/payoff') }}</h2>
             <a class="button download" href="/pages/download">
                 <span class="desktop"><i class="fa fa-download"></i>Download Bolt</span><span class="mobile">View download options</span>
-                <span class="sub">Current version v 2.0</span>
+                {% setcontent currentversion = 'blocks/version' %}
+                <span class="sub">{{ currentversion.title }}</span>
+            </a>
+            <a class="button trybolt" href="http://try.bolt.cm" title="Setup and start a Bolt-site within seconds on try.bolt.com!">
+                <i class="fa fa-hand-o-right"></i>Try Bolt now!
             </a>
             <a class="menu-toggle"><span></span></a>
         {% endblock header %}
@@ -130,7 +134,6 @@
 
 <script src="{{ paths.theme }}scripts/jquery-1.10.2.min.js"></script>
 <script src="{{ paths.theme }}scripts/rem.min.js" type="text/javascript"></script>
-<script src="{{ paths.theme }}scripts/picturefill.js" type="text/javascript"></script>
 {% block footer_extra_scripts %}
 {% endblock %}
 <script src="{{ paths.theme }}scripts/bolt-v20.js" type="text/javascript"></script>
