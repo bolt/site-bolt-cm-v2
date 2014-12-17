@@ -188,7 +188,6 @@ header {
         padding-bottom: .5rem;
         display: none;
         @media #{$large-up} {
-           display: block;
            position: absolute;
            width: 16rem;
            right: 6rem;
@@ -212,6 +211,11 @@ header {
             span.sub {
                 display: block;
             }
+        }
+        .trybolt {
+            @media #{$large-up} {
+                display: block;
+            }    
         }
     }
 }
