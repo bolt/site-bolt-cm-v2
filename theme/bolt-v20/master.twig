@@ -91,6 +91,11 @@
             <a class="button trybolt" href="http://try.bolt.cm" title="Setup and start a Bolt-site within seconds on try.bolt.com!">
                 <i class="fa fa-hand-o-right"></i>Try Bolt now!
             </a>
+
+            {% setcontent latestnews = 'news/latest/1' returnsingle %}
+            <a class="button latestnews" href="{{latestnews.link}}">
+                Latest news: {{latestnews.title|excerpt(50)}} &raquo;
+             </a>
             <a class="menu-toggle"><span></span></a>
         {% endblock header %}
         </div>

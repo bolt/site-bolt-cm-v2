@@ -194,6 +194,19 @@ header {
            top: 17rem;
        }    
     }
+
+    .latestnews {
+        background: rgba($black,0.85);
+        padding: .5rem;
+        font-size: 0.8125rem;
+        display: none;
+        @media #{$large-up} {
+           position: absolute;
+           width: 16rem;
+           right: 6rem;
+           top: 22rem;
+       }    
+    }
     
     .body-home & {
         height: 300px;
@@ -212,7 +225,8 @@ header {
                 display: block;
             }
         }
-        .trybolt {
+        .trybolt,
+        .latestnews {
             @media #{$large-up} {
                 display: block;
             }    
