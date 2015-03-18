@@ -914,8 +914,8 @@ class Backend implements ControllerProviderInterface
         }
 
         // Set the users and the current owner of this content.
-        if (empty($id)) {
-            // For brand-new items, the creator becomes the owner.
+        if (empty($id) || $duplicate) {
+            // For brand-new and duplicated items, the creator becomes the owner.
             $contentowner = $app['users']->getCurrentUser();
         } else {
             // For existing items, we'll just keep the current owner.
@@ -1565,6 +1565,7 @@ class Backend implements ControllerProviderInterface
                     'file',
                     array(
                         'label' => Trans::__('Upload a file to this folder'),
+                        'multiple' => TRUE,
                         'attr'  => array(
                         'data-filename-placement' => 'inside',
                         'title'                   => Trans::__('Select file …'))
@@ -1577,6 +1578,7 @@ class Backend implements ControllerProviderInterface
                 $form->bind($request);
                 if ($form->isValid()) {
                     $files = $request->files->get($form->getName());
+                    $files = $files['FileUpload'];
 
                     foreach ($files as $fileToProcess) {
                         $fileToProcess = array(
@@ -1903,6 +1905,16 @@ class Backend implements ControllerProviderInterface
         // Sanity checks for doubles in in contenttypes.
         // unfortunately this has to be done here, because the 'translator' classes need to be initialised.
         $app['config']->checkConfig();
+
+        // If we had to reload the config earlier on because we detected a version change, display a notice.
+        if ($app['config']->notify_update) {
+            $notice = sprintf(
+                    "Detected Bolt version change to <b>%s</b>. Please clear the cache and check the database, if you haven't done so already.",
+                    $app->getVersion()
+                );
+            $app['logger.system']->notice(strip_tags($notice), array('event' => 'config'));
+            $app['session']->getFlashBag()->add('info', $notice);
+        }
 
         // Check the database users table exists
         $tableExists = $app['integritychecker']->checkUserTableIntegrity();

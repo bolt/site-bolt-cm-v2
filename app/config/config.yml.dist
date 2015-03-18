@@ -17,6 +17,9 @@ theme: base-2014
 
 # The locale that'll be used by the application. If no locale is set the
 # fallback locale is 'en_GB'. For available options, see: http://docs.bolt.cm/locales
+# In some cases it may be needed to specify (non-standard) variations of the locale
+# to get everything to work as desired. This can be done as [nl_NL, Dutch_Netherlands]
+# When specifying multiple locale, make sure the first is a standard locale
 locale: en_GB
 #timezone: UTC
 
@@ -58,10 +61,6 @@ homepage_template: index.twig
 # when the request a non-existing page.
 # Note: If you are logged on, and debug is set to 'true', you will NOT see the 404 page!!
 notfound: page/not-found
-
-# The default content for the 403 'access denied' page.
-# Only valid when frontend_permission_checks is set to true
-#access_denied: page/not-logged-in
 
 # The default template and amount of records to use for listing-pages on the
 # site. Can be overridden for each contenttype and for each record, if it has a
@@ -144,6 +143,14 @@ thumbnails:
   exif_orientation: true
 #  browser_cache_time: 2592000
 
+# Define the HTML tags and attributes that are allowed in 'cleaned' HTML. This
+# is used for sanitizing HTML, to make sure there are no undesirable elements
+# left in the content that is shown to users. For example, tags like `<script>`
+# or `onclick`-attributes.
+htmlcleaner:
+  allowed_tags: [ div, p, br, hr, s, u, strong, em, i, b, li, ul, ol, blockquote, pre, code, tt, h1, h2, h3, h4, h5, h6, dd, dl, dh, table, tbody, thead, tfoot, th, td, tr, a, img ]
+  allowed_attributes: [ id, class, style, name, value, href, src ]
+
 # Uploaded file handling
 #
 # You can change the pattern match and replacement on uploaded files and if the
@@ -195,11 +202,6 @@ debuglog:
   enabled: false
   filename: bolt-debug.log
   level: DEBUG
-
-# Uncomment to enable permission checks in the frontend.
-# This allows hiding certain content types from regular (unauthenticated
-# visitors) through the permission system; see permissions.yml for details.
-# frontend_permission_checks: true
 
 # Use strict variables. This will make Bolt complain if you use {{ foo }},
 # when foo doesn't exist.

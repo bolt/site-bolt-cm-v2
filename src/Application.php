@@ -8,7 +8,7 @@ use Bolt\Library as Lib;
 use Bolt\Provider\LoggerServiceProvider;
 use Bolt\Provider\PathServiceProvider;
 use Cocur\Slugify\Bridge\Silex\SlugifyServiceProvider;
-use Doctrine\DBAL\Exception\ConnectionException as DBALConnectionException;
+use Doctrine\DBAL\DBALException;
 use RandomLib;
 use SecurityLib;
 use Silex;
@@ -28,8 +28,8 @@ class Application extends Silex\Application
 
     public function __construct(array $values = array())
     {
-        $values['bolt_version'] = '2.1.0';
-        $values['bolt_name'] = '';
+        $values['bolt_version'] = '2.1.3';
+        $values['bolt_name'] = 'pl1';
         $values['bolt_released'] = true; // `true` for stable releases, `false` for alpha, beta and RC.
 
         parent::__construct($values);
@@ -171,12 +171,12 @@ class Application extends Silex\Application
      */
     protected function checkDatabaseConnection()
     {
-        // [SECURITY]: We don't get an error thrown by register() if db details
-        // are incorrect, however we *will* get an \Exception when we try to
-        // connect that will leak connection information.
+        // [SECURITY]: If we get an error trying to connect to database, we throw a new
+        // LowLevelException with general information to avoid leaking connection information.
         try {
             $this['db']->connect();
-        } catch (DBALConnectionException $e) {
+        // A ConnectionException or DriverException could be thrown, we'll catch DBALException to be safe.
+        } catch (DBALException $e) {
             // Trap double exceptions caused by throwing a new LowlevelException
             set_exception_handler(array('\Bolt\Exception\LowlevelException', 'nullHandler'));
 
@@ -195,8 +195,6 @@ class Application extends Silex\Application
                      "&nbsp;&nbsp;&nbsp;&nbsp;* User name has access to the named database\n" .
                      "&nbsp;&nbsp;&nbsp;&nbsp;* Password is correct\n";
             throw new LowlevelException($error);
-        } catch (\Exception $e) {
-            throw new \Exception($e);
         }
 
         // Resume normal error handling
@@ -283,7 +281,12 @@ class Application extends Silex\Application
 
     public function initLocale()
     {
-        $this['locale'] = $this['config']->get('general/locale', Application::DEFAULT_LOCALE);
+        $configLocale = $this['config']->get('general/locale', Application::DEFAULT_LOCALE);
+        if (!is_array($configLocale)) {
+            $configLocale = array($configLocale);
+        }
+        // $app['locale'] should only be a single value.
+        $this['locale'] = reset($configLocale);
 
         // Set The Timezone Based on the Config, fallback to UTC
         date_default_timezone_set(
@@ -293,17 +296,21 @@ class Application extends Silex\Application
         // for javascript datetime calculations, timezone offset. e.g. "+02:00"
         $this['timezone_offset'] = date('P');
 
-        // Set default locale
-        $locale = array(
-            $this['locale'] . '.UTF-8',
-            $this['locale'] . '.utf8',
-            $this['locale'],
-            Application::DEFAULT_LOCALE . '.UTF-8',
-            Application::DEFAULT_LOCALE . '.utf8',
-            Application::DEFAULT_LOCALE,
-            substr(Application::DEFAULT_LOCALE, 0, 2)
-        );
-        setlocale(LC_ALL, $locale);
+        // Set default locale, for Bolt
+        $locale = array();
+        foreach ($configLocale as $key => $value) {
+            $locale = array_merge($locale, array(
+                $value . '.UTF-8',
+                $value . '.utf8',
+                $value,
+                Application::DEFAULT_LOCALE . '.UTF-8',
+                Application::DEFAULT_LOCALE . '.utf8',
+                Application::DEFAULT_LOCALE,
+                substr(Application::DEFAULT_LOCALE, 0, 2)
+            ));
+        }
+
+        setlocale(LC_ALL, array_unique($locale));
 
         $this->register(
             new Silex\Provider\TranslationServiceProvider(),
@@ -539,11 +546,7 @@ class Application extends Silex\Application
 
         $end = $this['config']->getWhichEnd();
         if (($exception instanceof HttpException) && ($end == 'frontend')) {
-            if ($exception->getStatusCode() == 403) {
-                $content = $this['storage']->getContent($this['config']->get('general/access_denied'), array('returnsingle' => true));
-            } else {
-                $content = $this['storage']->getContent($this['config']->get('general/notfound'), array('returnsingle' => true));
-            }
+            $content = $this['storage']->getContent($this['config']->get('general/notfound'), array('returnsingle' => true));
 
             // Then, select which template to use, based on our 'cascading templates rules'
             if ($content instanceof Content && !empty($content->id)) {

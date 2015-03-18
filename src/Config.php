@@ -38,6 +38,8 @@ class Config
      */
     public $fields;
 
+    public $notify_update;
+
     protected $yamlParser = false;
 
     /**
@@ -387,10 +389,7 @@ class Config
             // If field is a "file" type, make sure the 'extensions' are set, and it's an array.
             if ($field['type'] == 'file' || $field['type'] == 'filelist') {
                 if (empty($field['extensions'])) {
-                    $field['extensions'] = array_intersect(
-                        array('doc', 'docx', 'txt', 'md', 'pdf', 'xls', 'xlsx', 'ppt', 'pptx', 'csv'),
-                        $acceptableFileTypes
-                    );
+                    $field['extensions'] = $acceptableFileTypes;
                 }
 
                 if (!is_array($field['extensions'])) {
@@ -768,7 +767,6 @@ class Config
             // equivalent to E_ALL &~ E_NOTICE &~ E_DEPRECATED &~ E_USER_DEPRECATED
             'debug_enable_whoops'         => true,
             'debug_permission_audit_mode' => false,
-            'frontend_permission_checks'  => false,
             'strict_variables'            => false,
             'theme'                       => 'default',
             'debug_compressjs'            => true,
@@ -849,6 +847,13 @@ class Config
         // Backend and Async need access to `app/view/twig`
         if ($end == 'backend' || $end == 'async') {
             $twigpath[] = realpath($this->app['resources']->getPath('app') . '/view/twig');
+            if ($this->app['resources']->hasPath('composerbackendviews')) {
+                $backendviewpath = $this->app['resources']->getPath('composerbackendviews');
+                if (file_exists($backendviewpath)) {
+
+                    $twigpath[] = realpath($backendviewpath);
+                }
+            }
         }
 
         // The frontend as well as 'ajaxy' requests from the frontend need access to the theme's path.
@@ -929,6 +934,8 @@ class Config
             // Check to make sure the version is still the same. If not, effectively invalidate the
             // cached config to force a reload.
             if (!isset($this->data['version']) || ($this->data['version'] != $this->app->getVersion())) {
+                // The logger and the flashbags aren't available yet, so we set a flag to notify the user later.
+                $this->notify_update = true;
                 return false;
             }
 
