@@ -24,7 +24,10 @@ locale: en_GB
 # While in maintenance mode, only users of level editor or higher can access the site.
 # All other visitors are presented with a notice that the site is currently offline.
 # The default template file can be found in /app/theme_defaults/ and overridden with
-# this option using your own theme.
+# this option using your own theme. Note: If you've changed the filename, and
+# your changes do not show up on the website, be sure to check for a config.yml
+# file in your theme's folder. If a template is set there, it will override the
+# setting here.
 maintenance_mode: false
 maintenance_template: maintenance_default.twig
 
@@ -34,8 +37,8 @@ cron_hour: 3
 
 # If your site is reachable under different urls (say, both blog.example.org/
 # as well as example.org/), it's a good idea to set one of these as the canonical,
-# so it's clear which is the primary address of the site. Don't include the
-# http:// protocol prefix. Enable the following line to define a canonical url.
+# so it's clear which is the primary address of the site. If you include `https://`,
+# it will be included in the canonical urls.
 #canonical: example.org
 
 # Bolt can insert a <link rel="shortcut icon"> for all pages on the site. Note
@@ -43,7 +46,10 @@ cron_hour: 3
 # want to set the icon yourself, just don't enable the following line.
 #favicon: images/favicon-bolt.ico
 
-# The default content to use for the homepage, and the template to render it with.
+# The default content to use for the homepage, and the template to render it
+# with. Note: If you've changed the filename, and your changes do not show up on
+# the website, be sure to check for a config.yml file in your theme's folder. If
+# a template is set there, it will override the setting here.
 homepage: page/1
 homepage_template: index.twig
 
@@ -57,15 +63,20 @@ notfound: page/not-found
 # Only valid when frontend_permission_checks is set to true
 #access_denied: page/not-logged-in
 
-# The default template and amount of records to use for listing-pages on the site.
-# Can be overridden for each contenttype, and for each record, if it has a
-# 'templateselect' field.
+# The default template and amount of records to use for listing-pages on the
+# site. Can be overridden for each contenttype and for each record, if it has a
+# 'templateselect' field. Note: If you've changed the filename, and your changes
+# do not show up on the website, be sure to check for a config.yml file in your
+# theme's folder. If a template is set there, it will override the setting here.
 record_template: record.twig
 
 # The default template and amount of records to use for listing-pages on the site.
 # Can be overridden for each contenttype.
 # Note: sorting on TAXONOMY-pages will give unexpected results, if it has a pager
 # If you need sorting on those, make sure you display all the records on one page.
+# Note: If you've changed the filename, and your changes do not show up on the
+# website, be sure to check for a config.yml file in your theme's folder. If a
+# template is set there, it will override the setting here.
 listing_template: listing.twig
 listing_records: 6
 listing_sort: datepublish DESC
@@ -75,8 +86,11 @@ listing_sort: datepublish DESC
 # and 'DESC' for roughly 'newest first'.
 taxonomy_sort: DESC
 
-# Template for showing the search results. If not defined, uses the settings
-# for listing_template and listing_records
+# Template for showing the search results. If not defined, uses the settings for
+# listing_template and listing_records. Note: If you've changed the filename,
+# and your changes do not show up on the website, be sure to check for a
+# config.yml file in your theme's folder. If a template is set there, it will
+# override the setting here.
 search_results_template: listing.twig
 search_results_records: 10
 
@@ -110,11 +124,13 @@ caching:
 changelog:
   enabled: false
 
-# Default settings for thumbnails. Quality should be between 0 (horrible) and
-# 100 (best, huge image). Cropping is one of either crop, fit, borders, resize.
+# Default settings for thumbnails. Quality should be between 0 (horrible, small file) and
+# 100 (best, huge file). Cropping is one of either crop, fit, borders, resize.
 # default_thumbnail is the default size of images, when using {{ record.image|thumbnail() }}
 # default_image is the default size of images, when using {{ record.image|image() }}
 # allow_upscale determines whether small images will be enlarged to fit the requested dimensions.
+# browser_cache_time sets the amount of seconds that the browser will cache images for.
+# Set it to activate browser caching
 # Note: if you change these values, you might need to clear the cache before they show up.
 thumbnails:
   default_thumbnail: [ 160, 120 ]
@@ -125,6 +141,17 @@ thumbnails:
   error_image: view/img/default_error.png
   save_files: false
   allow_upscale: false
+  exif_orientation: true
+#  browser_cache_time: 2592000
+
+# Uploaded file handling
+#
+# You can change the pattern match and replacement on uploaded files and if the
+# resulting filename should be transformed to lower case.
+#upload:
+#  pattern: '[^A-Za-z0-9\.]+'
+#  replacement: '-'
+#  lowercase: true
 
 # File types that are acceptable for upload in either 'file' fields or through the 'files' screen.
 
@@ -159,6 +186,16 @@ debug_error_level: 6135 # equivalent to E_ALL &~ E_NOTICE &~ E_DEPRECATED &~ E_U
 #debug_error_level: 30719 # equivalent to E_ALL
 debug_enable_whoops: true # change this to false to use PHP's built-in error handling instead of Whoops
 
+# System debug logging
+# This will enable intensive logging of Silex functions and will be very hard on
+# performance and log file size.  The log file will be created in your cache directory
+# Enable this for short time periods only when diagnosing system issues.
+# The level can be either: DEBUG, INFO, NOTICE, WARNING, ERROR, CRITICAL, ALERT, EMERGENCY
+debuglog:
+  enabled: false
+  filename: bolt-debug.log
+  level: DEBUG
+
 # Uncomment to enable permission checks in the frontend.
 # This allows hiding certain content types from regular (unauthenticated
 # visitors) through the permission system; see permissions.yml for details.
@@ -192,16 +229,28 @@ wysiwyg:
     disableNativeSpellChecker: true # If set to 'true' it will stop browsers from underlining spelling mistakes
     # viewSourceRoles: [ 'admin', 'developer' ] # the roles which are allowed to use the [Source]-button.
 
-# by default, mail is sent using PHP's built-in mail function. In general, it's advised to use SMTP for sending mail
-# instead. Uncomment the following lines to use an SMTP server with authentication.
-# Please check http://silex.sensiolabs.org/doc/providers/swiftmailer.html for a full range of options
+# Use the 'mailoptions' setting to configure how Bolt sends email: using 'smtp'
+# or PHP's built-in `mail()`-function. Note that the latter might _seem_ easier,
+# but it's been disabled by a lot of webhosts, in order to prevent spam from
+# wrongly configured scripts. If you use it, your mail might disappear into a
+# black hole, without producing any errors. Generally speaking, using 'smtp' is
+# the better option, so use that if possible. Protip: If your webhost does not
+# support SMTP, sign up for a (free) Mandrill account at https://mandrill.com/
+# for sending emails reliably.
+
 #mailoptions:
+#  transport: smtp
+#  spool: true
 #  host: localhost
-#  port: 25
 #  username: username
 #  password: password
+#  port: 25
 #  encryption: null
 #  auth_mode: null
+
+#mailoptions:
+#  transport: mail
+#  spool: false
 
 # Bolt allows some modifications to how 'strict' login sessions are. For every option
 # that is set to true, it becomes harder for a bad-willing person to spoof your login
@@ -212,15 +261,6 @@ wysiwyg:
 cookies_use_remoteaddr: true
 cookies_use_browseragent: false
 cookies_use_httphost: true
-
-# Set the SECURE flag on session and authentication cookies. This will keep
-# most browsers from transmitting sessions cookies over an unencrypted
-# connection (e.g. when editing the site over HTTPS and at the same time
-# viewing it over HTTP).
-# NOTE: This setting only makes sense when you have actually set up HTTPS for
-# your Bolt site; if you do, you probably want to combine this flag with the
-# enforce_ssl option to avoid non-SSL requests to the backend altogether.
-cookies_https_only: false
 
 # The length of time a user stays 'logged in'. Change to 0 to end the session when the browser
 # is closed. The default is 1209600: two weeks in seconds.
@@ -242,23 +282,27 @@ session_use_storage_handler: true
 # '12' is better.
 hash_strength: 10
 
+# Bolt sets the `X-Frame-Options` and `Frame-Options` to `SAMEORIGIN` by default, to prevent
+# clickjacking. When you uncomment the following line and set it to 'false', you will prevent
+# the setting of these headers.
+#headers:
+#  x_frame_options: true
+
 # Bolt uses extensions.bolt.cm to fetch it's extensions by default. You can change that URL here.
-# Do not change this, unless you know what you're doing, and understand the associated risks. If 
-# you use 'http://extensions.bolt.cm', Bolt will not use SSL, increasing the risk for a MITM 
-# attack. 
+# Do not change this, unless you know what you're doing, and understand the associated risks. If
+# you use 'http://extensions.bolt.cm', Bolt will not use SSL, increasing the risk for a MITM
+# attack.
 #
 # For the stability option, you can choose either 'dev' or 'stable'. Setting this to 'dev' will allow you to
 # install dev-master versions of extensions.
 extensions:
   site: 'https://extensions.bolt.cm/'
   stability: stable
+  enabled: true
 
 # Enforce SSL: if set, all but the front-end pages will enforce an SSL
 # connection (and redirect to HTTPS if you attempt to visit the backend over
 # plain HTTP).
-# NOTE: if you set this, you probably also want to set the cookies_https_only
-# option; without it, users can still be tricked into sending session cookies
-# over plain HTTP, which could allow a MITM attacker to hijack their sessions.
 # enforce_ssl: true
 
 # If configured, Bolt will trust X-Forwarded-XXX headers from the listed IP
@@ -291,3 +335,10 @@ extensions:
 #grunt:
 #  livereload: false
 #  livereloadport: 35729
+
+# Options for backend user interface
+#backend:
+#  news:
+#    disable: true   # Disable news panel. Defaults to false. "Alerts" will still be shown.
+#  stack:
+#    disable: true   # Disable stack usage. Defaults to false.

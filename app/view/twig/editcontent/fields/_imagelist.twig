@@ -4,20 +4,21 @@
     extensions:  field.extensions|default([]),
     label:       field.label|default(''),
     upload:      field.upload|default(''),
+    can_upload:  field.canUpload,
     info:        field.info|default('info.upload.filelist')
-}%}
+} %}
 
 {#=== INIT ===========================================================================================================#}
 
 {% set attr_fileupload = {
-    accept:      option.extensions ? '.'~option.extensions|join(',.') : '',
+    accept:      option.extensions ? '.' ~ option.extensions|join(',.') : '',
     data_upload: {type: 'ImageList', key: key}|json_encode(),
     data_url:    url('upload', {'handler': option.upload}),
-    id:          'fileupload-'~key,
+    id:          'fileupload-' ~ key,
     name:        'files[]',
     type:        'file',
     multiple:    true,
-}%}
+} %}
 
 {% if context.content.get(key) is defined %}
     {% set list_json = context.content.get(key)|json_encode() %}
@@ -46,17 +47,18 @@
 {% endset %}
 
 {% set list_item %}
-    <div data-id="{{ '<ID>' }}" class="ui-state-default">
-        <img src="{{ '<PATH>' }}../thumbs/60x40/{{ '<FNAME>' }}" width="60" height="40">
+    <div data-id="{{ '<ID>' }}" class="list-item ui-state-default">
+        <a class="thumbnail-link" href="{{ '<PATH>' }}../files/{{ '<FNAME>' }}"><img src="{{ '<PATH>' }}../thumbs/60x40/{{ '<FNAME>' }}" width="60" height="40"></a>
         <input type="text" value="{{ '<VAL>' }}">
-        <a href="#"><i class="fa fa-times"></i></a>
+        <a href="#" class="remove-button"><i class="fa fa-times"></i></a>
     </div>
 {% endset %}
 
 {% set listdata = {
     'message': {
-        'remove':     __('Are you sure you want to remove this image?'),
-        'wrongtype':  __('There was an error uploading the file.\nMake sure that the file type is of:\n%typelist%', {'%typelist%': option.extensions ? '.'~option.extensions|join(', .') : '–'})
+        'remove':       __('Are you sure you want to remove this image?'),
+        'removeMulti':  __('Are you sure you want to remove these images?'),
+        'wrongtype':    __('There was an error uploading the file.\nMake sure that the file type is of:\n%typelist%', {'%typelist%': option.extensions ? '.' ~ option.extensions|join(', .') : '–'})
     },
     'empty':          list_empty|trim,
     'item':           list_item|trim|preg_replace('/>\\s+</', '><'),
@@ -69,9 +71,15 @@
 
         <div class="list" data-list="{{ listdata|json_encode }}"></div>
 
-        {{ macro.upload_buttons('image', key, attr_fileupload, option.upload, context.canUpload) }}
+        {% set can_upload = context.can_upload and option.can_upload %}
+        {{ macro.upload_buttons('image', key, attr_fileupload, option.upload, can_upload) }}
 
         <textarea name="{{ key }}" id="{{ key }}" class="hide">{{ list_json }}</textarea>
+
+        <span type="button" class="btn btn-default remove-selected-button">
+            <i class="fa fa-trash"></i>
+            <span>{{ __('Remove selected') }}</span>
+        </span>
 
         {{ block.serverselect(key) }}
 

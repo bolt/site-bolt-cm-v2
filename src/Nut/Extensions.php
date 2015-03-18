@@ -16,11 +16,13 @@ class Extensions extends BaseCommand
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $result = $this->app['extend.runner']->installed();
-        $json = $result->getContent();
+        $installed = $this->app['extend.manager']->showPackage('installed');
+        $rows = array();
 
-        foreach (json_decode($json) as $ext) {
-            $rows[] = array($ext->name, $ext->version, $ext->type, $ext->descrip);
+        foreach ($installed as $ext) {
+            /** @var \Composer\Package\CompletePackageInterface $package */
+            $package = $ext['package'];
+            $rows[] = array($package->getPrettyName(), $package->getPrettyVersion(), $package->getType(), $package->getDescription());
         }
 
         $table = $this->getHelper('table');
@@ -28,6 +30,5 @@ class Extensions extends BaseCommand
             ->setHeaders(array('Name', 'Version', 'Type',  'Description'))
             ->setRows($rows);
         $table->render($output);
-
     }
 }

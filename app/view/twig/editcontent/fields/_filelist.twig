@@ -4,20 +4,21 @@
     extensions:  field.extensions|default([]),
     label:       field.label|default(''),
     upload:      field.upload|default(''),
+    can_upload:  field.canUpload,
     info:        field.info|default('info.upload.filelist')
-}%}
+} %}
 
 {#=== INIT ===========================================================================================================#}
 
 {% set attr_fileupload = {
-    accept:       option.extensions ? '.'~option.extensions|join(',.') : '',
+    accept:       option.extensions ? '.' ~ option.extensions|join(',.') : '',
     data_upload:  {type: 'FileList', key: key}|json_encode(),
     data_url:     url('upload', {'handler': option.upload}),
-    id:           'fileupload-'~key,
+    id:           'fileupload-' ~ key,
     name:         'files[]',
     type:         'file',
     multiple:     true,
-}%}
+} %}
 
 {% if context.content.get(key) is defined %}
     {% set list_json = context.content.get(key)|json_encode() %}
@@ -45,17 +46,18 @@
 {% endset %}
 
 {% set list_item %}
-    <div data-id="{{ '<ID>' }}" class="ui-state-default">
+    <div data-id="{{ '<ID>' }}" class="list-item ui-state-default">
         <input type="text" value="{{ '<VAL>' }}">
-        <a href="#"><i class="fa fa-times"></i></a>
-        <span>{{ '<INF>' }}</span>
+        <a href="#" class="remove-button"><i class="fa fa-times"></i></a>
+        <span>{{ '<FNAME>' }}</span>
     </div>
 {% endset %}
 
 {% set listdata = {
     'message': {
         'remove':     __('Are you sure you want to remove this file?'),
-        'wrongtype':  __('There was an error uploading the file.\nMake sure that the file type is of:\n%typelist%', {'%typelist%': option.extensions ? '.'~option.extensions|join(', .') : '–'})
+        'removeMulti':  __('Are you sure you want to remove these images?'),
+        'wrongtype':  __('There was an error uploading the file.\nMake sure that the file type is of:\n%typelist%', {'%typelist%': option.extensions ? '.' ~ option.extensions|join(', .') : '–'})
     },
     'empty':          list_empty|trim,
     'item':           list_item|trim|preg_replace('/>\\s+</', '><'),
@@ -68,7 +70,13 @@
 
         <div class="list" data-list="{{ listdata|json_encode }}"></div>
 
-        {{ macro.upload_buttons('file', key, attr_fileupload, option.upload, context.canUpload) }}
+        {% set can_upload = context.can_upload and option.can_upload %}
+        {{ macro.upload_buttons('file', key, attr_fileupload, option.upload, can_upload) }}
+
+        <span type="button" class="btn btn-default remove-selected-button">
+            <i class="fa fa-trash"></i>
+            <span>{{ __('Remove selected') }}</span>
+        </span>
 
         <textarea name="{{ key }}" id="{{ key }}" class="hide">{{ list_json }}</textarea>
 

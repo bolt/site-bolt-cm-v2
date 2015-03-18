@@ -1,10 +1,10 @@
 # app/resources/translations/hu/messages.hu.yml – generated on 2014-12-03 15:14:45 UTC
 
 # Warning: Translations are in the process of being moved to a new keyword-based translation
-#          at the moment. This is an ongoing process. Translations currently in the 
-#          repository are automatically mapped to the new scheme. Be aware that there 
-#          can be a race condition between that process and your PR so that it's 
-#          eventually necessary to remap your translations. If you're planning on 
+#          at the moment. This is an ongoing process. Translations currently in the
+#          repository are automatically mapped to the new scheme. Be aware that there
+#          can be a race condition between that process and your PR so that it's
+#          eventually necessary to remap your translations. If you're planning on
 #          updating your translations, it's best to ask on IRC to time your contribution
 #          in order to prevent merge conflicts.
 
@@ -81,11 +81,10 @@
 "(no group)": "(nincs csoport)"
 "(none)": "(nincs)"
 "A password reset link has been sent to '%user%'.": "Jelszó visszaállítási link elküldve a '%user%' felhasználónak."
-"About": "Bemutatkozás"
-"About Bolt": "A Boltról"
+general.about: "Bemutatkozás"
+general.about-bolt: "A Boltról"
 "Actions": "Műveletek"
-"Actions for Users": "Műveletek a felhasználókhoz"
-"Activity log": "Aktivitási napló"
+users.actions-for-users: "Műveletek a felhasználókhoz"
 "Add a brief, optional comment to describe what's changed.": "Rövid, tetszőleges megjegyzés ami leírja, mi változott."
 "Add a comment:": "Megjegyzés hozzáadása:"
 "Add a new extension using the form below.": "Új bővítmény az alábbi formában."
@@ -104,8 +103,8 @@
 "Body": "Body"
 "Bolt - Fatal error.": "Bolt - Végzetes hiba."
 "Bolt Extension could not be found. Please check at %site% to ensure correct name.": "Ez a Bolt bővítmény nem található. Itt tudod ellenőrizni, hogy helyes névre hivatkozol: %site%."
-"Bolt documentation on Github": "Bolt dokumentáció a Githubon"
-"Bolt on Github": "Bolt a Githubon"
+general.bolt-documentation-on-github: "Bolt dokumentáció a Githubon"
+general.bolt-on-github: "Bolt a Githubon"
 "Browse Versions": "Verziók áttekintése"
 "Browser / platform": "Böngésző / platform"
 "Built-in role, automatically granted at all times, even if no user is logged in": "Beépített szerepkör, automatikusan biztosítva minden alkalommal még ha nincs is bejelentkezett felhasználó"
@@ -127,7 +126,7 @@
 "Check for updates": "Frissítések ellenőrzése"
 "Checking for available updates (this may take up to 60 seconds)": "A frissítések ellenőrzése (akár 1 percig is tarthat)"
 "Checking installed packages": "A telepített csomagok ellenőrzése"
-"Choose an entry": "Válasszon egy bejegyzést"
+contenttypes.general.choose-an-entry: "Válasszon egy bejegyzést"
 "Class:": "Osztály"
 "Clear Activitylog": "Aktivitási napló törlése"
 "Clear cache again": "Gyorsítótár ismételt ürítése"
@@ -297,7 +296,7 @@
 "Rename %foldername%": "%foldername% átnevezése"
 "Roles": "Szerepek"
 "Roles and Permissions": "Szerepek és Engedélyek"
-"Routing setup": "Útvonalkezelő beállítása"
+menu.configuration.routing: "Útvonalkezelő beállítása"
 "Run all Updates": "Teljes frissítés"
 "Run update check": "Frissítések ellenőrzése"
 "Running install of all packages …": "A csomagok telepítése folyamatban…"
@@ -339,12 +338,10 @@
 "Taxonomy": "Taxonómia"
 "Template": "Sablon"
 "Textarea": "Szövegdoboz"
-"Thanks": "Köszönet"
+general.thanks: "Köszönet"
 "That user does not exist.": "Ez a felhasználó nem létezik."
 "The Bolt extensions Repo at %repository% is currently unavailable. Check your connection and try again shortly.": "A Bolt bővítménytár - %repository% - éppen nem elérhető. Ellenőrizd a kapcsolatot és próbáld újra."
-"The activitylog has been cleared.": "Az aktivitási napló törölve."
-"The activitylog has been trimmed.": "Az aktivitási napló tömörítve."
-"The database needs to be updated/repaired. Go to 'Settings' > '<a href=\"%link%\">Check Database</a>' to do this now.": "Az adatbázist frissíteni / javítani kell. Menjen a 'Beállítások' > '<a href=\"%link%\">Adatbázis ellenőrzése</a>' menüpontba, hogy ezt megtehesse."
+"The database needs to be updated/repaired. Go to 'Configuration' > '<a href=\"%link%\">Check Database</a>' to do this now.": "Az adatbázist frissíteni / javítani kell. Menjen a 'Beállítások' > '<a href=\"%link%\">Adatbázis ellenőrzése</a>' menüpontba, hogy ezt megtehesse."
 "The extensions directory (<code>%dir%</code>) does not exist, or it is not writable.": "A bővítménymappa (<code>%dir%</code>) nem létezik vagy nem írható."
 "The field %field% has been changed to \"%newValue%\"": "A %field% mező új értéke \"%newValue%\""
 "The file '%s' doesn't exist, or is not readable.": "A '%s' fájl nem létezik vagy nem olvasható."
@@ -424,7 +421,7 @@
 "Your account is disabled. Sorry about that.": "Az őn fiókja tiltott. Sajnáljuk."
 "Your database is already up to date.": "Az adatbázis már a legfrissebb."
 "Your database is now up to date.": "Az adatbázis frissítve."
-"Your password": "Az ön jelszava"
+users.your-password: "Az ön jelszava"
 "and edited": "és szerkesztve"
 "back to editing": "vissza a szerkesztéshez"
 "by": "általa:"
@@ -560,7 +557,6 @@ panel:
             more: "további aktivitások"
         by: "általa:"
         fixme: "Fixme"
-        headline: "Legutóbbi aktivitások"
         logged-in: "bejelentkezve"
         logged-out: "kijelentkezve"
         saved: "Mentve"

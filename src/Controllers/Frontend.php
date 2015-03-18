@@ -2,17 +2,19 @@
 
 namespace Bolt\Controllers;
 
+use Bolt\Application;
+use Bolt\Content;
+use Bolt\Helpers\Input;
+use Bolt\Library as Lib;
+use Bolt\Pager;
+use Bolt\Translation\Translator as Trans;
 use Silex;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Bolt\Library as Lib;
-use Bolt\Helpers\String;
-use Bolt\Helpers\Input;
-use Bolt\Translation\Translator as Trans;
-use Bolt\Pager;
+use utilphp\util;
 
 /**
- * Standard Frontend actions
+ * Standard Frontend actions.
  *
  * This file acts as a grouping for the default front-end controllers.
  *
@@ -26,13 +28,13 @@ class Frontend
      * Perform contenttype-based permission check, aborting with a 403
      * Forbidden as appropriate.
      *
-     * @param Silex\Application    $app     The application/container
-     * @param \Bolt\Content|string $content The content to check
+     * @param \Silex\Application $app     The application/container
+     * @param Content|string     $content The content to check
      */
-    private static function checkFrontendPermission(Silex\Application $app, $content)
+    protected function checkFrontendPermission(Silex\Application $app, $content)
     {
         if ($app['config']->get('general/frontend_permission_checks')) {
-            if ($content instanceof \Bolt\Content) {
+            if ($content instanceof Content) {
                 $contenttypeslug = $content->contenttype['slug'];
                 $contentid = $content['id'];
             } else {
@@ -50,11 +52,12 @@ class Frontend
      *
      * Refer to the routing.yml config file for overridding.
      *
-     * @param Request           $request The Symfony Request
-     * @param \Bolt\Application $app     The appliction/container
+     * @param Request     $request The Symfony Request
+     * @param Application $app     The application/container
+     *
      * @return mixed
      */
-    public static function before(Request $request, \Bolt\Application $app)
+    public function before(Request $request, Application $app)
     {
         // Start the 'stopwatch' for the profiler.
         $app['stopwatch']->start('bolt.frontend.before');
@@ -63,7 +66,7 @@ class Frontend
         // the DB, and let's add a new user.
         if (!$app['users']->getUsers()) {
             //!$app['storage']->getIntegrityChecker()->checkUserTableIntegrity() ||
-            $app['session']->getFlashBag()->set('info', Trans::__('There are no users in the database. Please create the first user.'));
+            $app['session']->getFlashBag()->add('info', Trans::__('There are no users in the database. Please create the first user.'));
 
             return Lib::redirect('useredit', array('id' => ''));
         }
@@ -84,15 +87,18 @@ class Frontend
 
         // Stop the 'stopwatch' for the profiler.
         $app['stopwatch']->stop('bolt.frontend.before');
+
+        return null;
     }
 
     /**
      * Controller for the "Homepage" route. Usually the front page of the website.
      *
-     * @param Silex\Application $app The application/container
+     * @param \Silex\Application $app The application/container
+     *
      * @return mixed
      */
-    public static function homepage(Silex\Application $app)
+    public function homepage(Silex\Application $app)
     {
         $content = $app['storage']->getContent($app['config']->get('general/homepage'));
 
@@ -109,21 +115,22 @@ class Frontend
         }
 
         if (!empty($record)) {
-            self::checkFrontendPermission($app, $record);
+            $this->checkFrontendPermission($app, $record);
         }
 
-        return $app['render']->render($template);
+        return $this->render($app, $template, 'homepage');
     }
 
     /**
      * Controller for a single record page, like '/page/about/' or '/entry/lorum'.
      *
-     * @param Silex\Application $app             The application/container
-     * @param string            $contenttypeslug The content type slug
-     * @param string            $slug            The content slug
+     * @param \Silex\Application $app             The application/container
+     * @param string             $contenttypeslug The content type slug
+     * @param string             $slug            The content slug
+     *
      * @return mixed
      */
-    public static function record(Silex\Application $app, $contenttypeslug, $slug)
+    public function record(Silex\Application $app, $contenttypeslug, $slug = '')
     {
         $contenttype = $app['storage']->getContentType($contenttypeslug);
 
@@ -132,7 +139,12 @@ class Frontend
             $app->abort(404, "Page $contenttypeslug/$slug not found.");
         }
 
-        $slug = String::slug($slug, -1);
+        // Perhaps we don't have a slug. Let's see if we can pick up the 'id', instead.
+        if (empty($slug)) {
+            $slug = $app['request']->get('id');
+        }
+
+        $slug = $app['slugify']->slugify($slug);
 
         // First, try to get it by slug.
         $content = $app['storage']->getContent($contenttype['slug'], array('slug' => $slug, 'returnsingle' => true));
@@ -142,7 +154,7 @@ class Frontend
             $content = $app['storage']->getContent($contenttype['slug'], array('id' => $slug, 'returnsingle' => true));
         }
 
-        self::checkFrontendPermission($app, $content);
+        $this->checkFrontendPermission($app, $content);
 
         // No content, no page!
         if (!$content) {
@@ -157,22 +169,9 @@ class Frontend
         // Then, select which template to use, based on our 'cascading templates rules'
         $template = $app['templatechooser']->record($content);
 
-        // Fallback: If file is not OK, show an error page
-        $filename = $app['paths']['themepath'] . "/" . $template;
-        if (!file_exists($filename) || !is_readable($filename)) {
-            $error = sprintf(
-                "No template for '%s' defined. Tried to use '%s/%s'.",
-                $content->getTitle(),
-                basename($app['config']->get('general/theme')),
-                $template
-            );
-            $app['log']->setValue('templateerror', $error);
-            $app->abort(404, $error);
-        }
-
         // Setting the canonical path and the editlink.
-        $app['canonicalpath'] = $content->link();
-        $app['paths'] = $app['resources']->getPaths();
+        $paths = $app['resources']->getPaths();
+        $app['resources']->setUrl('canonicalurl', sprintf('%s%s', $paths['canonical'], $content->link()));
         $app['editlink'] = Lib::path('editcontent', array('contenttypeslug' => $contenttype['slug'], 'id' => $content->id));
         $app['edittitle'] = $content->getTitle();
 
@@ -182,18 +181,19 @@ class Frontend
         $app['twig']->addGlobal($contenttype['singular_slug'], $content);
 
         // Render the template and return.
-        return $app['render']->render($template);
+        return $this->render($app, $template, $content->getTitle());
     }
 
     /**
      * The controller for previewing a content from posted data.
      *
-     * @param Request           $request         The Symfony Request
-     * @param Silex\Application $app             The application/container
-     * @param string            $contenttypeslug The content type slug
+     * @param Request            $request         The Symfony Request
+     * @param \Silex\Application $app             The application/container
+     * @param string             $contenttypeslug The content type slug
+     *
      * @return mixed
      */
-    public static function preview(Request $request, Silex\Application $app, $contenttypeslug)
+    public function preview(Request $request, Silex\Application $app, $contenttypeslug)
     {
         $contenttype = $app['storage']->getContentType($contenttypeslug);
 
@@ -201,40 +201,40 @@ class Frontend
         $content = $app['storage']->getContentObject($contenttypeslug);
         $content->setFromPost($request->request->all(), $contenttype);
 
-        self::checkFrontendPermission($app, $content);
+        $this->checkFrontendPermission($app, $content);
 
         // Then, select which template to use, based on our 'cascading templates rules'
         $template = $app['templatechooser']->record($content);
-
-        // Fallback: If file is not OK, show an error page
-        $filename = $app['paths']['themepath'] . "/" . $template;
-        if (!file_exists($filename) || !is_readable($filename)) {
-            $error = sprintf(
-                "No template for '%s' defined. Tried to use '%s/%s'.",
-                $content->getTitle(),
-                basename($app['config']->get('general/theme')),
-                $template
-            );
-            $app['log']->setValue('templateerror', $error);
-            $app->abort(404, $error);
-        }
 
         // Make sure we can also access it as {{ page.title }} for pages, etc. We set these in the global scope,
         // So that they're also available in menu's and templates rendered by extensions.
         $app['twig']->addGlobal('record', $content);
         $app['twig']->addGlobal($contenttype['singular_slug'], $content);
 
-        return $app['render']->render($template);
+        // Chrome (unlike Firefox and Internet Explorer) has a feature that helps prevent
+        // XSS attacks for uncareful people. It blocks embeds, links and src's that have
+        // a URL that's also in the request. In Bolt we wish to enable this type of embeds,
+        // because otherwise Youtube, Vimeo and Google Maps embeds will simply not show,
+        // causing confusion for the editor, because they don't know what's happening.
+        // Is this a security concern, you may ask? I believe it cannot be exploited:
+        //   - Disabled, the behaviour on Chrome matches Firefox and IE.
+        //   - The user must be logged in to see the 'preview' page at all.
+        //   - Our CSRF-token ensures that the user will only see their own posted preview.
+        // @see: http://security.stackexchange.com/questions/53474/is-chrome-completely-secure-against-reflected-xss
+        header("X-XSS-Protection: 0");
+
+        return $this->render($app, $template, $content->getTitle());
     }
 
     /**
      * The listing page controller.
      *
-     * @param Silex\Application $app             The application/container
-     * @param string            $contenttypeslug The content type slug
+     * @param \Silex\Application $app             The application/container
+     * @param string             $contenttypeslug The content type slug
+     *
      * @return mixed
      */
-    public static function listing(Silex\Application $app, $contenttypeslug)
+    public function listing(Silex\Application $app, $contenttypeslug)
     {
         $contenttype = $app['storage']->getContentType($contenttypeslug);
 
@@ -251,22 +251,9 @@ class Frontend
         $amount = (!empty($contenttype['listing_records']) ? $contenttype['listing_records'] : $app['config']->get('general/listing_records'));
         $order = (!empty($contenttype['sort']) ? $contenttype['sort'] : $app['config']->get('general/listing_sort'));
         $content = $app['storage']->getContent($contenttype['slug'], array('limit' => $amount, 'order' => $order, 'page' => $page, 'paging' => true));
-        self::checkFrontendPermission($app, $contenttype['slug']);
+        $this->checkFrontendPermission($app, $contenttype['slug']);
 
         $template = $app['templatechooser']->listing($contenttype);
-
-        // Fallback: If file is not OK, show an error page
-        $filename = $app['paths']['themepath'] . "/" . $template;
-        if (!file_exists($filename) || !is_readable($filename)) {
-            $error = sprintf(
-                "No template for '%s'-listing defined. Tried to use '%s/%s'.",
-                $contenttypeslug,
-                basename($app['config']->get('general/theme')),
-                $template
-            );
-            $app['log']->setValue('templateerror', $error);
-            $app->abort(404, $error);
-        }
 
         // Make sure we can also access it as {{ pages }} for pages, etc. We set these in the global scope,
         // So that they're also available in menu's and templates rendered by extensions.
@@ -274,21 +261,29 @@ class Frontend
         $app['twig']->addGlobal($contenttype['slug'], $content);
         $app['twig']->addGlobal('contenttype', $contenttype['name']);
 
-        return $app['render']->render($template);
+        return $this->render($app, $template, $contenttypeslug);
     }
 
     /**
      * The taxonomy listing page controller.
      *
-     * @param Silex\Application $app          The application/container
-     * @param string            $taxonomytype The taxonomy type slug
-     * @param string            $slug         The taxonomy slug
+     * @param \Silex\Application $app          The application/container
+     * @param string             $taxonomytype The taxonomy type slug
+     * @param string             $slug         The taxonomy slug
+     *
      * @return mixed
      */
-    public static function taxonomy(Silex\Application $app, $taxonomytype, $slug)
+    public function taxonomy(Silex\Application $app, $taxonomytype, $slug)
     {
+        $taxonomy = $app['storage']->getTaxonomyType($taxonomytype);
+        // No taxonomytype, no possible content.
+        if (empty($taxonomy)) {
+            return false;
+        } else {
+            $taxonomyslug = $taxonomy['slug'];
+        }
         // First, get some content
-        $context = $taxonomytype . '_' . $slug;
+        $context = $taxonomy['singular_slug'] . '_' . $slug;
         $pagerid = Pager::makeParameterId($context);
          /* @var $query \Symfony\Component\HttpFoundation\ParameterBag */
         $query = $app['request']->query;
@@ -297,40 +292,18 @@ class Frontend
         $order = $app['config']->get('general/listing_sort');
         $content = $app['storage']->getContentByTaxonomy($taxonomytype, $slug, array('limit' => $amount, 'order' => $order, 'page' => $page));
 
-        $taxonomy = $app['storage']->getTaxonomyType($taxonomytype);
-
-        // No taxonomytype, no possible content..
-        if (empty($taxonomy)) {
-            return false;
-        } else {
-            $taxonomyslug = $taxonomy['slug'];
-        }
-
         // See https://github.com/bolt/bolt/pull/2310
         if (($taxonomy['behaves_like'] === 'tags' && !$content)
-            || ( in_array($taxonomy['behaves_like'], array('categories', 'grouping')) && !in_array($slug, isset($taxonomy['options']) ? array_keys($taxonomy['options']) : array()))) {
+            || (in_array($taxonomy['behaves_like'], array('categories', 'grouping')) && !in_array($slug, isset($taxonomy['options']) ? array_keys($taxonomy['options']) : array()))) {
             $app->abort(404, "No slug '$slug' in taxonomy '$taxonomyslug'");
         }
 
         $template = $app['templatechooser']->taxonomy($taxonomyslug);
 
-        // Fallback: If file is not OK, show an error page
-        $filename = $app['paths']['themepath'] . "/" . $template;
-        if (!file_exists($filename) || !is_readable($filename)) {
-            $error = sprintf(
-                "No template for '%s'-listing defined. Tried to use '%s/%s'.",
-                $taxonomyslug,
-                basename($app['config']->get('general/theme')),
-                $template
-            );
-            $app['log']->setValue('templateerror', $error);
-            $app->abort(404, $error);
-        }
-
         $name = $slug;
         // Look in taxonomies in 'content', to get a display value for '$slug', perhaps.
         foreach ($content as $record) {
-            $flat = \utilphp\util::array_flatten($record->taxonomy);
+            $flat = util::array_flatten($record->taxonomy);
             $key = $app['paths']['root'] . $taxonomy['slug'] . '/' . $slug;
             if (isset($flat[$key])) {
                 $name = $flat[$key];
@@ -346,17 +319,18 @@ class Frontend
         $app['twig']->addGlobal('taxonomy', $app['config']->get('taxonomy/' . $taxonomyslug));
         $app['twig']->addGlobal('taxonomytype', $taxonomyslug);
 
-        return $app['render']->render($template);
+        return $this->render($app, $template, $taxonomyslug);
     }
 
     /**
      * The search result page controller.
      *
-     * @param Request           $request The Symfony Request
-     * @param Silex\Application $app     The application/container
+     * @param Request            $request The Symfony Request
+     * @param \Silex\Application $app     The application/container
+     *
      * @return mixed
      */
-    public static function search(Request $request, Silex\Application $app)
+    public function search(Request $request, Silex\Application $app)
     {
         $q = '';
         $context = __FUNCTION__;
@@ -374,16 +348,16 @@ class Frontend
         $page = ($query) ? $query->get($param, $query->get('page', 1)) : 1;
 
         $config = $app['config'];
-        $page_size = $config->get('general/search_results_records') ?: ($config->get('general/listing_records') ?: 10);
+        $pageSize = $config->get('general/search_results_records') ?: ($config->get('general/listing_records') ?: 10);
 
-        $offset = ($page - 1) * $page_size;
-        $limit = $page_size;
+        $offset = ($page - 1) * $pageSize;
+        $limit = $pageSize;
 
         // set-up filters from URL
         $filters = array();
         foreach ($request->query->all() as $key => $value) {
             if (strpos($key, '_') > 0) {
-                list ($contenttypeslug, $field) = explode('_', $key, 2);
+                list($contenttypeslug, $field) = explode('_', $key, 2);
                 if (isset($filters[$contenttypeslug])) {
                     $filters[$contenttypeslug][$field] = $value;
                 } else {
@@ -403,13 +377,13 @@ class Frontend
         $result = $app['storage']->searchContent($q, null, $filters, $limit, $offset);
 
         $pager = array(
-            'for' => $context,
-            'count' => $result['no_of_results'],
-            'totalpages' => ceil($result['no_of_results'] / $page_size),
-            'current' => $page,
+            'for'          => $context,
+            'count'        => $result['no_of_results'],
+            'totalpages'   => ceil($result['no_of_results'] / $pageSize),
+            'current'      => $page,
             'showing_from' => $offset + 1,
-            'showing_to' => $offset + count($result['results']),
-            'link' => '/search?q=' . rawurlencode($q) . '&page_search='
+            'showing_to'   => $offset + count($result['results']),
+            'link'         => '/search?q=' . rawurlencode($q) . '&page_search='
         );
 
         $app['storage']->setPager($context, $pager);
@@ -420,33 +394,72 @@ class Frontend
 
         $template = $app['templatechooser']->search();
 
-        return $app['render']->render($template);
+        return $this->render($app, $template, 'search');
     }
 
     /**
      * Renders the specified template from the current theme in response to a request without
      * loading any content.
      *
-     * @param Silex\Application $app      The application/container
-     * @param string            $template The template name
-     * @return mixed
+     * @param \Silex\Application $app      The application/container
+     * @param string             $template The template name
+     *
      * @throws \Exception
+     *
+     * @return mixed
      */
-    public static function template(Silex\Application $app, $template)
+    public function template(Silex\Application $app, $template)
     {
         // Add the template extension if it is missing
         if (!preg_match('/\\.twig$/i', $template)) {
             $template .= '.twig';
         }
 
-        $themePath    = realpath($app['paths']['themepath'] . '/');
-        $templatePath = realpath($app['paths']['themepath'] . '/' . $template);
+        return $this->render($app, $template, $template);
+    }
 
-        // Verify that the resulting template path is located in the theme directory
-        if ($themePath !== substr($templatePath, 0, strlen($themePath))) {
-            throw new \Exception("Invalid template: $template");
+    /**
+     * Render a template while wrapping Twig_Error_Loader in 404
+     * in case the template is not found by Twig.
+     *
+     * @param \Silex\Application $app
+     * @param string             $template Ex: 'listing.twig'
+     * @param string             $title    '%s' in "No template for '%s' defined."
+     *
+     * @return mixed Rendered template
+     */
+    private function render(Silex\Application $app, $template, $title)
+    {
+        try {
+            return $app['twig']->render($template);
+        } catch (\Twig_Error_Loader $e) {
+            $error = sprintf(
+                'Rendering %s failed: %s',
+                $title,
+                $e->getMessage()
+            );
+
+            // Log it
+            $app['logger.system']->error($error, array('event' => 'twig'));
+
+            // Set the template error
+            $this->setTemplateError($app, $error);
+
+            // Abort ship
+            $app->abort(Response::HTTP_INTERNAL_SERVER_ERROR, $error);
         }
+    }
 
-        return $app['render']->render(substr($templatePath, strlen($themePath)));
+    /**
+     * Set the TwigDataCollector templatechosen parameter if enabled.
+     *
+     * @param \Silex\Application $app
+     * @param string             $error
+     */
+    private function setTemplateError(Silex\Application $app, $error)
+    {
+        if (isset($app['twig.logger'])) {
+            $app['twig.logger']->setTrackedValue('templateerror', $error);
+        }
     }
 }

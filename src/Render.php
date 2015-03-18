@@ -5,7 +5,7 @@ namespace Bolt;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Wrapper around Twig's render() function. Handles the following responsibilities:
+ * Wrapper around Twig's render() function. Handles the following responsibilities:.
  *
  * - Calls twig's render
  * - Stores a page in cache, if needed
@@ -13,11 +13,9 @@ use Symfony\Component\HttpFoundation\Response;
  * - Fetches pages or template (partials) from cache
  *
  * @author Bob den Otter, bob@twokings.nl
- *
  */
 class Render
 {
-
     public $app;
     public $safe;
 
@@ -39,10 +37,11 @@ class Render
     }
 
     /**
-     * Render a template, possibly store it in cache. Or, if applicable, return the cached result
+     * Render a template, possibly store it in cache. Or, if applicable, return the cached result.
      *
      * @param $template
-     * @param  array $vars
+     * @param array $vars
+     *
      * @return mixed
      */
     public function render($template, $vars = array())
@@ -61,7 +60,8 @@ class Render
     /**
      * Postprocess the rendered HTML: insert the snippets, and stuff.
      *
-     * @param  Response $response
+     * @param Response $response
+     *
      * @return string
      */
     public function postProcess(Response $response)
@@ -111,7 +111,7 @@ class Render
     {
         if ($this->checkCacheConditions('request')) {
             // This is where the magic happens.. We also store it with an empty 'template' name,
-            // So we can later fetch it by its request..
+            // So we can later fetch it by its request.
             $key = md5($this->app['request']->getPathInfo() . $this->app['request']->getQueryString());
             $this->app['cache']->save($key, $html, $this->cacheDuration());
         }
@@ -124,7 +124,7 @@ class Render
      */
     public function cacheDuration()
     {
-        // in minutes..
+        // in minutes.
         $duration = $this->app['config']->get('general/caching/duration', 10);
 
         // in seconds.
@@ -134,8 +134,9 @@ class Render
     /**
      * Check if the current conditions are suitable for caching.
      *
-     * @param  string $type
-     * @param  bool   $checkoverride
+     * @param string $type
+     * @param bool   $checkoverride
+     *
      * @return bool
      */
     public function checkCacheConditions($type = 'template', $checkoverride = false)
@@ -147,12 +148,12 @@ class Render
         }
 
         // Only cache pages in the frontend.
-        if ($this->app['end'] != "frontend") {
+        if ($this->app['config']->getWhichEnd() !== 'frontend') {
             return false;
         }
 
         // Only cache for 'get' requests.
-        if ($this->app['request']->getMethod() != "GET") {
+        if ($this->app['request']->getMethod() !== 'GET') {
             return false;
         }
 
@@ -163,7 +164,7 @@ class Render
 
         // Don't use the cache, if we're currently logged in. (unless explicitly enabled in config.yml
         if (!$this->app['config']->get('general/caching/authenticated') &&
-            $this->app['users']->getCurrentUsername() != "") {
+            $this->app['users']->getCurrentUsername() !== '') {
             return false;
         }
 

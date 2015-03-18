@@ -3,11 +3,12 @@
 namespace Bolt;
 
 use Bolt;
-use Bolt\Extensions\Snippets\Location as SnippetLocation;
 use Bolt\Extensions\ExtensionInterface;
+use Bolt\Extensions\Snippets\Location as SnippetLocation;
 use Bolt\Helpers\String;
 use Bolt\Translation\Translator as Trans;
-use Symfony\Component\Filesystem\Filesystem;
+use Composer\Autoload\ClassLoader;
+use Monolog\Logger;
 use Symfony\Component\Finder\Finder;
 
 class Extensions
@@ -27,7 +28,7 @@ class Extensions
     /**
      * List of enabled extensions.
      *
-     * @var array
+     * @var ExtensionInterface[]
      */
     private $enabled = array();
 
@@ -46,11 +47,11 @@ class Extensions
     private $widgetqueue;
 
     /**
-     * List of menu items to add in the backend
+     * List of menu items to add in the backend.
      *
      * @var array
      */
-    private $menuoptions;
+    private $menuoptions = array();
 
     /**
      * Whether or not to add jQuery.
@@ -80,6 +81,7 @@ class Extensions
      * @var array
      */
     public $composer = array();
+
     /**
      * Contains a list of all css and js assets added through addCss and
      * addJavascript functions.
@@ -109,13 +111,13 @@ class Extensions
     }
 
     /**
-     * Autoloads all registered extension files with an instance of the app
+     * Autoloads all registered extension files with an instance of the app.
      *
      * @return void
      **/
     public function autoload($app)
     {
-        $loader = new \Composer\Autoload\ClassLoader();
+        $loader = new ClassLoader();
 
         $mapfile = $this->basefolder . '/vendor/composer/autoload_psr4.php';
         if (is_readable($mapfile)) {
@@ -129,6 +131,7 @@ class Extensions
                 $map = require $mapfile;
                 $loader->addClassMap($map);
             }
+
             $loader->register();
         }
 
@@ -141,20 +144,20 @@ class Extensions
                         require $file;
                     }
                 } catch (\Exception $e) {
+                    $this->logInitFailure('Error importing extension class', $file, $e, Logger::ERROR);
                 }
             }
         }
     }
 
     /**
-     * Workaround to load locally installed extensions
+     * Workaround to load locally installed extensions.
      *
      * @param Application $app
      */
     public function localload($app)
     {
-        $fs = new Filesystem();
-        $flag = $fs->exists($this->basefolder . '/local');
+        $flag = $this->app['filesystem']->has('extensions://local');
 
         // Check that local exists
         if ($flag) {
@@ -167,13 +170,19 @@ class Extensions
                    ->depth('== 2');
 
             foreach ($finder as $file) {
+                /** @var \Symfony\Component\Finder\SplFileInfo $file */
                 try {
                     // Include the extensions core file
                     require_once dirname($file->getRealpath()) . '/Extension.php';
 
                     // Include the init file
                     require_once $file->getRealpath();
+
+                    // Mark is as a local extension
+                    $extension = end($this->enabled);
+                    $extension->setInstallType('local');
                 } catch (\Exception $e) {
+                    $this->logInitFailure('Error importing local extension class', $file->getBasename(), $e, Logger::ERROR);
                 }
             }
         }
@@ -182,7 +191,8 @@ class Extensions
     /**
      * Extension register method. Allows any extension to register itself onto the enabled stack.
      *
-     * @param  ExtensionInterface $extension
+     * @param ExtensionInterface $extension
+     *
      * @return void
      */
     public function register(ExtensionInterface $extension)
@@ -192,7 +202,12 @@ class Extensions
         $this->enabled[$name] = $this->app['extensions.' . $name];
 
         // Store the composer part of the extensions config
-        array_push($this->composer, $extension->getExtensionConfig());
+        $conf = $extension->getExtensionConfig();
+        foreach ($conf as $key => $value) {
+            $this->composer[$key] = $value;
+        }
+
+        // Conditionally initalise extension
         if ($this->isInitialized) {
             $this->initializeExtension($extension);
         }
@@ -201,20 +216,47 @@ class Extensions
     /**
      * Check if an extension is enabled, case sensitive.
      *
-     * @param  string $name
+     * @param string $name
+     *
      * @return bool
      */
     public function isEnabled($name)
     {
-        return in_array($name, $this->enabled);
+        return array_key_exists($name, $this->enabled);
+    }
+
+    /**
+     * Get the enabled extensions.
+     *
+     * @return ExtensionInterface[]
+     */
+    public function getEnabled()
+    {
+        return $this->enabled;
+    }
+
+    /**
+     * Gets the composer config for an extension.
+     *
+     * @param string $extensionName
+     *
+     * @return array
+     */
+    public function getComposerConfig($extensionName)
+    {
+        return $this->composer[$extensionName];
     }
 
     /**
      * Initialize the enabled extensions.
-     *
      */
     public function initialize()
     {
+        // Don't initialise if extension loading globally disabled
+        if (!$this->app['extend.enabled']) {
+            return;
+        }
+
         $this->autoload($this->app);
         $this->localload($this->app);
         $this->isInitialized = true;
@@ -231,14 +273,7 @@ class Extensions
         try {
             $extension->getConfig();
         } catch (\Exception $e) {
-            $this->app['log']->add("[EXT] YAML config failed to load for {$name}: " . $e->getMessage(), 2);
-
-            if ($this->app['config']->getWhichEnd() == 'backend') {
-                $this->app['session']->getFlashBag()->set(
-                    'error',
-                    Trans::__('[Extension error] YAML config failed to load for %ext%: %error%', array('%ext%' => $name, '%error%' => $e->getMessage()))
-                );
-            }
+            $this->logInitFailure('Failed to load YAML config', $name, $e, Logger::ERROR);
 
             return;
         }
@@ -250,18 +285,19 @@ class Extensions
             // Add an object of this extension to the global Twig scope.
             $namespace = $this->getNamespace($extension);
             if (!empty($namespace)) {
-                $this->app['twig']->addGlobal($namespace, $extension);
-            }
+                $this->app['twig'] = $this->app->share(
+                    $this->app->extend(
+                        'twig',
+                        function (\Twig_Environment $twig) use ($namespace, $extension) {
+                            $twig->addGlobal($namespace, $extension);
 
-        } catch (\Exception $e) {
-            $this->app['log']->add("[EXT] Initialisation failed for {$name}: " . $e->getMessage(), 2);
-
-            if ($this->app['config']->getWhichEnd() == 'backend') {
-                $this->app['session']->getFlashBag()->set(
-                    'error',
-                    Trans::__('[Extension error] Initialisation failed for %ext%: %error%', array('%ext%' => $name, '%error%' => $e->getMessage()))
+                            return $twig;
+                        }
+                    )
                 );
             }
+        } catch (\Exception $e) {
+            $this->logInitFailure('Initialisation failed', $name, $e, Logger::ERROR);
 
             return;
         }
@@ -273,39 +309,59 @@ class Extensions
         try {
             $this->getSnippets($name);
         } catch (\Exception $e) {
-            $this->app['log']->add("[EXT] Snippet loading failed for {$name}: " . $e->getMessage(), 2);
-
-            if ($this->app['config']->getWhichEnd() == 'backend') {
-                $this->app['session']->getFlashBag()->set(
-                    'error',
-                    Trans::__('[Extension error] Snippet loading failed for %ext%: %error%', array('%ext%' => $name, '%error%' => $e->getMessage()))
-                );
-            }
+            $this->logInitFailure('Snippet loading failed', $name, $e, Logger::ERROR);
 
             return;
         }
 
         // Add Twig extensions
-        if (is_callable(array($extension, 'getTwigExtensions'))) {
-            try {
-                foreach ($extension->getTwigExtensions() as $extension) {
-                    $this->app['twig']->addExtension($extension);
-                    if (is_callable(array($extension, 'isSafe')) && $extension->isSafe() === true) {
-                        $this->app['safe_twig']->addExtension($extension);
+        if (!is_callable(array($extension, 'getTwigExtensions'))) {
+            return;
+        }
+        /** @var \Twig_Extension[] $extensions */
+        $twigExtensions = $extension->getTwigExtensions();
+        $addTwigExFunc = array($this, 'addTwigExtension');
+        foreach ($twigExtensions as $twigExtension) {
+            $this->app['twig'] = $this->app->share(
+                $this->app->extend(
+                    'twig',
+                    function (\Twig_Environment $twig) use ($addTwigExFunc, $twigExtension, $name) {
+                        call_user_func($addTwigExFunc, $twig, $twigExtension, $name);
+
+                        return $twig;
                     }
-                }
-            } catch (\Exception $e) {
-                $this->app['log']->add("[EXT] Twig function registration failed for {$name}: " . $e->getMessage(), 2);
+                )
+            );
 
-                if ($this->app['config']->getWhichEnd() == 'backend') {
-                    $this->app['session']->getFlashBag()->set(
-                        'error',
-                        Trans::__('[Extension error] Twig function registration failed for %ext%: %error%', array('%ext%' => $name, '%error%' => $e->getMessage()))
-                    );
-                }
-
-                return;
+            if (!is_callable(array($extension, 'isSafe')) || !$extension->isSafe()) {
+                continue;
             }
+            $this->app['safe_twig'] = $this->app->share(
+                $this->app->extend(
+                    'safe_twig',
+                    function (\Twig_Environment $twig) use ($addTwigExFunc, $twigExtension, $name) {
+                        call_user_func($addTwigExFunc, $twig, $twigExtension, $name);
+
+                        return $twig;
+                    }
+                )
+            );
+        }
+    }
+
+    /**
+     * @internal DO NOT USE!
+     *
+     * @param \Twig_Environment $twig
+     * @param \Twig_Extension   $extension
+     * @param string            $name
+     */
+    public function addTwigExtension(\Twig_Environment $twig, $extension, $name)
+    {
+        try {
+            $twig->addExtension($extension);
+        } catch (\Exception $e) {
+            $this->logInitFailure('Twig function registration failed', $name, $e, Logger::ERROR);
         }
     }
 
@@ -345,7 +401,6 @@ class Extensions
 
         // return second to last as namespace name
         return (array_pop($classatoms));
-
     }
 
     /**
@@ -360,7 +415,7 @@ class Extensions
     {
         $this->assets['css'][md5($filename)] = array(
             'filename' => $filename,
-            'late' => $late,
+            'late'     => $late,
             'priority' => $priority
         );
     }
@@ -368,6 +423,7 @@ class Extensions
     /**
      * Add a particular javascript file to the output. This will be inserted after
      * the other javascript files.
+     *
      * @param string $filename
      * @param bool   $late
      * @param int    $priority
@@ -384,6 +440,15 @@ class Extensions
     /**
      * Insert a widget. And by 'insert' we actually mean 'add it to the queue,
      * to be processed later'.
+     *
+     * @param        $type
+     * @param        $location
+     * @param        $callback
+     * @param        $extensionname
+     * @param string $additionalhtml
+     * @param bool   $defer
+     * @param int    $cacheduration
+     * @param string $extraparameters
      */
     public function insertWidget($type, $location, $callback, $extensionname, $additionalhtml = '', $defer = true, $cacheduration = 180, $extraparameters = "")
     {
@@ -394,15 +459,15 @@ class Extensions
         $key = substr(md5(sprintf("%s%s%s%s", $sessionkey, $type, $location, !is_array($callback) ? $callback : get_class($callback[0]) . $callback[1])), 0, 8);
 
         $this->widgetqueue[] = array(
-            'type' => $type,
-            'location' => $location,
-            'callback' => $callback,
-            'additionalhtml' => $additionalhtml,
-            'cacheduration' => $cacheduration,
-            'extension' => $extensionname,
-            'defer' => $defer,
+            'type'            => $type,
+            'location'        => $location,
+            'callback'        => $callback,
+            'additionalhtml'  => $additionalhtml,
+            'cacheduration'   => $cacheduration,
+            'extension'       => $extensionname,
+            'defer'           => $defer,
             'extraparameters' => $extraparameters,
-            'key' => $key
+            'key'             => $key
         );
     }
 
@@ -418,7 +483,6 @@ class Extensions
         if (is_array($this->widgetqueue)) {
             foreach ($this->widgetqueue as $widget) {
                 if ($type == $widget['type'] && $location == $widget['location']) {
-
                     $html = sprintf(
                         "<section><div class='widget' id='widget-%s' data-key='%s'%s>%s</div>%s</section>",
                         $widget['key'],
@@ -437,18 +501,18 @@ class Extensions
     /**
      * Renders the widget identified by the given key.
      *
-     * @param  string $key Widget identifier
+     * @param string $key Widget identifier
+     *
      * @return string HTML
      */
     public function renderWidget($key)
     {
         foreach ($this->widgetqueue as $widget) {
             if ($key == $widget['key']) {
-
                 $cachekey = 'widget_' . $widget['key'];
 
                 if ($this->app['cache']->contains($cachekey)) {
-                    // Present in the cache ..
+                    // Present in the cache .
                     $html = $this->app['cache']->fetch($cachekey);
                 } elseif (is_string($widget['callback']) && method_exists($this->initialized[$widget['extension']], $widget['callback'])) {
                     // Widget is defined in the extension itself.
@@ -464,7 +528,6 @@ class Extensions
                 }
 
                 return $html;
-
             }
         }
 
@@ -472,7 +535,7 @@ class Extensions
     }
 
     /**
-     * Call the 'getSnippets' function of an initialized extension, and make sure the snippets are initialized
+     * Call the 'getSnippets' function of an initialized extension, and make sure the snippets are initialized.
      */
     public function getSnippets($extensionname)
     {
@@ -492,23 +555,26 @@ class Extensions
 
     /**
      * Insert a snippet. And by 'insert' we actually mean 'add it to the queue, to be processed later'.
+     *
+     * @param        $location
+     * @param        $callback
+     * @param string $extensionname
+     * @param string $extraparameters
      */
     public function insertSnippet($location, $callback, $extensionname = 'core', $extraparameters = '')
     {
         $key = md5($extensionname . $callback . $location);
 
-        // http://php.net/manual/en/function.func-get-args.php
-
         $this->snippetqueue[$key] = array(
-            'location' => $location,
-            'callback' => $callback,
-            'extension' => $extensionname,
+            'location'        => $location,
+            'callback'        => $callback,
+            'extension'       => $extensionname,
             'extraparameters' => $extraparameters
         );
     }
 
     /**
-     * Clears the snippet queue
+     * Clears the snippet queue.
      */
     public function clearSnippetQueue()
     {
@@ -522,11 +588,11 @@ class Extensions
         // $this->matchedcomments array
         $html = preg_replace_callback('/<!--(.*)-->/Uis', array($this, 'pregcallback'), $html);
 
-        // Replace the snippets in the queue..
+        // Replace the snippets in the queue.
         foreach ($this->snippetqueue as $item) {
 
             // Get the snippet, either by using a callback function, or else use the
-            // passed string as-is..
+            // passed string as-is.
 
             if (($item['extension'] != "core") && method_exists($this->initialized[$item['extension']], $item['callback'])) {
                 // Snippet is defined in the extension itself.
@@ -535,13 +601,16 @@ class Extensions
                 // Snippet is a callback in the 'global scope'
                 $snippet = call_user_func($item['callback'], $this->app, $item['extraparameters']);
             } else {
-                // Insert the 'callback' as a string..
+                // Insert the 'callback' as a string.
                 $snippet = $item['callback'];
             }
 
             // then insert it into the HTML, somewhere.
             switch ($item['location']) {
                 case SnippetLocation::END_OF_HEAD:
+                case SnippetLocation::AFTER_HEAD_JS: // same as end of head because we cheat a little
+                case SnippetLocation::AFTER_HEAD_CSS: // same as end of head because we cheat a little
+                case SnippetLocation::AFTER_HEAD_META: // same as end of head because meta tags are unordered
                     $html = $this->insertEndOfHead($snippet, $html);
                     break;
                 case SnippetLocation::AFTER_META:
@@ -560,22 +629,29 @@ class Extensions
                     $html = $this->insertAfterJs($snippet, $html);
                     break;
                 case SnippetLocation::START_OF_HEAD:
+                case SnippetLocation::BEFORE_HEAD_JS: // same as start of head because we cheat a little
+                case SnippetLocation::BEFORE_HEAD_CSS: // same as start of head because we cheat a little
+                case SnippetLocation::BEFORE_HEAD_META: // same as start of head because meta tags are unordered
                     $html = $this->insertStartOfHead($snippet, $html);
                     break;
                 case SnippetLocation::START_OF_BODY:
+                case SnippetLocation::BEFORE_BODY_JS: // same as start of body because we cheat a little
+                case SnippetLocation::BEFORE_BODY_CSS: // same as start of body because we cheat a little
                     $html = $this->insertStartOfBody($snippet, $html);
                     break;
                 case SnippetLocation::END_OF_BODY:
+                case SnippetLocation::AFTER_BODY_JS: // same as end of body because we cheat a little
+                case SnippetLocation::AFTER_BODY_CSS: // same as end of body because we cheat a little
                     $html = $this->insertEndOfBody($snippet, $html);
                     break;
                 case SnippetLocation::END_OF_HTML:
                     $html = $this->insertEndOfHtml($snippet, $html);
                     break;
+
                 default:
                     $html .= $snippet . "\n";
                     break;
             }
-
         }
 
         if ($this->addjquery === true) {
@@ -591,7 +667,7 @@ class Extensions
     }
 
     /**
-     * Insert all assets in template. Use sorting by priority
+     * Insert all assets in template. Use sorting by priority.
      *
      * @param $html
      *
@@ -611,7 +687,6 @@ class Extensions
             array_walk($files, create_function('&$v, $k', '$v = $v[2];'));
 
             foreach ($files as $file) {
-
                 $late = $file['late'];
                 $filename = $file['filename'];
 
@@ -637,85 +712,79 @@ class Extensions
     }
 
     /**
-     *
      * Helper function to insert some HTML into thestart of the head section of
      * an HTML page, right after the <head> tag.
      *
-     * @param  string $tag
-     * @param  string $html
+     * @param string $tag
+     * @param string $html
+     *
      * @return string
      */
     public function insertStartOfHead($tag, $html)
     {
-        // first, attempt to insert it after the <head> tag, matching indentation..
+        // first, attempt to insert it after the <head> tag, matching indentation.
 
         if (preg_match("~^([ \t]*)<head(.*)~mi", $html, $matches)) {
 
             // Try to insert it after <head>
             $replacement = sprintf("%s\n%s\t%s", $matches[0], $matches[1], $tag);
             $html = String::replaceFirst($matches[0], $replacement, $html);
-
         } else {
 
             // Since we're serving tag soup, just append it.
             $html .= $tag . "\n";
-
         }
 
         return $html;
     }
 
     /**
-     *
      * Helper function to insert some HTML into thestart of the head section of
      * an HTML page, right after the <head> tag.
      *
-     * @param  string $tag
-     * @param  string $html
+     * @param string $tag
+     * @param string $html
+     *
      * @return string
      */
     public function insertStartOfBody($tag, $html)
     {
-        // first, attempt to insert it after the <body> tag, matching indentation..
+        // first, attempt to insert it after the <body> tag, matching indentation.
         if (preg_match("~^([ \t]*)<body(.*)~mi", $html, $matches)) {
 
             // Try to insert it after <body>
             $replacement = sprintf("%s\n%s\t%s", $matches[0], $matches[1], $tag);
             $html = String::replaceFirst($matches[0], $replacement, $html);
-
         } else {
 
             // Since we're serving tag soup, just append it.
             $html .= $tag . "\n";
-
         }
 
         return $html;
     }
 
     /**
-     *
      * Helper function to insert some HTML into the head section of an HTML
      * page, right before the </head> tag.
      *
-     * @param  string $tag
-     * @param  string $html
+     * @param string $tag
+     * @param string $html
+     *
      * @return string
      */
     public function insertEndOfHead($tag, $html)
     {
-        // first, attempt to insert it before the </head> tag, matching indentation..
+        // first, attempt to insert it before the </head> tag, matching indentation.
         if (preg_match("~^([ \t]*)</head~mi", $html, $matches)) {
 
             // Try to insert it just before </head>
             $replacement = sprintf("%s\t%s\n%s", $matches[1], $tag, $matches[0]);
             $html = String::replaceFirst($matches[0], $replacement, $html);
-
         } else {
 
             // Since we're serving tag soup, just append it.
             $html .= $tag . "\n";
-
         }
 
         return $html;
@@ -725,24 +794,23 @@ class Extensions
      * Helper function to insert some HTML into the body section of an HTML
      * page, right before the </body> tag.
      *
-     * @param  string $tag
-     * @param  string $html
+     * @param string $tag
+     * @param string $html
+     *
      * @return string
      */
     public function insertEndOfBody($tag, $html)
     {
-        // first, attempt to insert it before the </body> tag, matching indentation..
+        // first, attempt to insert it before the </body> tag, matching indentation.
         if (preg_match("~^([ \t]*)</body~mi", $html, $matches)) {
 
             // Try to insert it just before </head>
             $replacement = sprintf("%s\t%s\n%s", $matches[1], $tag, $matches[0]);
             $html = String::replaceFirst($matches[0], $replacement, $html);
-
         } else {
 
             // Since we're serving tag soup, just append it.
             $html .= $tag . "\n";
-
         }
 
         return $html;
@@ -752,24 +820,23 @@ class Extensions
      * Helper function to insert some HTML into the html section of an HTML
      * page, right before the </html> tag.
      *
-     * @param  string $tag
-     * @param  string $html
+     * @param string $tag
+     * @param string $html
+     *
      * @return string
      */
     public function insertEndOfHtml($tag, $html)
     {
-        // first, attempt to insert it before the </body> tag, matching indentation..
+        // first, attempt to insert it before the </body> tag, matching indentation.
         if (preg_match("~^([ \t]*)</html~mi", $html, $matches)) {
 
             // Try to insert it just before </head>
             $replacement = sprintf("%s\t%s\n%s", $matches[1], $tag, $matches[0]);
             $html = String::replaceFirst($matches[0], $replacement, $html);
-
         } else {
 
             // Since we're serving tag soup, just append it.
             $html .= $tag . "\n";
-
         }
 
         return $html;
@@ -778,20 +845,20 @@ class Extensions
     /**
      * Helper function to insert some HTML into the head section of an HTML page.
      *
-     * @param  string $tag
-     * @param  string $html
+     * @param string $tag
+     * @param string $html
+     *
      * @return string
      */
     public function insertAfterMeta($tag, $html)
     {
-        // first, attempt to insert it after the last meta tag, matching indentation..
+        // first, attempt to insert it after the last meta tag, matching indentation.
         if (preg_match_all("~^([ \t]*)<meta (.*)~mi", $html, $matches)) {
 
             // matches[0] has some elements, the last index is -1, because zero indexed.
             $last = count($matches[0]) - 1;
             $replacement = sprintf("%s\n%s%s", $matches[0][$last], $matches[1][$last], $tag);
             $html = String::replaceFirst($matches[0][$last], $replacement, $html);
-
         } else {
             $html = $this->insertEndOfHead($tag, $html);
         }
@@ -802,20 +869,20 @@ class Extensions
     /**
      * Helper function to insert some HTML into the head section of an HTML page.
      *
-     * @param  string $tag
-     * @param  string $html
+     * @param string $tag
+     * @param string $html
+     *
      * @return string
      */
     public function insertAfterCss($tag, $html)
     {
-        // first, attempt to insert it after the last <link> tag, matching indentation..
+        // first, attempt to insert it after the last <link> tag, matching indentation.
         if (preg_match_all("~^([ \t]*)<link (.*)~mi", $html, $matches)) {
 
             // matches[0] has some elements, the last index is -1, because zero indexed.
             $last = count($matches[0]) - 1;
             $replacement = sprintf("%s\n%s%s", $matches[0][$last], $matches[1][$last], $tag);
             $html = String::replaceFirst($matches[0][$last], $replacement, $html);
-
         } else {
             $html = $this->insertEndOfHead($tag, $html);
         }
@@ -826,24 +893,23 @@ class Extensions
     /**
      * Helper function to insert some HTML before the first CSS include in the page.
      *
-     * @param  string $tag
-     * @param  string $html
+     * @param string $tag
+     * @param string $html
+     *
      * @return string
      */
     public function insertBeforeCss($tag, $html)
     {
-        // first, attempt to insert it after the <body> tag, matching indentation..
+        // first, attempt to insert it after the <body> tag, matching indentation.
         if (preg_match("~^([ \t]*)<link(.*)~mi", $html, $matches)) {
 
             // Try to insert it before the match
             $replacement = sprintf("%s%s\n%s\t%s", $matches[1], $tag, $matches[0], $matches[1]);
             $html = String::replaceFirst($matches[0], $replacement, $html);
-
         } else {
 
             // Since we're serving tag soup, just append it.
             $html .= $tag . "\n";
-
         }
 
         return $html;
@@ -852,24 +918,23 @@ class Extensions
     /**
      * Helper function to insert some HTML before the first javascript include in the page.
      *
-     * @param  string $tag
-     * @param  string $html
+     * @param string $tag
+     * @param string $html
+     *
      * @return string
      */
     public function insertBeforeJS($tag, $html)
     {
-        // first, attempt to insert it after the <body> tag, matching indentation..
+        // first, attempt to insert it after the <body> tag, matching indentation.
         if (preg_match("~^([ \t]*)<script(.*)~mi", $html, $matches)) {
 
             // Try to insert it before the match
             $replacement = sprintf("%s%s\n%s\t%s", $matches[1], $tag, $matches[0], $matches[1]);
             $html = String::replaceFirst($matches[0], $replacement, $html);
-
         } else {
 
             // Since we're serving tag soup, just append it.
             $html .= $tag . "\n";
-
         }
 
         return $html;
@@ -880,9 +945,10 @@ class Extensions
      * First in the head section, but if there is no script in the head, place
      * it anywhere.
      *
-     * @param  string $tag
-     * @param  string $html
-     * @param  bool   $insidehead
+     * @param string $tag
+     * @param string $html
+     * @param bool   $insidehead
+     *
      * @return string
      */
     public function insertAfterJs($tag, $html, $insidehead = true)
@@ -895,13 +961,12 @@ class Extensions
             $context = $html;
         }
 
-        // then, attempt to insert it after the last <script> tag within context, matching indentation..
+        // then, attempt to insert it after the last <script> tag within context, matching indentation.
         if (preg_match_all("~^([ \t]*)(.*)</script>~mi", $context, $matches)) {
             // matches[0] has some elements, the last index is -1, because zero indexed.
             $last = count($matches[0]) - 1;
             $replacement = sprintf("%s\n%s%s", $matches[0][$last], $matches[1][$last], $tag);
             $html = String::replaceFirst($matches[0][$last], $replacement, $html);
-
         } elseif ($insidehead) {
             // Second attempt: entire document
             $html = $this->insertAfterJs($tag, $html, false);
@@ -916,7 +981,8 @@ class Extensions
     /**
      * Insert jQuery, if it's not inserted already.
      *
-     * @param  string $html
+     * @param string $html
+     *
      * @return string HTML
      */
     private function insertJquery($html)
@@ -929,7 +995,7 @@ class Extensions
         // jquery-1.8.2.min.js
         // jquery-1.5.js
         if (!preg_match('/<script(.*)jquery(-latest|-[0-9\.]*)?(\.min)?\.js/', $html)) {
-            $jqueryfile = $this->app['paths']['app'] . 'view/js/jquery-1.11.1.min.js';
+            $jqueryfile = $this->app['paths']['app'] . 'view/js/jquery-1.11.2.min.js';
             $html = $this->insertBeforeJs('<script src="' . $jqueryfile . '"></script>', $html);
         }
 
@@ -949,16 +1015,16 @@ class Extensions
      */
     public function addMenuOption($label, $path, $icon = false, $requiredPermission = null)
     {
-        // Fix the path, if we have not given a full path..
+        // Fix the path, if we have not given a full path.
         if (strpos($path, '/') === false) {
-            $path = $this->app['paths']['bolt'] . $path;
+            $path = $this->app['resources']->getUrl('bolt') . $path;
         }
 
         if (empty($requiredPermission) || $this->app['users']->isAllowed($requiredPermission)) {
             $this->menuoptions[$path] = array(
                 'label' => $label,
-                'path' => $path,
-                'icon' => $icon
+                'path'  => $path,
+                'icon'  => $icon
             );
         }
     }
@@ -984,17 +1050,39 @@ class Extensions
     }
 
     /**
+     * @param string     $msg
+     * @param string     $extensionName
+     * @param \Exception $e
+     * @param int        $level
+     */
+    protected function logInitFailure($msg, $extensionName, \Exception $e, $level = Logger::CRITICAL)
+    {
+        $context = array(
+            'event'     => 'extensions',
+            'exception' => $e
+        );
+
+        $this->app['logger.system']->addRecord($level, sprintf("%s for %s: %s", $msg, $extensionName, $e->getMessage()), $context);
+
+        $this->app['session']->getFlashBag()->add(
+            'error',
+            Trans::__("[Extension error] $msg for %ext%: %error%", array('%ext%' => $extensionName, '%error%' => $e->getMessage()))
+        );
+    }
+
+    /**
      * Callback method to identify comments and store them in the matchedcomments
      * array. These will be put back after the replacements on the HTML are
      * finished.
      *
-     * @param  string $c
+     * @param string $c
+     *
      * @return string The key under which the comment is stored
      */
     private function pregcallback($c)
     {
         $key = "###bolt-comment-" . count($this->matchedcomments) . "###";
-        // Add it to the array of matched comments..
+        // Add it to the array of matched comments.
         $this->matchedcomments["/" . $key . "/"] = $c[0];
 
         return $key;

@@ -2,59 +2,61 @@
 
 namespace Bolt\Translation;
 
+use Bolt\Application;
+use Bolt\Translation\Translator as Trans;
 use Silex;
 use Symfony\Component\Finder\Finder;
+use Symfony\Component\Translation\Exception\InvalidResourceException;
 use Symfony\Component\Yaml\Escaper;
 use Symfony\Component\Yaml\Exception\ParseException;
 use Symfony\Component\Yaml\Yaml;
-use Bolt\Translation\Translator as Trans;
 
 /**
- * Handles translation file dependent tasks
+ * Handles translation file dependent tasks.
  */
 class TranslationFile
 {
     /**
-     * Injected Application object
+     * Injected Application object.
      *
-     * @var type
+     * @var \Bolt\Application
      */
     private $app;
 
     /**
-     * Requested Domain
+     * Requested Domain.
      *
-     * @var type
+     * @var string
      */
     private $domain;
 
     /**
-     * Path to the translation file
+     * Path to the translation file.
      *
-     * @var type
+     * @var string
      */
     private $absPath;
 
     /**
-     * Project relative path to the translation file
+     * Project relative path to the translation file.
      *
-     * @var type
+     * @var string
      */
     private $relPath;
 
     /**
-     * List of all translatable Strings found
+     * List of all translatable Strings found.
      *
      * @var array
      */
     private $translatables = array();
 
     /**
-     * Constructor
+     * Constructor.
      *
-     * @param Silex\Application $app
-     * @param string $domain Requested resource
-     * @param string $locale Requested locale
+     * @param \Silex\Application $app
+     * @param string             $domain Requested resource
+     * @param string             $locale Requested locale
      */
     public function __construct(Silex\Application $app, $domain, $locale)
     {
@@ -67,10 +69,11 @@ class TranslationFile
     }
 
     /**
-     * Get the path to a tranlsation resource
+     * Get the path to a tranlsation resource.
      *
      * @param string $domain Requested resource
      * @param string $locale Requested locale
+     *
      * @return array returnsarray(absolute path, relative path)
      */
     private function buildPath($domain, $locale)
@@ -93,7 +96,7 @@ class TranslationFile
     }
 
     /**
-     * Get the path to a tranlsation resource
+     * Get the path to a tranlsation resource.
      *
      * @return array returns array(absolute path, relative path)
      */
@@ -103,19 +106,19 @@ class TranslationFile
     }
 
     /**
-     * Adds a string to the internal list of translatable strings
+     * Adds a string to the internal list of translatable strings.
      *
-     * @param string $Text
+     * @param string $text
      */
-    private function addTranslatable($Text)
+    private function addTranslatable($text)
     {
-        if (strlen($Text) > 1 && !isset($this->translatables[$Text])) {
-            $this->translatables[$Text] = '';
+        if (strlen($text) > 1 && !isset($this->translatables[$text])) {
+            $this->translatables[$text] = '';
         }
     }
 
     /**
-     * Scan twig templates for  __('...' and __("..." and add the strings found to the list of translatable strings
+     * Scan twig templates for  __('...' and __("..." and add the strings found to the list of translatable strings.
      */
     private function scanTwigFiles()
     {
@@ -131,10 +134,11 @@ class TranslationFile
         // Regex from: stackoverflow.com/questions/5695240/php-regex-to-ignore-escaped-quotes-within-quotes
         $twigRegex = array(
             "/\b__\(\s*'([^'\\\\]*(?:\\\\.[^'\\\\]*)*)'(?U).*\)/s" => array('\\\'' => '\''), // __('single_quoted_string'…
-            '/\b__\(\s*"([^"\\\\]*(?:\\\\.[^"\\\\]*)*)"(?U).*\)/s' => array('\"' => '"'), // __("double_quoted_string"…
+            '/\b__\(\s*"([^"\\\\]*(?:\\\\.[^"\\\\]*)*)"(?U).*\)/s' => array('\"'   => '"'), // __("double_quoted_string"…
         );
 
         foreach ($finder as $file) {
+            /** @var \Symfony\Component\Finder\SplFileInfo $file */
             foreach ($twigRegex as $regex => $stripslashes) {
                 if (preg_match_all($regex, $file->getContents(), $matches)) {
                     foreach ($matches[1] as $foundString) {
@@ -146,7 +150,7 @@ class TranslationFile
     }
 
     /**
-     * Scan php files for  __('...' and __("..." and add the strings found to the list of translatable strings
+     * Scan php files for  __('...' and __("..." and add the strings found to the list of translatable strings.
      *
      * All translatables strings have to be called with:
      * __("text", $params=array(), $domain='messages', locale=null) // $app['translator']->trans()
@@ -164,13 +168,14 @@ class TranslationFile
             ->in(__DIR__ . DIRECTORY_SEPARATOR . '..');
 
         foreach ($finder as $file) {
+            /** @var \Symfony\Component\Finder\SplFileInfo $file */
             $tokens = token_get_all($file->getContents());
-            $num_tokens = count($tokens);
+            $numTokens = count($tokens);
 
             // Skip whitespace and comments
-            $next = function () use (&$x, $tokens, $num_tokens) {
+            $next = function () use (&$x, $tokens, $numTokens) {
                 $token = $tokens[++$x];
-                while ($x < $num_tokens && is_array($token) && ($token[0] == T_WHITESPACE || $token[0] == T_COMMENT)) {
+                while ($x < $numTokens && is_array($token) && ($token[0] == T_WHITESPACE || $token[0] == T_COMMENT)) {
                     $token = $tokens[++$x];
                 }
 
@@ -192,7 +197,7 @@ class TranslationFile
                 return false;
             };
 
-            for ($x = 0; $x < $num_tokens; $x++) {
+            for ($x = 0; $x < $numTokens; $x++) {
                 $token = $tokens[$x];
                 // Found function __()
                 if (is_array($token) && $token[0] == T_STRING && $token[1] == '__') {
@@ -200,14 +205,14 @@ class TranslationFile
                     $token = $next();
 
                     // Found "("?
-                    if ($x < $num_tokens && !is_array($token) && $token == '(') {
+                    if ($x < $numTokens && !is_array($token) && $token == '(') {
                         // Skip whitespace and comments between "__()" and first function argument
                         $token = $next();
                         // Found String?
                         if (is_array($token) && $token[0] == T_CONSTANT_ENCAPSED_STRING) {
                             $string = '';
                             // Get string, also if concatenated
-                            while ($x < $num_tokens && $isArg($token)) {
+                            while ($x < $numTokens && $isArg($token)) {
                                 if (is_array($token) && $token[0] == T_CONSTANT_ENCAPSED_STRING) {
                                     $raw = substr($token[1], 1, strlen($token[1]) - 2);
                                     if (substr($token[1], 0, 1) == '"') {
@@ -231,7 +236,7 @@ class TranslationFile
     }
 
     /**
-     *  Add fields names and labels for contenttype (forms) to the list of translatable strings
+     *  Add fields names and labels for contenttype (forms) to the list of translatable strings.
      */
     private function scanContenttypeFields()
     {
@@ -247,7 +252,7 @@ class TranslationFile
     }
 
     /**
-     *  Add relation names and labels to the list of translatable strings
+     *  Add relation names and labels to the list of translatable strings.
      */
     private function scanContenttypeRelations()
     {
@@ -265,7 +270,7 @@ class TranslationFile
     }
 
     /**
-     * Add name ans singular names for taxonomies to the list of translatable strings
+     * Add name ans singular names for taxonomies to the list of translatable strings.
      */
     private function scanTaxonomies()
     {
@@ -277,7 +282,7 @@ class TranslationFile
     }
 
     /**
-     * Find all twig templates and bolt php code, extract translatables strings, merge with existing translations
+     * Find all twig templates and bolt php code, extract translatables strings, merge with existing translations.
      *
      * @return array
      */
@@ -295,11 +300,12 @@ class TranslationFile
     }
 
     /**
-     * Builds the translations file data with added translations
+     * Builds the translations file data with added translations.
      *
-     * @param array $newTranslations New translation data to write
+     * @param array $newTranslations   New translation data to write
      * @param array $savedTranslations Translation data read from file
-     * @param array $hinting Translation data that can be used as hinting
+     * @param array $hinting           Translation data that can be used as hinting
+     *
      * @return string
      */
     private function buildNewContent($newTranslations, $savedTranslations, $hinting = array())
@@ -307,11 +313,11 @@ class TranslationFile
         // Presort
         $unusedTranslations = $savedTranslations;
         $transByType = array(
-            'Unused' => array(' unused messages', array()),
+            'Unused'   => array(' unused messages', array()),
             'TodoReal' => array(' untranslated messages', array()),
-            'TodoKey' => array(' untranslated keyword based messages', array()),
+            'TodoKey'  => array(' untranslated keyword based messages', array()),
             'DoneReal' => array(' translations', array()),
-            'DoneKey' => array(' keyword based translations', array()),
+            'DoneKey'  => array(' keyword based translations', array()),
         );
         foreach ($newTranslations as $key => $translation) {
             $set = array('trans' => $translation);
@@ -390,7 +396,7 @@ class TranslationFile
     }
 
     /**
-     * Parses translations file ans returns translations
+     * Parses translations file ans returns translations.
      *
      * @return array Translations found
      */
@@ -430,7 +436,7 @@ class TranslationFile
     }
 
     /**
-     * Get the content of the info translation file or the fallback file
+     * Get the content of the info translation file or the fallback file.
      *
      * @return string
      */
@@ -441,7 +447,7 @@ class TranslationFile
         // if the file doesn't exist yet, point to the fallback one
         if (!file_exists($path) || filesize($path) < 10) {
             // fallback
-            list($path) = $this->buildPath('infos', \Bolt\Application::DEFAULT_LOCALE);
+            list($path) = $this->buildPath('infos', Application::DEFAULT_LOCALE);
 
             if (!file_exists($path)) {
                 $this->app['session']->getFlashBag()->add('error', 'Locale infos yml file not found. Fallback also not found.');
@@ -457,7 +463,7 @@ class TranslationFile
     }
 
     /**
-     * Gets all translatable strings and returns a translationsfile for messages or contenttypes
+     * Gets all translatable strings and returns a translationsfile for messages or contenttypes.
      *
      * @return string
      */
@@ -475,14 +481,14 @@ class TranslationFile
 
         try {
             return $this->buildNewContent($newTranslations, $savedTranslations);
-        } catch (\Symfony\Component\Translation\Exception\InvalidResourceException $e) {
+        } catch (InvalidResourceException $e) {
             // last resort fallback, edit the file
             return file_get_contents($this->absPath);
         }
     }
 
     /**
-     * Gets all translatable strings and returns a translationsfile for messages or contenttypes
+     * Gets all translatable strings and returns a translationsfile for messages or contenttypes.
      *
      * @return string
      */
@@ -502,7 +508,7 @@ class TranslationFile
     }
 
     /**
-     * Gets all translatable strings and returns a translationsfile for messages or contenttypes
+     * Gets all translatable strings and returns a translationsfile for messages or contenttypes.
      *
      * @return string
      */
@@ -519,7 +525,7 @@ class TranslationFile
     }
 
     /**
-     * Checks if translations file is allowed to write to
+     * Checks if translations file is allowed to write to.
      *
      * @return bool
      */

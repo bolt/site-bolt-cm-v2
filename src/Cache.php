@@ -2,82 +2,116 @@
 
 namespace Bolt;
 
+use Bolt\Configuration\ResourceManager;
 use Doctrine\Common\Cache\FilesystemCache;
-use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * Simple, file based cache for volatile data.. Useful for storing non-vital
  * information like feeds, and other stuff that can be recovered easily.
  *
  * @author Bob den Otter, bob@twokings.nl
- *
  */
 class Cache extends FilesystemCache
 {
-
     /**
-     * Max cache age. Default 10 minutes
+     * Max cache age. Default 10 minutes.
      */
     const DEFAULT_MAX_AGE = 600;
 
     /**
-     * Default cache file extension
+     * Default cache file extension.
      */
-    const DEFAULT_EXTENSION = '.boltcache.data';
+    private $extension = '.data';
 
     /**
-     * Set up the object. Initialize the proper folder for storing the
-     * files.
-     *
-     * @param  string                               $cacheDir
-     * @throws \Exception|\InvalidArgumentException
+     * @var string[] regular expressions for replacing disallowed characters in file name
      */
-    public function __construct($cacheDir = null)
-    {
-        $filesystem = new Filesystem();
-        if (!$filesystem->isAbsolutePath($cacheDir)) {
-            $cacheDir = realpath(__DIR__ . "/" . $cacheDir);
-        }
+    private $disallowedCharacterPatterns = array(
+        '/\-/', // replaced to disambiguate original `-` and `-` derived from replacements
+        '/[^a-zA-Z0-9\-_\[\]]/' // also excludes non-ascii chars (not supported, depending on FS)
+    );
 
+    /**
+     * @var string[] replacements for disallowed file characters
+     */
+    private $replacementCharacters = array('__', '-');
+
+    /**
+     * Set up the object. Initialize the proper folder for storing the files.
+     *
+     * @param string      $cacheDir
+     * @param Application $app
+     *
+     * @throws \Exception
+     */
+    public function __construct($cacheDir, Application $app)
+    {
         try {
-            parent::__construct($cacheDir, self::DEFAULT_EXTENSION);
-        } catch (\InvalidArgumentException $e) {
+            parent::__construct($cacheDir, $this->extension);
+        } catch (\Exception $e) {
+            $app['logger.system']->critical($e->getMessage(), array('event' => 'exception', 'exception' => $e));
             throw $e;
         }
+    }
+
+    /**
+     * Generate a filename for the cached items in our filebased cache.
+     *
+     * The original Doctrine/cache function stored files in folders that
+     * were nested 32 layers deep. In practice this led to cache folders
+     * containing up to 600,000 folders, while containing only about 15,000
+     * cached items. This is a huge overkill. Here, we use only two levels,
+     * which still means each folder will in practice contain only a very
+     * limited amount of files. i.e.: for 15,000 files, there are 256*256
+     * folders, which statstically means one or two files per folder.
+     *
+     * @param string $id
+     *
+     * @return string
+     */
+    protected function getFilename($id)
+    {
+        $foldername = implode(str_split(substr(hash('sha256', $id), 0, 4), 2), DIRECTORY_SEPARATOR);
+
+        return $this->directory
+            . DIRECTORY_SEPARATOR
+            . $foldername
+            . DIRECTORY_SEPARATOR
+            . preg_replace($this->disallowedCharacterPatterns, $this->replacementCharacters, $id)
+            . $this->extension;
     }
 
     /**
      * Clear the cache. Both the doctrine FilesystemCache, as well as twig and thumbnail temp files.
      *
      * @see clearCacheHelper
-     *
      */
     public function clearCache()
     {
         $result = array(
-            'successfiles' => 0,
-            'failedfiles' => 0,
-            'failed' => array(),
+            'successfiles'   => 0,
+            'failedfiles'    => 0,
+            'failed'         => array(),
             'successfolders' => 0,
-            'failedfolders' => 0,
-            'log' => ''
+            'failedfolders'  => 0,
+            'log'            => ''
         );
 
-        // Clear Doctrine's folder..
+        // Clear Doctrine's folder.
         parent::flushAll();
 
-        // Clear our own cache folder..
+        // Clear our own cache folder.
         $this->clearCacheHelper($this->getDirectory(), '', $result);
 
-        // Clear the thumbs folder..
-        $path = dirname(dirname(dirname(__DIR__))) . "/thumbs";
-        $this->clearCacheHelper($path, '', $result);
+        // Clear the thumbs folder.
+        $app = ResourceManager::getApp();
+        $this->clearCacheHelper($app['resources']->getPath('web') . '/thumbs', '', $result);
 
         return $result;
     }
 
     /**
-     * Helper function for clearCache()
+     * Helper function for clearCache().
      *
      * @param string $startFolder
      * @param string $additional
@@ -96,7 +130,6 @@ class Cache extends FilesystemCache
         $dir = dir($currentfolder);
 
         while (($entry = $dir->read()) !== false) {
-
             $exclude = array('.', '..', 'index.html', '.gitignore');
 
             if (in_array($entry, $exclude)) {
@@ -113,7 +146,6 @@ class Cache extends FilesystemCache
             }
 
             if (is_dir($currentfolder . '/' . $entry)) {
-
                 $this->clearCacheHelper($startFolder, $additional . '/' . $entry, $result);
 
                 if (@rmdir($currentfolder . '/' . $entry)) {
@@ -121,9 +153,7 @@ class Cache extends FilesystemCache
                 } else {
                     $result['failedfolders']++;
                 }
-
             }
-
         }
 
         $dir->close();

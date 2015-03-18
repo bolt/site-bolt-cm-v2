@@ -1,10 +1,10 @@
 # app/resources/translations/nl_NL/messages.nl_NL.yml – generated on 2014-12-06 09:23:09 UTC
 
 # Warning: Translations are in the process of being moved to a new keyword-based translation
-#          at the moment. This is an ongoing process. Translations currently in the 
-#          repository are automatically mapped to the new scheme. Be aware that there 
-#          can be a race condition between that process and your PR so that it's 
-#          eventually necessary to remap your translations. If you're planning on 
+#          at the moment. This is an ongoing process. Translations currently in the
+#          repository are automatically mapped to the new scheme. Be aware that there
+#          can be a race condition between that process and your PR so that it's
+#          eventually necessary to remap your translations. If you're planning on
 #          updating your translations, it's best to ask on IRC to time your contribution
 #          in order to prevent merge conflicts.
 
@@ -24,11 +24,10 @@
 "(no group)": "(geen groep)"
 "(none)": "(geen)"
 "A password reset link has been sent to '%user%'.": "Een link om het wachtwoord te resetten is verstuurd aan '%user%'."
-"About": "Over"
-"About Bolt": "Over Bolt"
+general.about-bolt: "Over Bolt"
 "Actions": "Acties"
-"Actions for Users": "Handelingen voor Gebruikers"
-"Activity log": "Activiteitenlog"
+
+
 "Add a brief, optional comment to describe what's changed.": "Plaats optioneel een korte opmerking om de aanpassingen te beschrijven."
 "Add a comment:": "Voeg een opmerking toe:"
 "Add a new extension using the form below.": "Voeg een nieuwe extensie toe met onderstaand formulier."
@@ -47,8 +46,6 @@
 "Body": "Broodtekst"
 "Bolt - Fatal error.": "Bolt - Kritieke fout."
 "Bolt Extension could not be found. Please check at %site% to ensure correct name.": "De Bolt extensie kon niet worden gevonden. Controleer op %site% of je de goede naam gebruikt."
-"Bolt documentation on Github": "Bolt documentatie op Github"
-"Bolt on Github": "Bolt op Github"
 "Browse Versions": "Blader tussen versies"
 "Browser / platform": "Browser / platform"
 "Built-in role, automatically granted at all times, even if no user is logged in": "Ingebouwde rol die aan iedereen wordt toegekend, ook als de gebruiker niet is ingelogd"
@@ -70,7 +67,6 @@
 "Check for updates": "Controleer op updates"
 "Checking for available updates (this may take up to 60 seconds)": "Updates aan het controleren (dit kan tot 60 seconden duren)"
 "Checking installed packages": "Controleer geïnstalleerde packages"
-"Choose an entry": "Kies een entry"
 "Class:": "Class"
 "Clear Activitylog": "Wis activiteitenlog"
 "Clear cache again": "Leeg de cache nogmaals"
@@ -217,7 +213,7 @@
 "Password reset not successful! Either the token was incorrect, or you were too late, or you tried to reset the password from a different IP-address.": "Resetten van het wachtwoord is mislukt! Is het token correct? Wellicht heeft u te lang gewacht of geprobeerd het wachtwoord te resetten vanaf een ander ip-adres."
 "Password reset successful! You can now log on with the password that was sent to you via email.": "Gelukt! Je kunt nu inloggen met het wachtwoord dat per e-mail is verzonden."
 "Path": "Pad"
-"Path to image file": "Pad naar afbeeldings-bestand"
+"Path to image file": "Pad naar afbeelding"
 "Path:": "Pad:"
 "Permalink": "Permalink"
 "Permission denied": "Permissie gewiegerd"
@@ -248,7 +244,7 @@
 "Rename %foldername%": "Hernoem %foldername%"
 "Roles": "Rollen"
 "Roles and Permissions": "Rollen en permissies"
-"Routing setup": "Route instellingen"
+menu.configuration.routing: "Route instellingen"
 "Run all Updates": "Doe alle updates"
 "Run update check": "Doe update check"
 "Running install of all packages …": "Doe installatie voor alle pacakges"
@@ -291,15 +287,13 @@
 "Tag": "Tag"
 "Tags": "Tags"
 "Taxonomy": "Taxonomie"
-"Teaser": "Ankeiler"
+"Teaser": "Teaser"
 "Template": "Template"
 "Textarea": "Tekstveld"
-"Thanks": "Bedankt"
+
 "That user does not exist.": "Die gebruiker bestaat niet."
 "The Bolt extensions Repo at %repository% is currently unavailable. Check your connection and try again shortly.": "De Bolt extensies Repo op %repository% is momenteel niet beschikbaar. Controleer je verbinding, en probeer het straks opnieuw"
-"The activitylog has been cleared.": "De activiteitenlog is gewist."
-"The activitylog has been trimmed.": "De activiteitenlog is verkleind."
-"The database needs to be updated/repaired. Go to 'Settings' > '<a href=\"%link%\">Check Database</a>' to do this now.": "De database moet bijgewerkt of gerepareerd worden. Ga naar 'Instellingen' > '<a href=\"%link%\">Controleer Database</a>' om dit nu te doen."
+"The database needs to be updated/repaired. Go to 'Configuration' > '<a href=\"%link%\">Check Database</a>' to do this now.": "De database moet bijgewerkt of gerepareerd worden. Ga naar 'Configuratie' > '<a href=\"%link%\">Controleer Database</a>' om dit nu te doen."
 "The extensions directory (<code>%dir%</code>) does not exist, or it is not writable.": "De directory voor extensies (<code>%dir%</code> bestaat niet of is niet schrijfbaar."
 "The field %field% has been changed to \"%newValue%\"": "Het veld %field% is gewijzigd in \"%newValue%\"."
 "The file '%s' doesn't exist, or is not readable.": "Het bestand '%s' bestaat niet, of is niet leesbaar."
@@ -380,7 +374,7 @@
 "Your account is disabled. Sorry about that.": "Je account is uitgeschakeld. Sorry daarvoor."
 "Your database is already up to date.": "Je database was al bijgewerkt."
 "Your database is now up to date.": "Je database is nu bijgewerkt."
-"Your password": "Je wachtwoord"
+
 "[Extension error] Initialisation failed for %ext%: %error%": "[Extensie fout] Initialisatie niet gelukt in %ext%: %error%"
 "[Extension error] Snippet loading failed for %ext%: %error%": "[Extensie fout] Snippet laden niet gelukt in %ext%: %error%"
 "[Extension error] Twig function registration failed for %ext%: %error%": "[Extensie fout] Twig functie initialiseren niet gelukt in %ext%: %error%"
@@ -443,6 +437,8 @@ contenttypes:
         show-more: "Meer %contenttypes%"
         view: "Bekijk %contenttypes%"
         wrong-use-field: "In het contenttype voor '%contenttype%', heeft het veld '%field%' de regel 'uses: %uses%', maar het veld '%uses%' bestaat niet. Bewerk contenttypes.yml, en corrigeer dit."
+
+
 
 field:
     general:
@@ -540,6 +536,7 @@ page:
         message:
             saving-user: "Gebruiker %user% kon niet worden opgeslagen, of er was niets aangepast."
             user-saved: "Gebruiker %user% is opgeslagen"
+            change-self: "Je bent uitgelogd, omdat je je eigen gebruikersnaam hebt aangepast. Log opnieuw in om door te gaan."
         note-sqlite: "Je gebruikt momenteel SQLite om de eerste gebruiker aan te maken. Als je liever MySQL of PostgreSQL wilt gebruikern, pas dan het configuratie-bestand op <tt>'app/config/config.yml'</tt> aan, en Bolt zal de database tabellen voor je aanmaken. Denk er dan aan om deze pagina te herladen, voor je doorgaat."
         placeholder:
             displayname: "Weergavenaam invullen"
@@ -575,7 +572,6 @@ panel:
             more: "meer activiteit"
         by: "door"
         fixme: "Fixmij:"
-        headline: "Laatste activiteit"
         logged-in: "ingelogd"
         logged-out: "uitgelogd"
         saved: "Opgeslagen"
@@ -583,3 +579,13 @@ panel:
     user-actions:
         button:
             add: "Nieuwe gebruiker toevoegen"
+
+contenttypes.general.choose-an-entry: "Kies een entry"
+general.bolt-on-github: "Bolt op Github"
+general.bolt-documentation-on-github: "Bolt documentatie op Github"
+general.about: "Over"
+users.actions-for-users: "Handelingen voor Gebruikers"
+users.your-password: "Je wachtwoord"
+general.thanks: "Bedankt"
+
+

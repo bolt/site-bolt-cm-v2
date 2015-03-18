@@ -140,11 +140,11 @@ showcases:
         datetime:
             type: datetime
             default: "2000-01-01"
-            variant: inline            
+            variant: inline
         date:
             type: date
             default: "first day of last month"
-            variant: inline            
+            variant: inline
         integerfield:
             type: integer
             index: true
@@ -162,14 +162,15 @@ showcases:
             type: select
             values: entries/id,title
             postfix: "Select an entry"
-            class: wide
+            autocomplete: true
+            sort: title
     relations:
         entries:
             multiple: false
-            label: Choose an entry
+            label: "Choose an entry"
             order: -id
             format: "{{ item.title|escape }} <span>(№ {{ item.id }})</span>"
-            postfix: "By selecting an Entry, you're creating a di-directional relationshop to that Entry."
+            postfix: "By selecting an Entry, you're creating a bi-directional relationship to that Entry."
         pages:
             multiple: true
             order: title

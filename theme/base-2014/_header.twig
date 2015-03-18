@@ -1,8 +1,5 @@
 <!DOCTYPE html>
-<!--[if lt IE 7]> <html class="no-js lt-ie9 lt-ie8 lt-ie7" lang="{{ htmllang() }}"> <![endif]-->
-<!--[if IE 7]>    <html class="no-js lt-ie9 lt-ie8" lang="{{ htmllang() }}"> <![endif]-->
-<!--[if IE 8]>    <html class="no-js lt-ie9" lang="{{ htmllang() }}"> <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="{{ htmllang() }}"> <!--<![endif]-->
+<html class="no-js" lang="{{ htmllang() }}">
 <head>
     <meta charset="utf-8" />
 
@@ -21,6 +18,10 @@
        this will keep working. See the documentation on paths: http://docs.bolt.cm/internals#paths #}
     <link rel="stylesheet" href="{{ paths.theme }}css/foundation.css">
     <link rel="stylesheet" href="{{ paths.theme }}css/app.css">
+    {# Bolt comes with Magnific Popup, as it's used in the backend. We can use it here, or you can
+      just swap it out for the image-viewing script of your choice. Or delete it altogether. #}
+    <link rel="stylesheet" href="{{ paths.theme }}css/magnific-popup.css">
+
 
     {#<!-- A variable from the theme's config: {{ theme.foo }} -->#}
 
@@ -54,9 +55,9 @@
 
         <!-- Header bar -->
         <div class="headerphoto">
-            
-            {# You can either hardcode the filename for the header, or take a value from the current 
-               content in 'record', or - as we do in this example - take a random one from the list 
+
+            {# You can either hardcode the filename for the header, or take a value from the current
+               content in 'record', or - as we do in this example - take a random one from the list
                in the /theme/base-2014/config.yml file. #}
             {% set headerimage = paths.theme ~ 'images/' ~ random(theme.headerimage) %}
             <img src="{{ headerimage }} " alt="" />

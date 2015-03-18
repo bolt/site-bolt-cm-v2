@@ -28,11 +28,9 @@ class TwigProxy extends \Twig_Extension
     }
 
     /**
-     * Add a Twig Function
+     * Add a Twig Function.
      *
-     * @param string $name
-     * @param string $callback
-     * @param array  $options
+     * @param \Twig_SimpleFunction $twigFunction
      */
     public function addTwigFunction(\Twig_SimpleFunction $twigFunction)
     {
@@ -40,15 +38,12 @@ class TwigProxy extends \Twig_Extension
     }
 
     /**
-     * Add a Twig Filter
+     * Add a Twig Filter.
      *
-     * @param string $name
-     * @param string $callback
-     * @param array  $options
+     * @param \Twig_SimpleFilter $twigFilter
      */
     public function addTwigFilter(\Twig_SimpleFilter $twigFilter)
     {
         $this->filters[] = $twigFilter;
     }
-
 }

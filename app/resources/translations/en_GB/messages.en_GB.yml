@@ -1,10 +1,10 @@
 # app/resources/translations/en_GB/messages.en_GB.yml – generated on 2014-12-06 09:22:41 UTC
 
 # Warning: Translations are in the process of being moved to a new keyword-based translation
-#          at the moment. This is an ongoing process. Translations currently in the 
-#          repository are automatically mapped to the new scheme. Be aware that there 
-#          can be a race condition between that process and your PR so that it's 
-#          eventually necessary to remap your translations. If you're planning on 
+#          at the moment. This is an ongoing process. Translations currently in the
+#          repository are automatically mapped to the new scheme. Be aware that there
+#          can be a race condition between that process and your PR so that it's
+#          eventually necessary to remap your translations. If you're planning on
 #          updating your translations, it's best to ask on IRC to time your contribution
 #          in order to prevent merge conflicts.
 
@@ -24,11 +24,12 @@
 "(no group)": "(no group)"
 "(none)": "(none)"
 "A password reset link has been sent to '%user%'.": "A password reset link has been sent to '%user%'."
-"About": "About"
-"About Bolt": "About Bolt"
+general.about: "About"
+general.about-bolt: "About Bolt"
 "Actions": "Actions"
-"Actions for Users": "Actions for Users"
-"Activity log": "Activity log"
+users.actions-for-users: "Actions for Users"
+logs.change-log: "Change Log"
+logs.system-log: "System Log"
 "Add a brief, optional comment to describe what's changed.": "Add a brief, optional comment to describe what's changed."
 "Add a comment:": "Add a comment:"
 "Add a new extension using the form below.": "Add a new extension using the form below."
@@ -47,8 +48,8 @@
 "Body": "Body"
 "Bolt - Fatal error.": "Bolt - Fatal error."
 "Bolt Extension could not be found. Please check at %site% to ensure correct name.": "Bolt Extension could not be found. Please check at %site% to ensure correct name."
-"Bolt documentation on Github": "Bolt documentation on GitHub"
-"Bolt on Github": "Bolt on GitHub"
+general.bolt-documentation-on-github: "Bolt documentation on GitHub"
+general.bolt-on-github: "Bolt on GitHub"
 "Browse Versions": "Browse Versions"
 "Browser / platform": "Browser / platform"
 "Built-in role, automatically granted at all times, even if no user is logged in": "Built-in role, automatically granted at all times, even if no user is logged in"
@@ -70,7 +71,7 @@
 "Check for updates": "Check for updates"
 "Checking for available updates (this may take up to 60 seconds)": "Checking for available updates (this may take up to 60 seconds)"
 "Checking installed packages": "Checking installed packages"
-"Choose an entry": "Choose an entry"
+contenttypes.general.choose-an-entry: "Choose an entry"
 "Class:": "Class:"
 "Clear Activitylog": "Clear activity log"
 "Clear cache again": "Clear cache again"
@@ -248,7 +249,7 @@
 "Rename %foldername%": "Rename %foldername%"
 "Roles": "Roles"
 "Roles and Permissions": "Roles and Permissions"
-"Routing setup": "Routing set up"
+menu.configuration.routing: "Routing set up"
 "Run all Updates": "Run all Updates"
 "Run update check": "Run update check"
 "Running install of all packages …": "Running install of all packages …"
@@ -294,12 +295,14 @@
 "Teaser": "Teaser"
 "Template": "Template"
 "Textarea": "Textarea"
-"Thanks": "Thanks"
+general.thanks: "Thanks"
 "That user does not exist.": "That user does not exist."
 "The Bolt extensions Repo at %repository% is currently unavailable. Check your connection and try again shortly.": "The Bolt extensions Repo at %repository% is currently unavailable. Check your connection and try again shortly."
-"The activitylog has been cleared.": "The activity log has been cleared."
-"The activitylog has been trimmed.": "The activity log has been trimmed."
-"The database needs to be updated/repaired. Go to 'Settings' > '<a href=\"%link%\">Check Database</a>' to do this now.": "The database needs to be updated/repaired. Go to 'Settings' > '<a href=\"%link%\">Check Database</a>' to do this now."
+"The change log has been cleared.": "The change log has been cleared."
+"The change log has been trimmed.": "The change log has been trimmed."
+"The system log has been cleared.": "The system log has been cleared."
+"The system log has been trimmed.": "The system log has been trimmed."
+"The database needs to be updated/repaired. Go to 'Configuration' > '<a href=\"%link%\">Check Database</a>' to do this now.": "The database needs to be updated/repaired. Go to 'Configuration' > '<a href=\"%link%\">Check Database</a>' to do this now."
 "The extensions directory (<code>%dir%</code>) does not exist, or it is not writable.": "The extensions directory (<code>%dir%</code>) does not exist, or it is not writable."
 "The field %field% has been changed to \"%newValue%\"": "The field %field% has been changed to \"%newValue%\""
 "The file '%s' doesn't exist, or is not readable.": "The file '%s' doesn't exist, or is not readable."
@@ -380,7 +383,7 @@
 "Your account is disabled. Sorry about that.": "Your account is disabled. Sorry about that."
 "Your database is already up to date.": "Your database is already up to date."
 "Your database is now up to date.": "Your database is now up to date."
-"Your password": "Your password"
+users.your-password: "Your password"
 "[Extension error] Initialisation failed for %ext%: %error%": "[Extension error] Initialisation failed for %ext%: %error%"
 "[Extension error] Snippet loading failed for %ext%: %error%": "[Extension error] Snippet loading failed for %ext%: %error%"
 "[Extension error] Twig function registration failed for %ext%: %error%": "[Extension error] Twig function registration failed for %ext%: %error%"
@@ -401,9 +404,9 @@
 component:
     changelog-detail:
         by: "by"
-        field: "field"
-        value-new: "new value"
-        value-old: "old value"
+        field: "Field"
+        value-new: "New value"
+        value-old: "Old value"
     changelog-pager:
         page: "Page"
 
@@ -435,6 +438,7 @@ contenttypes:
         publish: "Publish %contenttype%"
         recent: "Recent %contenttypes%"
         recently-edited: "Recently edited %contenttypes%"
+        recent-changes-one: "Recent changes to this %contenttype%"
         reserved-name: "In the contenttype for '%contenttype%', the field '%field%' is defined, which is a reserved name. Please edit contenttypes.yml, and correct this."
         save: "Save %contenttype%"
         saved-changes: "The changes to this %contenttype% have been saved."
@@ -532,14 +536,15 @@ page:
             last-seen: "Last seen"
             password: "Password"
             password-confirm: "Password (confirmation)"
-            user-enabled: "User is enabled"
+            user-enabled: "User account is enabled"
             username: "Username"
         log:
-            user-added: "Added user '%user%'."
-            user-updated: "Updated user '%user%'."
+            user-added: "Added user account '%user%'."
+            user-updated: "Updated user account '%user%'."
         message:
             saving-user: "User %user% could not be saved, or nothing was changed."
             user-saved: "User %user% has been saved."
+            change-self: "You've been logged off, because you changed your own username. Please log on again."
         note-sqlite: "You are currently using SQLite to set up the first user. If you wish to use MySQL or PostgreSQL instead, edit the configuration file at <tt>'app/config/config.yml'</tt> and Bolt will set up the database tables for you. Be sure to reload this page before continuing."
         placeholder:
             displayname: "Pick a display name / alias"
@@ -548,11 +553,11 @@ page:
             password-confirm: "Confirm your password"
             username: "Pick a username, lowercase only"
         title:
-            create: "Create a new user"
-            edit: "Edit user"
+            create: "Create a new user account"
+            edit: "Edit user account"
             profile: "Profile"
-        user-create: "Create a new user, using the form below. The password field is required."
-        user-edit: "Edit an existing user, using the form below. Leave the password fields empty, unless you wish to change the password."
+        user-create: "Create a new user account, using the form below. The password field is required."
+        user-edit: "Edit an existing user account, using the form below. Leave the password fields empty, unless you wish to change the password."
     login:
         button:
             back: "Back to login"
@@ -575,10 +580,13 @@ panel:
             more: "more activity"
         by: "by"
         fixme: "Fixme:"
-        headline: "Latest activity"
+        change: "Latest changes"
         logged-in: "logged in"
         logged-out: "logged out"
+        created: "Created"
         saved: "Saved"
+        system: "Latest system activity"
+        deleted: "Deleted"
         unknown: "unknown"
     user-actions:
         button:

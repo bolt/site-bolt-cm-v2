@@ -2,62 +2,65 @@
 namespace Bolt\Configuration;
 
 use Bolt\Application;
-use Symfony\Component\HttpFoundation\Request;
 use Composer\Autoload\ClassLoader;
+use Eloquent\Pathogen\AbsolutePathInterface;
+use Eloquent\Pathogen\RelativePathInterface;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\HttpFoundation\Request;
 
 /**
  * A Base Class to handle resource management of paths and urls within a Bolt App.
  *
  * Intended to simplify the ability to override resource location
  *
- *
  * @author Ross Riley, riley.ross@gmail.com
- *
- * @property \Composer\Autoload\ClassLoader $classloader
- * @property \Bolt\Application $app
- * @property \Symfony\Component\HttpFoundation\Request $requestObject
- * @property \Eloquent\Pathogen\FileSystem\Factory\FileSystemPathFactory $pathManager
  */
 class ResourceManager
 {
-
+    /** @var \Bolt\Application */
     public $app;
 
     public $urlPrefix = "";
 
     /**
-     * Don't use! Will probably refactored out soon
+     * @var \Bolt\Application
+     *
+     * @deprecated Don't use! Will probably refactored out soon
      */
-    protected static $theApp;
+    public static $theApp;
 
+    /** @var \Eloquent\Pathogen\AbsolutePathInterface */
     protected $root;
 
+    /** @var Request */
     protected $requestObject;
 
+    /** @var AbsolutePathInterface[] */
     protected $paths = array();
 
     protected $urls = array();
 
+    /** @var string[] */
     protected $request = array();
 
-    protected $verifier = false;
+    /** @var LowLevelChecks|null */
+    protected $verifier;
 
+    /** @var \Composer\Autoload\ClassLoader|null */
     protected $classLoader;
 
+    /** @var \Eloquent\Pathogen\FileSystem\Factory\FileSystemPathFactory */
     protected $pathManager;
 
     /**
      * Constructor initialises on the app root path.
      *
-     * @param \ArrayAccess $container
-     * ArrayAccess compatible DI container that must contain one of:
-     * 'classloader' of instance a ClassLoader will use introspection to find root path or
-     * 'rootpath' will be treated as an existing directory as string.
+     * @param \ArrayAccess $container ArrayAccess compatible DI container that must contain one of:
+     *                                'classloader' of instance a ClassLoader will use introspection to find root path or
+     *                                'rootpath' will be treated as an existing directory as string.
      *
      * Optional ones:
      * 'request' - Symfony\Component\HttpFoundation\Request
-     * 'verifier' - LowLevelChecks verifier
      */
     public function __construct(\ArrayAccess $container)
     {
@@ -71,10 +74,6 @@ class ResourceManager
 
         if (!($container instanceof Application) && !empty($container['request'])) {
             $this->requestObject = $container['request'];
-        }
-
-        if (!empty($container['verifier'])) {
-            $this->verifier = $container['verifier'];
         }
 
         $this->setUrl('root', '/');
@@ -99,35 +98,30 @@ class ResourceManager
         $this->setPath('config', 'app/config');
         $this->setPath('database', 'app/database');
         $this->setPath('themebase', 'theme');
-
     }
 
     public function useLoader(ClassLoader $loader)
     {
         $this->classLoader = $loader;
-        $ldpath = dirname($loader->findFile('Composer\\Autoload\\ClassLoader'));
-        $expath = explode('vendor', $ldpath);
-        array_pop($expath);
+        $loaderPath = dirname($loader->findFile('Composer\\Autoload\\ClassLoader'));
+        // Remove last vendor/* off loaderPath to get our root path
+        list($rootPath) = explode('vendor', $loaderPath, -1);
 
-        return $this->setPath('root', join('vendor', $expath));
+        return $this->setPath('root', $rootPath);
     }
-
-    /*
-     * Setters
-     */
 
     public function setApp(Application $app)
     {
-        static::$theApp = $this->app = $app;
+        $this->app = $app;
+        ResourceManager::$theApp = $app;
     }
 
     public function setPath($name, $value)
     {
-        if (! preg_match("/^(?:\/|\\\\|\w:\\\\|\w:\/).*$/", $value)) {
-            $path = $this->pathManager->create($value);
-            $path = $this->paths['root']->resolve($path);
-        } else {
-            $path = $this->pathManager->create($value);
+        // If this is a relative path make it relative to root.
+        $path = $this->pathManager->create($value);
+        if ($path instanceof RelativePathInterface) {
+            $path = $path->resolveAgainst($this->paths['root']);
         }
 
         $this->paths[$name] = $path;
@@ -138,17 +132,62 @@ class ResourceManager
         return $path;
     }
 
+    /**
+     * Gets a path as a string.
+     *
+     * Subdirectories are automatically parsed to correct filesystem.
+     *
+     * For example:
+     *
+     *     $bar = getPath('root/foo/bar');
+     *
+     * @param string $name Name of path
+     *
+     * @throws \InvalidArgumentException If path isn't available
+     *
+     * @return string
+     */
     public function getPath($name)
     {
-        if (array_key_exists($name . "path", $this->paths)) {
-            return $this->paths[$name . "path"]->string();
+        return $this->getPathObject($name)->string();
+    }
+
+    /**
+     * Gets a path as a PathInterface.
+     *
+     * Subdirectories are automatically parsed to correct filesystem.
+     *
+     * For example:
+     *
+     *     $bar = getPath('root/foo/bar');
+     *
+     * @param string $name Name of path
+     *
+     * @throws \InvalidArgumentException If path isn't available
+     *
+     * @return AbsolutePathInterface
+     */
+    public function getPathObject($name)
+    {
+        $parts = array();
+        if (strpos($name, '/') !== false) {
+            $parts = explode('/', $name);
+            $name = array_shift($parts);
         }
 
-        if (! array_key_exists($name, $this->paths)) {
+        if (array_key_exists($name . "path", $this->paths)) {
+            $path = $this->paths[$name . "path"];
+        } elseif (array_key_exists($name, $this->paths)) {
+            $path = $this->paths[$name];
+        } else {
             throw new \InvalidArgumentException("Requested path $name is not available", 1);
         }
 
-        return $this->paths[$name];
+        if (!empty($parts)) {
+            $path = $path->joinAtomSequence($parts);
+        }
+
+        return $path;
     }
 
     public function setUrl($name, $value)
@@ -176,7 +215,7 @@ class ResourceManager
     public function getRequest($name)
     {
         if (! array_key_exists($name, $this->request)) {
-            throw new \InvalidArgumentException("Request componenet $name is not available", 1);
+            throw new \InvalidArgumentException("Request component $name is not available", 1);
         }
 
         return $this->request[$name];
@@ -187,7 +226,7 @@ class ResourceManager
      * However $this->paths can be either mixed array elements of String or Path
      * getPaths() will convert them string to provide homogeneous type result.
      *
-     * @return array String array of merge
+     * @return string[] array of merged strings
      */
     public function getPaths()
     {
@@ -202,62 +241,66 @@ class ResourceManager
     }
 
     /**
-     * Takes a Request object and uses it to initialize settings that depend on the request
+     * Takes a Request object and uses it to initialize settings that depend on the request.
      *
-     * @return void
-     *
+     * @param Request $request
      */
-    public function initializeRequest(Request $request = null)
+    public function initializeRequest(Application $app, Request $request = null)
     {
         if ($request === null) {
             $request = Request::createFromGlobals();
         }
 
-        // Set the current protocol. Default to http, unless otherwise..
+        // This is where we set the canonical. Note: The protocol (scheme) defaults to 'http',
+        // and the path is discarded, as it makes no sense in this context: Bolt always
+        // determines the path for a page / record. This is not the canonical's job.
+        $canonical = parse_url($app['config']->get('general/canonical', ""));
+        if (empty($canonical['scheme'])) {
+            $canonical['scheme'] = 'http';
+        }
+        if (empty($canonical['host'])) {
+            $canonical['host'] = $request->server->get('HTTP_HOST');
+        }
+        $this->setRequest("canonical", sprintf("%s://%s", $canonical['scheme'], $canonical['host']));
+
+        // Set the current protocol. Default to http, unless otherwise.
         $protocol = "http";
 
-        if ( (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on') ||
-             (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https' || !empty($_SERVER['HTTP_X_FORWARDED_SSL']) && $_SERVER['HTTP_X_FORWARDED_SSL'] == 'on') ) {
+        if (($request->server->get('HTTPS') == 'on') ||
+            ($request->server->get('SERVER_PROTOCOL') == 'https') ||
+            ($request->server->get('HTTP_X_FORWARDED_PROTO') == 'https') ||
+            ($request->server->get('HTTP_X_FORWARDED_SSL') == 'on')) {
             $protocol = "https";
-        } elseif (empty($_SERVER["SERVER_PROTOCOL"])) {
+        } elseif ($request->server->get("SERVER_PROTOCOL") === null) {
             $protocol = "cli";
         }
 
-        if ("" !== $request->getBasePath()) {
-            $this->setUrl('root', $request->getBasePath() . "/");
-            $this->setUrl("app", $this->getUrl('root') . "app/");
-            $this->setUrl("extensions", $this->getUrl('root') . "extensions/");
-            $this->setUrl("files", $this->getUrl('root') . "files/");
-            $this->setUrl("async", $this->getUrl('root') . "async/");
-            $this->setUrl("upload", $this->getUrl('root') . "upload/");
+        $rootUrl = $this->getUrl('root');
+        if ($request->getBasePath() !== '') {
+            $rootUrl = $request->getBasePath() . '/';
+            $this->setUrl('root', $rootUrl);
+            $this->setUrl('app', $rootUrl . 'app/');
+            $this->setUrl('extensions', $rootUrl . 'extensions/');
+            $this->setUrl('files', $rootUrl . 'files/');
+            $this->setUrl('async', $rootUrl . 'async/');
+            $this->setUrl('upload', $rootUrl . 'upload/');
         }
 
         $this->setRequest("protocol", $protocol);
-        $this->setRequest("hostname", $request->server->get('HTTP_HOST'));
-        $this->setUrl("current", $request->getPathInfo());
-        $this->setUrl("canonicalurl", sprintf('%s://%s%s', $this->getRequest("protocol"), $this->getRequest('canonical'), $this->getUrl('current')));
-        $this->setUrl("currenturl", sprintf('%s://%s%s', $this->getRequest("protocol"), $this->getRequest('hostname'), $this->getUrl('current')));
-        $this->setUrl("hosturl", sprintf('%s://%s', $this->getRequest("protocol"), $this->getRequest('hostname')));
-        $this->setUrl("rooturl", sprintf('%s://%s%s', $this->getRequest("protocol"), $this->getRequest('canonical'), $this->getUrl("root")));
+        $hostname = $request->server->get('HTTP_HOST');
+        $this->setRequest('hostname', $hostname);
+        $current = $request->getBasePath() . $request->getPathInfo();
+        $this->setUrl('current', $current);
+        $this->setUrl('canonicalurl', sprintf('%s%s', $this->getRequest('canonical'), $current));
+        $this->setUrl('currenturl', sprintf('%s://%s%s', $protocol, $hostname, $current));
+        $this->setUrl('hosturl', sprintf('%s://%s', $protocol, $hostname));
+        $this->setUrl('rooturl', sprintf('%s%s', $this->getRequest('canonical'), $rootUrl));
     }
 
     /**
-     * Takes a Bolt Application and uses it to initialize settings that depend on the application config
+     * Takes a loaded config array and uses it to initialize settings that depend on it.
      *
-     * @return void
-     *
-     */
-    public function initializeApp(Application $app)
-    {
-        $canonical = $app['config']->get('general/canonical', "");
-        $this->setRequest("canonical", $canonical);
-    }
-
-    /**
-     * Takes a loaded config array and uses it to initialize settings that depend on it
-     *
-     * @return void
-     *
+     * @param array $config
      */
     public function initializeConfig($config)
     {
@@ -268,14 +311,21 @@ class ResourceManager
 
     public function initialize()
     {
-        $this->initializeApp($this->app);
-        $this->initializeRequest($this->requestObject);
+        $this->initializeRequest($this->app, $this->requestObject);
         $this->postInitialize();
     }
 
     public function postInitialize()
     {
         $this->setThemePath($this->app['config']->get("general"));
+
+        $theme = $this->app['config']->get('theme');
+        if (isset($theme['template_directory'])) {
+            $this->setPath('templatespath', $this->getPath('theme') . '/' . $this->app['config']->get('theme/template_directory'));
+        } else {
+            $this->setPath('templatespath', $this->getPath('theme'));
+        }
+
         $branding = ltrim($this->app['config']->get('general/branding/path') . '/', '/');
         $this->setUrl("bolt", $this->getUrl('root') . $branding);
         $this->app['config']->setCkPath();
@@ -284,7 +334,7 @@ class ResourceManager
 
     public function compat()
     {
-        if (! defined("BOLT_COMPOSER_INSTALLED")) {
+        if (! defined('BOLT_COMPOSER_INSTALLED')) {
             define('BOLT_COMPOSER_INSTALLED', false);
         }
         if (! defined("BOLT_PROJECT_ROOT_DIR")) {
@@ -306,42 +356,45 @@ class ResourceManager
      * The theme path is needed before the app has constructed, so this is a shortcut to
      * allow the Application constructor to pre-provide a theme path.
      *
-     * @return void
-     *
+     * @param array $generalConfig
      */
     public function setThemePath($generalConfig)
     {
-        $theme_dir = isset($generalConfig['theme']) ? '/' . $generalConfig['theme'] : '';
-        $theme_path = isset($generalConfig['theme_path']) ? $generalConfig['theme_path'] : '/theme';
-        $theme_url = isset($generalConfig['theme_path']) ? $generalConfig['theme_path'] : $this->getUrl('root') . 'theme';
+        $themeDir = isset($generalConfig['theme']) ? '/' . $generalConfig['theme'] : '';
+        $themePath = isset($generalConfig['theme_path']) ? $generalConfig['theme_path'] : '/theme';
+        $themeUrl = isset($generalConfig['theme_path']) ? $generalConfig['theme_path'] : $this->getUrl('root') . 'theme';
 
         // See if the user has set a theme path otherwise use the default
         if (!isset($generalConfig['theme_path'])) {
-            $this->setPath('themepath', $this->getPath('themebase') . $theme_dir);
-            $this->setUrl('theme', $theme_url . $theme_dir . '/');
+            $this->setPath('themepath', $this->getPath('themebase') . $themeDir);
+            $this->setUrl('theme', $themeUrl . $themeDir . '/');
         } else {
-            $this->setPath('themepath', $this->getPath('rootpath') . $theme_path . $theme_dir);
-            $this->setUrl('theme', $theme_url . $theme_dir . '/');
+            $this->setPath('themepath', $this->getPath('rootpath') . $themePath . $themeDir);
+            $this->setUrl('theme', $themeUrl . $themeDir . '/');
         }
     }
 
     /**
      * Verifies the configuration to ensure that paths exist and are writable.
-     *
-     * @return void
-     * @author
-     *
      */
     public function verify()
     {
         $this->getVerifier()->doChecks();
     }
 
+    /**
+     * Verify the database folder.
+     */
     public function verifyDb()
     {
         $this->getVerifier()->doDatabaseCheck();
     }
 
+    /**
+     * Get the LowlevelChecks object.
+     *
+     * @return LowlevelChecks
+     */
     public function getVerifier()
     {
         if (! $this->verifier) {
@@ -351,30 +404,53 @@ class ResourceManager
         return $this->verifier;
     }
 
+    /**
+     * Set the LowlevelChecks object.
+     *
+     * @param $verifier LowlevelChecks
+     */
+    public function setVerifier($verifier)
+    {
+        $this->verifier = $verifier;
+    }
+
+    /**
+     * Get the Composer autoload ClassLoader.
+     *
+     * @return ClassLoader
+     */
     public function getClassLoader()
     {
         return $this->classLoader;
     }
 
+    /**
+     * Get the Bolt\Application object.
+     *
+     * @throws \RuntimeException
+     *
+     * @return \Bolt\Application
+     */
     public static function getApp()
     {
         if (! static::$theApp) {
-            $message = sprintf("The Bolt 'Application' object isn't initialized yet so the container can't be accessed here: <code>%s</code>", htmlspecialchars(debug_backtrace(), ENT_QUOTES));
-            throw new LowlevelException($message);
+            $trace = debug_backtrace(false);
+            $trace = $trace[0]['file'] . '::' . $trace[0]['line'];
+            $message = sprintf("The Bolt 'Application' object isn't initialized yet so the container can't be accessed here: <code>%s</code>", $trace);
+            throw new \RuntimeException($message);
         }
 
         return static::$theApp;
     }
 
     /**
-    *
-    * Find the relative file system path between two file system paths
-    *
-    * @param string $frompath Path to start from
-    * @param string $topath Path we want to end up in
-    *
-    * @return string Path leading from $frompath to $topath
-    */
+     * Find the relative file system path between two file system paths.
+     *
+     * @param string $frompath Path to start from
+     * @param string $topath   Path we want to end up in
+     *
+     * @return string Path leading from $frompath to $topath
+     */
     public function findRelativePath($frompath, $topath)
     {
         $filesystem = new Filesystem();
