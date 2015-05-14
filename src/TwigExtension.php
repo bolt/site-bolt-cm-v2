@@ -417,6 +417,9 @@ class TwigExtension extends \Twig_Extension
 
         // Get the dimensions of the image
         $imagesize = getimagesize($fullpath);
+        
+        // Get the exif data of the image
+        $imageexif = exif_read_data($fullpath);
 
         // Get the aspectratio
         if ($imagesize[1] > 0) {
@@ -435,6 +438,16 @@ class TwigExtension extends \Twig_Extension
             'fullpath'    => realpath($fullpath),
             'url'         => str_replace("//", "/", $this->app['paths']['files'] . $filename)
         );
+        
+        // Get the orientation as defined by exif 
+        $info['exiforientation'] = $imageexif['Orientation'] ? : false;
+        
+        // If the picture is turned by exif, ouput the turned aspectratio
+        if (in_array($imageexif['Orientation'], array(6,7,8))) {
+            $info['exifaspectratio'] = $imagesize[1] / $imagesize[0];
+        } else {
+            $info['exifaspectratio'] = $ar;
+        }
 
         // Landscape if aspectratio > 5:4
         $info['landscape'] = ($ar >= 1.25) ? true : false;
@@ -490,7 +503,7 @@ class TwigExtension extends \Twig_Extension
             )
         );
         $output = $maid->clean($output);
-        
+
         return $output;
     }
 
@@ -667,26 +680,27 @@ class TwigExtension extends \Twig_Extension
             return true;
         }
 
-        $linkToCheck  = false;
-
         if (is_array($content) && isset($content['link'])) {
             $linkToCheck = $content['link'];
         } elseif ($content instanceof \Bolt\Content) {
             $linkToCheck = $content->link();
+        } else {
+            $linkToCheck = (string) $content;
         }
 
-        $requestedUri    = explode('?', $this->app['request']->getRequestUri());
+        $uriFromRequest = explode('?', $this->app['request']->getRequestUri());
+        $requestedUri    = reset($uriFromRequest);
 
         $entrancePageUrl = $this->app['config']->get('general/homepage');
         $entrancePageUrl = (substr($entrancePageUrl, 0, 1) !== '/') ? '/' . $entrancePageUrl : $entrancePageUrl;
 
         // check against Request Uri
-        if ($requestedUri[0] == $linkToCheck) {
+        if ($requestedUri == $linkToCheck) {
             return true;
         }
 
         // check against entrance page url from general configuration
-        if ('/' == $requestedUri[0] && $linkToCheck == $entrancePageUrl) {
+        if ('/' == $requestedUri && $linkToCheck == $entrancePageUrl) {
             return true;
         }
 

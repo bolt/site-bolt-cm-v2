@@ -40,7 +40,9 @@
                         <option value="deprecated">deprecated</option>
                         <option value="exception">exception</option>
                         <option value="news">news</option>
+                        <option value="nut">nut</option>
                         <option value="security">security</option>
+                        <option value="storage">storage</option>
                         <option value="template">template</option>
                         <option value="translation">translation</option>
                         <option value="twig">twig</option>
@@ -64,15 +66,17 @@
 
             <table class="table table-striped dashboardlisting">
                 <thead>
-                    <th>№</th>
-                    <th>Type</th>
-                    <th>Context</th>
-                    <th>Route</th>
-                    <th>URI</th>
-                    <th>Details</th>
-                    <th>User</th>
-                    <th>IP</th>
-                    <th>Date</th>
+                    <tr>
+                        <th>№</th>
+                        <th>Type</th>
+                        <th>Context</th>
+                        <th>Route</th>
+                        <th>URI</th>
+                        <th>Details</th>
+                        <th>User</th>
+                        <th>IP</th>
+                        <th>Date</th>
+                    </tr>
                 </thead>
                 <tbody>
                 {% for entry in entries %}

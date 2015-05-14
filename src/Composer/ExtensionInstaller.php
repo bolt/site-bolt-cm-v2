@@ -1,10 +1,16 @@
 <?php
 namespace Bolt\Composer;
 
+use Composer\EventDispatcher\Event;
+use Composer\Installer\PackageEvent;
+use Composer\Script\Event as ScriptEvent;
+
 class ExtensionInstaller
 {
     /**
-     * @param \Composer\Script\Event $event
+     * Event handler for composer package events
+     *
+     * @param \Composer\EventDispatcher\Event $event
      */
     public static function handle($event)
     {

@@ -12,6 +12,10 @@ news:
             uses: title
         image:
             type: image             
+        text_markdown:
+            type: markdown
+            height: 400px  
+            allowtwig: true
         introduction:
             type: html
             height: 300px  
@@ -20,9 +24,6 @@ news:
             type: html
             height: 300px  
             allowtwig: true
-        text_markdown:
-            type: markdown
-            height: 400px  
     record_template: newsitem.twig
     listing_template: news.twig
     sort: -id
@@ -273,4 +274,3 @@ homepage:
 #             filter: '*.twig'
 #     taxonomy: [ chapters ]
 #     recordsperpage: 100
-
