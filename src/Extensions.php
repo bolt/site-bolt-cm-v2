@@ -8,6 +8,8 @@ use Bolt\Extensions\Snippets\Location as SnippetLocation;
 use Bolt\Helpers\Str;
 use Bolt\Translation\Translator as Trans;
 use Composer\Autoload\ClassLoader;
+use Composer\Json\JsonFile;
+use Composer\Json\JsonManipulator;
 use Monolog\Logger;
 use Symfony\Component\Finder\Finder;
 
@@ -167,32 +169,110 @@ class Extensions
         $flag = $this->app['filesystem']->has('extensions://local');
 
         // Check that local exists
-        if ($flag) {
-            // Find init.php files that are exactly 2 directories below etensions/local/
-            $finder = new Finder();
-            $finder->files()
-                   ->in($this->basefolder . '/local')
-                   ->followLinks()
-                   ->name('init.php')
-                   ->depth('== 2');
+        if (!$flag) {
+            return;
+        }
 
-            foreach ($finder as $file) {
-                /** @var \Symfony\Component\Finder\SplFileInfo $file */
-                try {
-                    // Include the extensions core file
-                    require_once dirname($file->getRealpath()) . '/Extension.php';
+        // Find init.php files that are exactly 2 directories below etensions/local/
+        $finder = new Finder();
+        $finder->files()
+               ->in($this->basefolder . '/local')
+               ->followLinks()
+               ->name('init.php')
+               ->depth('== 2')
+       ;
 
-                    // Include the init file
-                    require_once $file->getRealpath();
+        foreach ($finder as $file) {
+            /** @var \Symfony\Component\Finder\SplFileInfo $file */
+            try {
+                // Include the extensions core file
+                require_once dirname($file->getRealpath()) . '/Extension.php';
 
-                    // Mark is as a local extension
-                    $extension = end($this->enabled);
-                    $extension->setInstallType('local');
-                } catch (\Exception $e) {
-                    $this->logInitFailure('Error importing local extension class', $file->getBasename(), $e, Logger::ERROR);
-                }
+                // Include the init file
+                require_once $file->getRealpath();
+
+                // Mark is as a local extension
+                $extension = end($this->enabled);
+                $extension->setInstallType('local');
+            } catch (\Exception $e) {
+                $this->logInitFailure('Error importing local extension class', $file->getBasename(), $e, Logger::ERROR);
             }
         }
+    }
+
+    /**
+     * Check for local extension composer.json files and import their PSR-4 settings.
+     *
+     * @param boolean $force
+     *
+     * @internal
+     */
+    public function checkLocalAutoloader($force = false)
+    {
+        if (!$this->app['filesystem']->has('extensions://local/') || !force || $this->app['filesystem']->has('extensions://local/.built')) {
+            return;
+        }
+
+        // Get Bolt's extension JSON
+        $composerOptions = $this->app['extend.manager']->getOptions();
+        $composerJsonFile = new JsonFile($composerOptions['composerjson']);
+        $boltJson = $composerJsonFile->read();
+        $boltPsr4 = isset($boltJson['autoload']['psr-4']) ? $boltJson['autoload']['psr-4'] : array();
+
+        $finder = new Finder();
+        $finder->files()
+            ->in($this->basefolder . '/local')
+            ->followLinks()
+            ->name('composer.json')
+            ->depth('== 2')
+        ;
+
+        foreach ($finder as $file) {
+            try {
+                $extensionJsonFile = new JsonFile($file->getRealpath());
+                $json = $extensionJsonFile->read();
+            } catch (\Exception $e) {
+                // Ignore for now
+            }
+
+            if (isset($json['autoload']['psr-4'])) {
+                $basePath = str_replace($this->app['resources']->getPath('extensions/local'), 'local', dirname($file->getRealpath()));
+                $psr4 = $this->getLocalExtensionPsr4($basePath, $json['autoload']['psr-4']);
+                $boltPsr4 = array_merge($boltPsr4, $psr4);
+            }
+        }
+
+        $boltJson['autoload']['psr-4'] = $boltPsr4;
+        $composerJsonFile->write($boltJson);
+        $this->app['extend.manager']->dumpautoload();
+        $this->app['filesystem']->write('extensions://local/.built', time());
+    }
+
+    /**
+     * Get the PSR-4 data for a local extension with the paths adjusted.
+     *
+     * @param string $path
+     * @param array  $autoload
+     *
+     * @return array
+     */
+    private function getLocalExtensionPsr4($path, array $autoload)
+    {
+        $psr4 = array();
+        foreach ($autoload as $namespace => $namespacePaths) {
+            $paths = null;
+            if (is_string($namespacePaths)) {
+                $paths = "$path/$namespacePaths";
+            } else {
+                foreach ($namespacePaths as $namespacePath) {
+                    $paths[] = "$path/$namespacePath";
+                }
+            }
+
+            $psr4[$namespace] = $paths;
+        }
+
+        return $psr4;
     }
 
     /**
@@ -251,7 +331,7 @@ class Extensions
      */
     public function getComposerConfig($extensionName)
     {
-        return $this->composer[$extensionName];
+        return isset($this->composer[$extensionName]) ? $this->composer[$extensionName] : array();
     }
 
     /**
@@ -419,17 +499,29 @@ class Extensions
      * Add a particular CSS file to the output. This will be inserted before the
      * other css files.
      *
-     * @param string  $filename File name to add to href=""
-     * @param boolean $late     True to add to the end of the HTML <body>
-     * @param integer $priority Loading priority
+     * @param string $filename File name to add to href=""
+     * @param array  $options  'late'     - True to add to the end of the HTML <body>
+     *                         'priority' - Loading priority
+     *                         'attrib'   - A string containing either/or 'defer', and 'async'
      */
-    public function addCss($filename, $late = false, $priority = 0)
+    public function addCss($filename, $options = array())
     {
+        // Handle pre-2.2 function parameters, namely $late and $priority
+        if (!is_array($options)) {
+            $args = func_get_args();
+
+            $options = array(
+                'late'     => isset($args[1]) ? isset($args[1]) : false,
+                'priority' => isset($args[2]) ? isset($args[2]) : 0,
+                'attrib'   => false
+            );
+        }
+
         $this->assets['css'][md5($filename)] = array(
             'filename' => $filename,
-            'late'     => $late,
-            'priority' => $priority,
-            'attrib'   => false
+            'late'     => isset($options['late'])     ? $options['late']     : false,
+            'priority' => isset($options['priority']) ? $options['priority'] : 0,
+            'attrib'   => isset($options['attrib'])   ? $options['attrib']   : false
         );
     }
 
@@ -440,7 +532,7 @@ class Extensions
      * @param string $filename File name to add to src=""
      * @param array  $options  'late'     - True to add to the end of the HTML <body>
      *                         'priority' - Loading priority
-     *                         'attrib'   - Either 'defer', or 'async'
+     *                         'attrib'   - A string containing either/or 'defer', and 'async'
      */
     public function addJavascript($filename, $options = array())
     {

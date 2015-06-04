@@ -25,6 +25,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Yaml;
 use Symfony\Component\Yaml\Exception\ParseException;
+use League\Flysystem\FileNotFoundException;
 
 /**
  * Backend controller grouping.
@@ -744,7 +745,7 @@ class Backend implements ControllerProviderInterface
 
             // If we have an ID now, this is an existing record
             if ($id) {
-                $content = $app['storage']->getContent($contenttype['slug'], array('id' => $id, 'status' => '!'));
+                $content = $app['storage']->getContent($contenttype['slug'], array('id' => $id, 'status' => '!undefined'));
                 $oldStatus = $content['status'];
             } else {
                 $content = $app['storage']->getContentObject($contenttypeslug);
@@ -835,7 +836,7 @@ class Backend implements ControllerProviderInterface
                         }
 
                         // Get our record after POST_SAVE hooks are dealt with and return the JSON
-                        $content = $app['storage']->getContent($contenttype['slug'], array('id' => $id, 'returnsingle' => true, 'status' => '!'));
+                        $content = $app['storage']->getContent($contenttype['slug'], array('id' => $id, 'returnsingle' => true, 'status' => '!undefined'));
 
                         $val = array();
 
@@ -879,7 +880,7 @@ class Backend implements ControllerProviderInterface
                 // check if a pager was set in the referrer - if yes go back there
                 $editreferrer = $app['request']->get('editreferrer');
                 if ($editreferrer) {
-                    Lib::simpleredirect($editreferrer);
+                    Lib::simpleredirect($editreferrer, true);
                 } else {
                     return Lib::redirect('overview', array('contenttypeslug' => $contenttype['slug']));
                 }
@@ -1072,7 +1073,7 @@ class Backend implements ControllerProviderInterface
         $contenttype = $app['storage']->getContentType($contenttypeslug);
 
         foreach ($ids as $id) {
-            $content = $app['storage']->getContent($contenttype['slug'], array('id' => $id, 'status' => '!'));
+            $content = $app['storage']->getContent($contenttype['slug'], array('id' => $id, 'status' => '!undefined'));
             $title = $content->getTitle();
 
             if (!$app['users']->isAllowed("contenttype:{$contenttype['slug']}:delete:$id")) {
@@ -1084,7 +1085,11 @@ class Backend implements ControllerProviderInterface
             }
         }
 
-        return Lib::redirect('overview', array('contenttypeslug' => $contenttype['slug']));
+        // get the parameters from the URL of the previous page, so we can return to it.
+        $redirectParameters = Lib::getQueryParameters($app['request']->server->get('HTTP_REFERER'));
+        $redirectParameters['contenttypeslug'] = $contenttype['slug'];
+
+        return Lib::redirect('overview', $redirectParameters);
     }
 
     /**
@@ -1107,6 +1112,10 @@ class Backend implements ControllerProviderInterface
         $content = $app['storage']->getContent($contenttype['slug'] . '/' . $id);
         $title = $content->getTitle();
 
+        // get the parameters from the URL of the previous page, so we can return to it.
+        $redirectParameters = Lib::getQueryParameters($app['request']->server->get('HTTP_REFERER'));
+        $redirectParameters['contenttypeslug'] = $contenttype['slug'];
+
         // map actions to new statuses
         $actionStatuses = array(
             'held'    => 'held',
@@ -1116,7 +1125,7 @@ class Backend implements ControllerProviderInterface
         if (!isset($actionStatuses[$action])) {
             $app['session']->getFlashBag()->add('error', Trans::__('No such action for content.'));
 
-            return Lib::redirect('overview', array('contenttypeslug' => $contenttype['slug']));
+            return Lib::redirect('overview', $redirectParameters);
         }
         $newStatus = $actionStatuses[$action];
 
@@ -1124,7 +1133,7 @@ class Backend implements ControllerProviderInterface
             !$app['users']->isContentStatusTransitionAllowed($content['status'], $newStatus, $contenttype['slug'], $id)) {
             $app['session']->getFlashBag()->add('error', Trans::__('You do not have the right privileges to edit that record.'));
 
-            return Lib::redirect('overview', array('contenttypeslug' => $contenttype['slug']));
+            return Lib::redirect('overview', $redirectParameters);
         }
 
         if ($app['storage']->updateSingleValue($contenttype['slug'], $id, 'status', $newStatus)) {
@@ -1133,7 +1142,7 @@ class Backend implements ControllerProviderInterface
             $app['session']->getFlashBag()->add('info', Trans::__("Content '%title%' could not be modified.", array('%title%' => $title)));
         }
 
-        return Lib::redirect('overview', array('contenttypeslug' => $contenttype['slug']));
+        return Lib::redirect('overview', $redirectParameters);
     }
 
     /**
@@ -1622,9 +1631,15 @@ class Backend implements ControllerProviderInterface
             $uploadview = false;
         }
 
-        if ($filesystem->getVisibility($path) === 'public') {
+        try {
+            $visibility = $filesystem->getVisibility($path);
+        } catch (FileNotFoundException $fnfe) {
+            $visibility = false;
+        }
+
+        if ($visibility === 'public') {
             $validFolder = true;
-        } elseif ($filesystem->getVisibility($path) === 'readonly') {
+        } elseif ($visibility === 'readonly') {
             $validFolder = true;
             $uploadview = false;
         } else {

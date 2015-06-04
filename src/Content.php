@@ -403,7 +403,7 @@ class Content implements \ArrayAccess
                     $unserdata = $value;
                 }
 
-                if ($unserdata !== false) {
+                if (is_array($unserdata)) {
                     $templateContent = new Content($this->app, $this->getTemplateFieldsContentType(), array(), false);
                     $value = $templateContent;
                     $this->populateTemplateFieldsContenttype($value);
@@ -908,7 +908,11 @@ class Content implements \ArrayAccess
         if ($allowtwig && preg_match('/[{][{%#]/', $snippet)) {
             $snippet = html_entity_decode($snippet, ENT_QUOTES, 'UTF-8');
 
-            return $this->app['safe_render']->render($snippet, $this->getTemplateContext());
+            try {
+                return $this->app['safe_render']->render($snippet, $this->getTemplateContext());
+            } catch(\Exception $e) {
+                return $e->getMessage();
+            }
         }
 
         return $snippet;
