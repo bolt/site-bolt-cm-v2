@@ -1,4 +1,8 @@
 <?php
+namespace Bolt;
+
+use Bolt\Exception\LowlevelException;
+
 /**
  * Second stage loader. Here we bootstrap the app:
  *
@@ -8,10 +12,6 @@
  * - Load and verify configuration
  * - Initialize the application
  */
-
-namespace Bolt;
-
-use Bolt\Exception\LowlevelException;
 
 // Do bootstrapping within a new local scope to avoid polluting the global
 return call_user_func(
@@ -42,6 +42,7 @@ return call_user_func(
 
         // None of the mappings matched, error
         if (!isset($config)) {
+            include $boltRootPath . '/src/Exception/LowlevelException.php';
             throw new LowlevelException(
                 "Configuration autodetection failed because The file " .
                 "<code>vendor/autoload.php</code> doesn't exist. Make sure " .
@@ -49,17 +50,18 @@ return call_user_func(
             );
         }
 
-        // Register a PHP shutdown function to catch fatal error
-        register_shutdown_function(array('\Bolt\Exception\LowlevelException', 'catchFatalErrors'));
+        // Register a PHP shutdown function to catch early fatal errors
+        register_shutdown_function(array('\Bolt\Exception\LowlevelException', 'catchFatalErrorsEarly'));
 
-        /**
-         * @var $config Configuration\ResourceManager
-         */
+        /** @var \Bolt\Configuration\ResourceManager $config */
         $config->verify();
         $config->compat();
 
         // Create the 'Bolt application'
         $app = new Application(array('resources' => $config));
+
+        // Register a PHP shutdown function to catch fatal errors with the application object
+        register_shutdown_function(array('\Bolt\Exception\LowlevelException', 'catchFatalErrors'), $app);
 
         // Initialize the 'Bolt application': Set up all routes, providers, database, templating, etc..
         $app->initialize();

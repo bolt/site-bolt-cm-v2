@@ -309,12 +309,13 @@ class Frontend
     /**
      * The search result page controller.
      *
-     * @param Request            $request The Symfony Request
-     * @param \Silex\Application $app     The application/container
+     * @param Request            $request      The Symfony Request
+     * @param \Silex\Application $app          The application/container
+     * @param array              $contenttypes The content type slug(s) you want to search for
      *
      * @return \Twig_Markup
      */
-    public function search(Request $request, Silex\Application $app)
+    public function search(Request $request, Silex\Application $app, array $contenttypes = null)
     {
         $q = '';
         $context = __FUNCTION__;
@@ -358,7 +359,7 @@ class Frontend
             $filters = null;
         }
 
-        $result = $app['storage']->searchContent($q, null, $filters, $limit, $offset);
+        $result = $app['storage']->searchContent($q, $contenttypes, $filters, $limit, $offset);
 
         $pager = array(
             'for'          => $context,
@@ -367,7 +368,7 @@ class Frontend
             'current'      => $page,
             'showing_from' => $offset + 1,
             'showing_to'   => $offset + count($result['results']),
-            'link'         => '/search?q=' . rawurlencode($q) . '&page_search='
+            'link'         => $app['url_generator']->generate('search', array('q' => $q)) . '&page_search='
         );
 
         $app['storage']->setPager($context, $pager);

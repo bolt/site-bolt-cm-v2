@@ -134,7 +134,7 @@ class MenuBuilder
         $path = ltrim(rtrim($item['path'], '/'), '/');
 
         // Pre-set our link in case the match() throws an exception
-        $item['link'] = '/' . $path;
+        $item['link'] = $this->app['resources']->getUrl('root') . $path;
 
         try {
             // See if we have a 'content/id' or 'content/slug' path
@@ -147,8 +147,8 @@ class MenuBuilder
                 $this->app['url_matcher']->match('/' . $path);
 
                 // If we found a valid routing match then we're still here,
-                // attempt to retrive the actual record and use its values.
-                $this->populateItemFromRecord($item, $path);
+                // attempt to retrieve the actual record and use its values.
+                $item = $this->populateItemFromRecord($item, $path);
             }
         } catch (ResourceNotFoundException $e) {
             $this->app['logger.system']->error(
@@ -178,11 +178,11 @@ class MenuBuilder
 
         if ($content) {
             if (empty($item['label'])) {
-                $item['label'] = !empty($content->values['title']) ?: '';
+                $item['label'] = !empty($content->values['title']) ? $content->values['title'] : '';
             }
 
             if (empty($item['title'])) {
-                $item['title'] = !empty($content->values['subtitle']) ?: '';
+                $item['title'] = !empty($content->values['subtitle']) ? $content->values['subtitle'] : '';
             }
 
             $item['link'] = $content->link();

@@ -32,7 +32,7 @@ class Application extends Silex\Application
      */
     public function __construct(array $values = array())
     {
-        $values['bolt_version'] = '2.2.0';
+        $values['bolt_version'] = '2.2.5';
         $values['bolt_name'] = '';
         $values['bolt_released'] = true; // `true` for stable releases, `false` for alpha, beta and RC.
 
@@ -329,7 +329,10 @@ class Application extends Silex\Application
 
         $this->register(
             new Silex\Provider\TranslationServiceProvider(),
-            array('locale_fallbacks' => array(Application::DEFAULT_LOCALE))
+            array(
+                'translator.cache_dir' => $this['resources']->getPath('cache/trans'),
+                'locale_fallbacks'     => array(Application::DEFAULT_LOCALE)
+                )
         );
 
         // Loading stub functions for when intl / IntlDateFormatter isn't available.
@@ -368,7 +371,9 @@ class Application extends Silex\Application
         $factory = new RandomLib\Factory();
         $this['randomgenerator'] = $factory->getGenerator(new SecurityLib\Strength(SecurityLib\Strength::MEDIUM));
 
-        $this->register(new Silex\Provider\UrlGeneratorServiceProvider())
+        $this
+            ->register(new Silex\Provider\HttpFragmentServiceProvider())
+            ->register(new Silex\Provider\UrlGeneratorServiceProvider())
             ->register(new Silex\Provider\FormServiceProvider())
             ->register(new Silex\Provider\ValidatorServiceProvider())
             ->register(new Provider\RoutingServiceProvider())
@@ -532,7 +537,7 @@ class Application extends Silex\Application
             // only add when content-type is text/html
             if (strpos($response->headers->get('Content-Type'), 'text/html') !== false) {
                 // Add our meta generator tag.
-                $this['extensions']->insertSnippet(Extensions\Snippets\Location::AFTER_META, '<meta name="generator" content="Bolt">');
+                $this['extensions']->insertSnippet(Extensions\Snippets\Location::END_OF_HEAD, '<meta name="generator" content="Bolt">');
 
                 // Perhaps add a canonical link.
 
@@ -541,7 +546,7 @@ class Application extends Silex\Application
                         '<link rel="canonical" href="%s">',
                         htmlspecialchars($this['resources']->getUrl('canonicalurl'), ENT_QUOTES)
                     );
-                    $this['extensions']->insertSnippet(Extensions\Snippets\Location::AFTER_META, $snippet);
+                    $this['extensions']->insertSnippet(Extensions\Snippets\Location::END_OF_HEAD, $snippet);
                 }
 
                 // Perhaps add a favicon.
@@ -552,7 +557,7 @@ class Application extends Silex\Application
                         htmlspecialchars($this['resources']->getUrl('theme'), ENT_QUOTES),
                         htmlspecialchars($this['config']->get('general/favicon'), ENT_QUOTES)
                     );
-                    $this['extensions']->insertSnippet(Extensions\Snippets\Location::AFTER_META, $snippet);
+                    $this['extensions']->insertSnippet(Extensions\Snippets\Location::END_OF_HEAD, $snippet);
                 }
 
                 // Do some post-processing.. Hooks, snippets.

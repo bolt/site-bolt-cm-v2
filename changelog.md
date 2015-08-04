@@ -1,7 +1,73 @@
+Bolt 2.2.next
+-------------
+
+Nothing yet.
+
+Bolt 2.2.5
+----------
+
+Released 2015-07-24. Notable changes:
+
+ - Performance: Don't request users if we don't have too, and streamline `isAllowed()` functionality. (#3847)
+ - Fixed / security: If a user is not root, do not allow them to change the file extension on rename in UI. (Thanks to Tim Coen of Curesec GmbH for bringing this issue to our attention. See #3815)
+ - Fixed: Layout issue in Chrome 44. Pretty sure it's a weird bug in Chrome. (#3856)
+ - Changed: Update JS Markdown Options to match Parsedown for consistency. (#3820)
+ - Added: A Nut command to rebuild the extension autoloaders. (#3786)
+ - Changed: Send "New Bolt site" e-mail upon first user creation only. (Thanks Fabschurt, see #3792)
+ - Fixed: Issue in Geolocation field, where it would 'forget' the retrieved address. (#3813)
+ - Fixed / Added: Have the Async file/directory routes return useful JSON responses. Display an UI alert on file/directory request failures. (#3815)
+ - Fixed: Trigger database update notifications for changed field names (#3816)
+ - Fixed: The database platform's method `getCreateTableSQL` allows foreign keys to be added. (Thanks Ntomka, see #3745)
+ - Added: Add caching for the translation provider (#3753)
+ - Fixed: If vendor/autoload.php is missing, include `LowlevelException.php` manually.
+
+Bolt 2.2.4
+----------
+
+Released 2015-06-25. Notable changes:
+
+ - Fixed: Logic preventing building of local extension autoloader (Thanks timcooper, see #3699)
+ - Fixed: Clipboard paste issue with fileuploader (Thanks timcooper, see #3702)
+ - Added: Now possibile to use the search feature for spcific contenttype(s) (Thanks sbani, see #3713)
+ - Fixed: Wrong interpretation of max_upload_filesize / post_max_size (Thanks tvlooy, see #3732)
+ - Fixed: Password reset "Error: Divide by zero" (see #3730)
+
+Bolt 2.2.3
+----------
+
+Released 2015-06-15. Notable changes:
+
+ - Fixed: Yaml config read and write fixed for other indentations than '2 spaces'. (See #3682)
+
+Bolt 2.2.2
+----------
+
+Released 2015-06-12. Notable changes:
+
+ - Added: Swedish translation. (Thanks SahAssar, see #3659)
+ - Fixed: In menus: Don't assume root URL is '/'
+ - Fixed: Generate search pager link
+ - Fixed: Sorting in 'overviews':`content.TitleColumnName()` is an array now. (see #3635)
+ - Fixed: Set link of item in Menu properly, and fixes bug in populateItemFromRecord. (See #3655)
+
+Bolt 2.2.1
+----------
+
+Released 2015-06-05. Notable changes:
+
+ - Update: Silex is now version 1.3.0
+ - Added: Implement `title_format:`, to control the behaviour of what's seen as the 'title' in overviews and listings. See #3635
+ - Changed: Create the extension's composer.json if only a local extension exists. See #3627
+ - Fixed: Use the Silex HttpFragmentServiceProvider as TwigCoreExtension has been removed in Silex 1.3. See #3632
+ - Fixed: Two more overrides in `composer.json` for symfony components that got bumped to v2.7.0. See #3634
+ - Fixed: Extend SSL/TLS Handling. Fixes bug/warnings in Packagemanager. See #3633
+ - Fixed: Generated `<meta>`-tags always stay in the `<head>` section, now. See #3637
+
+
 Bolt 2.2.0
 ----------
 
-Released 2015-06-04. Notable changes: 
+Released 2015-06-04. Notable changes:
 
  - Added: Stop Finder from recursing common build folders and place a limit on the maximum depth it will recurse otherwise. (Thanks @Cooperaj, see #3069)
  - Fixed: Removing default taxonomylink route leads to exception (See #3070)
@@ -9,11 +75,11 @@ Released 2015-06-04. Notable changes:
  - Fixed: Whoops error when duplicating a record. (See #3064)
  - Fixed: Fixes broken extension installer (See #3086)
  - Added: Add composer branch alias. (see #3089)
- - Fixed: Redirect for backend trailing slash redirect (`/bolt` -> `/bolt/`) (See #3083) 
+ - Fixed: Redirect for backend trailing slash redirect (`/bolt` -> `/bolt/`) (See #3083)
  - Fixed: Regression that errored on PHP < 5.3.6: `Remove SplFileInfo::getExtension()`. (See #3095)
  - Added: Use the X-Forwarded for IP address when an appropriate one exists and the trustedProxies config contains a valid IP. (Thanks @Cooperaj, see #3031, #3093)
  - Fixed: Extension theme installer working properly (see #3108, thanks @nikgo)
- - Fixed: Replacing `&nbsp;` with single space, instead of nothing. (See #3111) 
+ - Fixed: Replacing `&nbsp;` with single space, instead of nothing. (See #3111)
  - Added: Added an option to delete a record, when editing it. (See #3134)
  - Removed: removed "frontend permission checks". (See #3133)
  - Fixed: Prevent extra spaces in excerpts. (See #3130)
@@ -25,9 +91,9 @@ Released 2015-06-04. Notable changes:
  - Fixed: Fixed z-index of sidebar. (See #3100)
  - Fixed: Disable "revert" button on 'edit file' screen, when file is not wrtiable. (See #3009)
  - Added: Allow for multiple (fallback) locales in `config.yml`. (Thanks @sintemaa, see #3127)
- - Fixed: Be a little more strict in picking 'selected' options: Only use the fallback, if there's no valid id set. 
+ - Fixed: Be a little more strict in picking 'selected' options: Only use the fallback, if there's no valid id set.
  - Change: Lock composer.json to Symfony 2.6.4 as 2.6.5 fails PHPUnit
- - Added: Re-added standalone jQuery lib, as some extensions might need it. 
+ - Added: Re-added standalone jQuery lib, as some extensions might need it.
  - Fixed: Create app/ subdirectories on Composer installs, and other `composer install` fixes.
  - Fixed: Workaround, so we don't break on installations with `"require": []` in `extensions/composer.json` (see #3171)
  - Never add extra jQueries on the backend. (See #3177)
@@ -39,8 +105,8 @@ Released 2015-06-04. Notable changes:
  - Fixed: Make sure we use `ParsedownExtra`, instead of just `Parsedown. (Thanks, @cooperaj, see #3194)
  - Fixed: Changelog content uses correct tablenames. (See 3198)
  - Added: Markdown fields now have a nice new editor, with Preview and fill screen / split screen functionality. (ee #3225)
- - Fixed: Normalising taxonomy before comparison for deleting old ones.(Thanks @silentworks, see #3224) 
- - Change: Improve `shyphenate()`: Only add breaks to long words, instead of everywhere. (see #3221) 
+ - Fixed: Normalising taxonomy before comparison for deleting old ones.(Thanks @silentworks, see #3224)
+ - Change: Improve `shyphenate()`: Only add breaks to long words, instead of everywhere. (see #3221)
  - Added: Upload UX improvements part 2 - Progress bars. (Thanks @pinpickle, see #3218)
  - Fixed: Fix 'current' in menu. (see #3209)
  - Change: Use 4 spaces in all `.yml` and base-2014 theme. (see #3205)
@@ -48,7 +114,7 @@ Released 2015-06-04. Notable changes:
  - Fixed: Make `BaseExtension::initialize()` non-abstract again to deal with PHP < 5.3.10 (See #3257)
  - Fixed: `isallowed` checks for extensions to also check for `extensions:config` (Thanks @SahAssar, see #3249)
  - Fixed: Strange step behaviour when no `min` is set for integer fields (Thanks @Pinpickle, see #3284)
- - Fixed: Make sure we have the same amount of columns, always. (See #3228) 
+ - Fixed: Make sure we have the same amount of columns, always. (See #3228)
  - Added: Allow for filtering on 'taxonomies' on the overview pages. (See #3278)
  - Added: Support for methods in `routing.yml` (see #3292)
  - Fixed: Publishing for items with 'Timed Publish' is working again. (Fixes #3279)
@@ -82,12 +148,12 @@ Released 2015-06-04. Notable changes:
  - Added: Include plugins "Styles Combo" and "Stylesheet Parser" in CKEditor (See #3384)
  - Added: Always have a fallback for a timezone when it isn't set in either php.ini or config.yml (See #3397)
  - Added: Ability to set a Email Sender Mail in config.yml (Thanks @Shyim, see #3409)
- - [Tests] Properly tidy the Codeception template field test (see #3451) 
- - Check if folder exists first, when using it for uploads (See #3450) 
+ - [Tests] Properly tidy the Codeception template field test (see #3451)
+ - Check if folder exists first, when using it for uploads (See #3450)
  - [Codeception] Use a conditional version so 5.3 Travis builds won't fail. (See #3448)
  - Enhancement to define templates for the template chooser in backend. (Thanks Shyim, see #3447)
- - Allow 'duplicate' and 'delete' from contextual menu, when a Record has relationships. Fixes #3431 
- - Don't trigger DBCheck for changed indexes. Fixes #3426 
+ - Allow 'duplicate' and 'delete' from contextual menu, when a Record has relationships. Fixes #3431
+ - Don't trigger DBCheck for changed indexes. Fixes #3426
  - Only show the "delete" button if the page has been saved already. Fixes #3444
  - Fixes #3435 by disabling browser XSS protection for file editing. (See #3439, thanks timcooper)
  - Secondary menu refactoring (JS) + fixes for #2329 and #2347 (see #3433
@@ -131,7 +197,7 @@ Released 2015-06-04. Notable changes:
 Bolt 2.1.9
 ----------
 
-Released 2015-04-29. Notable changes: 
+Released 2015-04-29. Notable changes:
 
  - Fixed: `attrib` for images. (See #3487)
  - Fixed: Fix pagination for searching via `getContent()`` or `{% setcontent %}`. (See #3496)
@@ -140,7 +206,7 @@ Released 2015-04-29. Notable changes:
 Bolt 2.1.8
 ----------
 
-Released 2015-04-29. Notable changes: 
+Released 2015-04-29. Notable changes:
 
  - Fix: prevent error message in `_sub_menu.twig` if `strict_variables` is set. (See #3462)
  - Security: Make sure we set the status correctly for 'async' requests. (See #3463)
@@ -149,11 +215,11 @@ Released 2015-04-29. Notable changes:
 Bolt 2.1.7
 ----------
 
-Released 2015-04-29. Notable changes: 
+Released 2015-04-29. Notable changes:
 
- - Check if folder exists first, when using it for uploads (See #3450) 
- - Allow 'duplicate' and 'delete' from contextual menu, when a Record has relationships. Fixes #3431 
- - Don't trigger DBCheck for changed indexes. Fixes #3426 
+ - Check if folder exists first, when using it for uploads (See #3450)
+ - Allow 'duplicate' and 'delete' from contextual menu, when a Record has relationships. Fixes #3431
+ - Don't trigger DBCheck for changed indexes. Fixes #3426
  - Make Application::unsetSessionCookie() optional and BC friendly (see #3427)
  - Make the removal / stripping of `&nbsp;` characters in CKEditor fields optional. (see #3373)
  - Fixed: Allow editing of empty files. (Thanks, @SahAssar, see #3391)
@@ -163,7 +229,7 @@ Released 2015-04-29. Notable changes:
 Bolt 2.1.6
 ----------
 
-Released 2015-04-13. Notable changes: 
+Released 2015-04-13. Notable changes:
 
  - Fixed: Slugs generation with `uses:` fixed (see #3310)
  - Added: Frontend requests should not set cookies. Remove them, to allow Varnish to do a better job of caching the request. (see #3309)
@@ -187,7 +253,7 @@ Bolt 2.1.5
 Released 2015-04-01. Notable changes:
 
  - Fixed: Strange step behaviour when no `min` is set for integer fields (Thanks @Pinpickle, see #3284)
- - Fixed: Make sure we have the same amount of columns, always. (See #3228) 
+ - Fixed: Make sure we have the same amount of columns, always. (See #3228)
  - Added: Allow for filtering on 'taxonomies' on the overview pages. (See #3278)
  - Added: Support for methods in `routing.yml` (see #3292)
  - Fixed: Publishing for items with 'Timed Publish' is working again. (Fixes #3279)
@@ -205,7 +271,7 @@ Released 2015-03-27. Notable changes:
  - Change: Only log content not found errors if slug isn't numeric, since `next` and `previous` check by `id` (see #3186)
  - Fixed: Make sure we use `ParsedownExtra`, instead of just `Parsedown`. (Thanks, @cooperaj, see #3194)
  - Fixed: Changelog content uses correct tablenames. (See 3198)
- - Change: Improve `shyphenate()`: Only add breaks to long words, instead of everywhere. (see #3221) 
+ - Change: Improve `shyphenate()`: Only add breaks to long words, instead of everywhere. (see #3221)
  - Fixed: Fix 'current' in menu. (see #3209)
  - Fixed: `isallowed` checks for extensions to also check for `extensions:config` (Thanks @SahAssar, see #3249)
  - Fixed: Allow 'name' in contenttype to override translation, for 2.1.x (see #3259)
@@ -226,9 +292,9 @@ Released 2015-03-18. Notable changes:
  - Fixed: Disable "revert" button on 'edit file' screen, when file is not wrtiable. (See #3009)
  - Added: Allow for multiple (fallback) locales in `config.yml`. (Thanks @sintemaa, see #3127)
  - Fixed: Warning for unsaved content comes up when nothing has been changed (see #3077)
- - Fixed: Be a little more strict in picking 'selected' options: Only use the fallback, if there's no valid id set. 
+ - Fixed: Be a little more strict in picking 'selected' options: Only use the fallback, if there's no valid id set.
  - Change: Lock composer.json to Symfony 2.6.4 as 2.6.5 fails PHPUnit
- - Added: Re-added standalone jQuery lib, as some extensions might need it. 
+ - Added: Re-added standalone jQuery lib, as some extensions might need it.
  - Fixed: Workaround, so we don't break on installations with `"require": []` in `extensions/composer.json` (see #3171)
 
 
