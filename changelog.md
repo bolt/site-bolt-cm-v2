@@ -3,12 +3,26 @@ Bolt 2.2.next
 
 Nothing yet.
 
+
+Bolt 2.2.8
+----------
+
+Released 2015-07-31. Notable changes:
+
+- Fixed: Ensure grouped taxonomies aren't wiped from listing pages when toggling the publication status. (see #3910)
+- Fixed: Timed entries will no longer switch to 'unpublished' after update to 2.2.7 (see #3899)
+- Fixed: "Notice: Array to string conversion in /..../src/Storage.php on line 1071" (See #3893)
+- Fixed: Avoid a missing array key from displaying a warning (Thanks Fabschurt)
+- Updated: `squizlabs/php_codesniffer` requirement to `~2.0` due to upstream changes.
+- Fixed: Send storage event in publishTimedRecords (see #3879)
+- Fixed: Memory leak / loop in "new content" (see #3883)
+
 Bolt 2.2.5
 ----------
 
 Released 2015-07-24. Notable changes:
 
- - Performance: Don't request users if we don't have too, and streamline `isAllowed()` functionality. (#3847)
+ - Performance: Don't request users if we don't have to, and streamline `isAllowed()` functionality. (#3847)
  - Fixed / security: If a user is not root, do not allow them to change the file extension on rename in UI. (Thanks to Tim Coen of Curesec GmbH for bringing this issue to our attention. See #3815)
  - Fixed: Layout issue in Chrome 44. Pretty sure it's a weird bug in Chrome. (#3856)
  - Changed: Update JS Markdown Options to match Parsedown for consistency. (#3820)
@@ -28,7 +42,7 @@ Released 2015-06-25. Notable changes:
 
  - Fixed: Logic preventing building of local extension autoloader (Thanks timcooper, see #3699)
  - Fixed: Clipboard paste issue with fileuploader (Thanks timcooper, see #3702)
- - Added: Now possibile to use the search feature for spcific contenttype(s) (Thanks sbani, see #3713)
+ - Added: Now possibile to use the search feature for specific contenttype(s) (Thanks sbani, see #3713)
  - Fixed: Wrong interpretation of max_upload_filesize / post_max_size (Thanks tvlooy, see #3732)
  - Fixed: Password reset "Error: Divide by zero" (see #3730)
 
