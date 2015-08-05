@@ -855,8 +855,44 @@ section.showcases {
         }
 
     }
+
+    p { font-size: 28px; }
+
 }
 
+.hover-dark {
+    -webkit-filter: grayscale(100%);
+    -moz-filter: grayscale(100%);
+    -ms-filter: grayscale(100%);
+    -o-filter: grayscale(100%);
+    filter: grayscale(100%);
+    filter: url(grayscale.svg); /* Firefox 4+ */
+    filter: gray; /* IE 6-9 */;
+    -webkit-transition-duration: 1s; /* Safari */
+    transition-duration: 1s;
+    cursor: pointer;
+    
+    user-drag: none; 
+    -moz-user-select: none;
+    -webkit-user-drag: none;
+    
+    border: solid #CFCFCF 1px;
+}
+
+.hover-dark:hover {
+    -webkit-filter: grayscale(0%);
+    -moz-filter: grayscale(0%);
+    -ms-filter: grayscale(0%);
+    -o-filter: grayscale(0%);
+    filter: grayscale(0%);
+    filter: none;
+}
+
+.nav-tabs .secondary-nav {
+    float:right;
+    margin-left:10px;
+    margin-right:0;
+}
 
 
 /* -------------- TYPOGRAPHY --------------- */

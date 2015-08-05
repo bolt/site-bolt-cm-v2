@@ -121,14 +121,23 @@ showcases:
         slug:
             type: slug
             uses: title
-        frontpage:
+        featured:
             type: checkbox
-            label: Tonen op homepage?
+        description:
+            type: html
+            height: 300px
+            group: basic
+        author:
+            type: text
+            class: large
         image:
-            type: image             
+            type: image
+        slider:
+            type: imagelist
         sitelink:
             type: text
             class: large
+    taxonomy: [ tags ]
     record_template: newsitem.twig
     listing_template: showcase.twig
 
