@@ -1,7 +1,7 @@
 {% extends "master.twig" %}
 
 {% block bodyclass %}body-record{% endblock %}
-          
+
 {% block content %}
 
 {% if record.contenttype.slug =='news' %}
@@ -18,7 +18,7 @@
             {% if news %}<p class="meta" title="{{ record.datepublish|date("j F Y - H:i") }}">Published: {{ record.datepublish|date("l j F Y") }}</p>{% endif %}
             <div class="articlebody">
                 {% if record.image %}
-                <a href="{{ record.image|image() }}" class="fancybox">
+                <a href="{{ record.image|image() }}" class="magnific">
                     <img src="{{ record.image|thumbnail(700,3000,'r') }}">
                 </a>
                 {% endif %}
@@ -26,27 +26,23 @@
                 {{  record.text }}
                 {{  record.text_markdown }}
                 {{  record.body }}
-                
+
                 {% if news %}
                     <div class="disqus">
                     {{ disqus() }}
                     </div>
                 {% endif %}
-                
+
                 {% if record.slug =='irc' %}
                 <iframe src="https://kiwiirc.com/client?settings=8a78db10b57fff9f5d6a2fe144acb6a4" style="border:0; width:100%; height:550px;"></iframe>
                 {% endif %}
-                
+
             </div>
-            
+
         </article>
-                
+
     </div>
 </section>
 
 {% endblock content %}
 
-{% block footer_extra_scripts %}
-    <script src="{{ paths.theme }}scripts/cycle2.min.js"></script>
-    <script src="{{ paths.theme }}scripts/cycle2.swipe.min.js"></script>
-{% endblock %}

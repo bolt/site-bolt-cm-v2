@@ -1,5 +1,5 @@
 jQuery(function($) {
-    
+
     // HIDING MOBILE NAVIGATION
     $('.main-nav').removeClass('expanded');
     // and toggling it again with a button
@@ -7,19 +7,25 @@ jQuery(function($) {
         $('.main-nav').toggleClass('expanded');
         $(this).toggleClass('active');
     });
-    
-   
+
+
     // MAKE TOPIMAGE SCROLL SLOWER FOR PARALLAX EFFECT
     $(window).scroll(function () {
         $('header').css('backgroundPosition', '0px ' + (posTop() / 2) + 'px');
     });
-    
-    
+
+
     //initialize Cycle 2 slideshow.
-    $('.bolt-slideshow').cycle();
-    
+    if ($('.bolt-slideshow').is('*')) {
+        $('.bolt-slideshow').cycle();
+    }
+
+    $('.magnific').magnificPopup({
+        type:'image'
+    });
+
     if($(window).width() < 801) { // ONLY MEDIUM-DOWN
-    
+
         $('.bolt-slideshow').on('cycle-after', function(event, opts) {
 
             //$('.slider .pager').css('margin-left', '0px');
@@ -29,13 +35,13 @@ jQuery(function($) {
             //console.log('A:', offset, 'margin:',margin, 'def', offsetdef);
             $('.slider .pager').animate({'margin-left': '-' + offsetdef + 'px'});
 
-            
+
         });
-    
-    
+
+
     }
-       
-    // Update the number of stars. Stolen from foundation.zurb.com. 
+
+    // Update the number of stars. Stolen from foundation.zurb.com.
     $.ajax({
       dataType: 'jsonp',
       url: 'https://api.github.com/repos/bolt/bolt?callback=boltGithub&access_token=8e0dfc559d22265208b2924266c8b15b60fd9b85',
@@ -48,15 +54,15 @@ jQuery(function($) {
       }
     });
 
-   
-    if($(window).width() > 800) { // ONLY LARGE-UP 
-        
+
+    if($(window).width() > 800) { // ONLY LARGE-UP
+
         // STICKY MAIN-NAV
-        $(window).scroll(function () { 
+        $(window).scroll(function () {
             var nav = $(".main-nav");
             var navwidth = nav.width();
             var halfwidth = Math.round(navwidth/2);
-    
+
             // make main-nav sticky when scrolled lower then header height
             if (posTop() > ($('header').height()-44)){
                 nav.addClass('is-sticky');
@@ -67,16 +73,16 @@ jQuery(function($) {
                 nav.removeClass('is-sticky');
                 nav.css({'margin-left':'auto'})
             };
-        });     
+        });
     }
-    
+
     // FIX FOR SCROLLPOS IN ALL BROWSERS
     function posTop() {
         return typeof window.pageYOffset != 'undefined' ? window.pageYOffset: document.documentElement.scrollTop? document.documentElement.scrollTop: document.body.scrollTop? document.body.scrollTop:0;
-    }    
-    
+    }
 
-    
+
+
 });
 
 
