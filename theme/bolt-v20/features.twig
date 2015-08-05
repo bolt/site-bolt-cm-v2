@@ -1,7 +1,7 @@
 {% extends "master.twig" %}
 
 {% block bodyclass %}body-features{% endblock %}
-          
+
 {% block content %}
 
 {% set chapters = app.config.get('taxonomy/chapters/options') %}
@@ -10,7 +10,7 @@
     <ul>
         {% for cat, catname in chapters %}
         <li><a href="#{{cat}}">For {{catname}}</a></li> <!-- AW - WORKING ON THIS -->
-        {% endfor %}        
+        {% endfor %}
     </ul>
 </nav>
 
@@ -18,13 +18,13 @@
 <section class="maininfo">
     <div class="maincolumn">
 
-{% setcontent textblock='blocks/'~cat %}   
+{% setcontent textblock='blocks/'~cat %}
 
      <article class="row">
             <h1 id="{{cat}}">For {{catname}}</h1>
             <h2 class="subheader articlebody">{{textblock.body|striptags}}</h2>
         </article>
-    
+
         {% setcontent features = 'features' where { 'chapters':cat }%}
         <ul class="featurelist">
             {% for item in features %}
@@ -33,7 +33,7 @@
                 <div class="imgcontainer"><img src="{{ thumbnail(item.image, 606, 400, 'r') }}" alt="{{ item.title }}" width="303" class="feature-img-{{ loop.index }}"/></div>
                 {% endif %}
                 <h3><i class="fa fa-bolt"></i>{{ item.title }}</h3>
-                {{ item.text }} 
+                {{ item.text }}
             </li>
             {% endfor %}
         </ul>
@@ -46,7 +46,3 @@
 
 {% endblock content %}
 
-{% block footer_extra_scripts %}
-    <script src="{{ paths.theme }}scripts/cycle2.min.js"></script>
-    <script src="{{ paths.theme }}scripts/cycle2.swipe.min.js"></script>
-{% endblock %}

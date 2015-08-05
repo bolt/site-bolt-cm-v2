@@ -1,7 +1,7 @@
 {% extends "master.twig" %}
 
 {% block bodyclass %}body-news{% endblock %}
-          
+
 {% block content %}
 
 <section class="maininfo">
@@ -14,16 +14,16 @@
             <p class="meta" title="{{ item.datepublish|date("j F Y - H:i") }}">Published: {{ item.datepublish|date("l j F Y") }}</p>
             <div class="articlebody">
                 {% if item.image %}
-                <a href="{{ item.image|image() }}" class="fancybox">
+                <a href="{{ item.image|image() }}" class="magnific">
                     <img src="{{ item.image|thumbnail(700,300) }}">
                 </a>
                 {% endif %}
                 <p>{{ item.excerpt(600) }}</p>
-                <a href="{{item.link}}" class="button">Read the full article</a> 
-            </div> 
+                <a href="{{item.link}}" class="button">Read the full article</a>
+            </div>
         </article>
         {% endfor %}
-                
+
     </div>
 </section>
 
@@ -31,7 +31,3 @@
 
 {% endblock content %}
 
-{% block footer_extra_scripts %}
-    <script src="{{ paths.theme }}scripts/cycle2.min.js"></script>
-    <script src="{{ paths.theme }}scripts/cycle2.swipe.min.js"></script>
-{% endblock %}

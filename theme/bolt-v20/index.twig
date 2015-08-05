@@ -1,7 +1,7 @@
 {% extends "master.twig" %}
 
 {% block bodyclass %}body-home{% endblock %}
-          
+
 {% block content %}
 
 <section class="hero">
@@ -11,7 +11,7 @@
             <h1>{{ record.title}}</h1>
             <h2 class="subheader articlebody">{{ record.subtitle }}</h2>
         </article>
-    
+
     </div>
 </section>
 
@@ -35,11 +35,11 @@
 </section>
 
 <section class="maininfo">
-    
+
     {% setcontent devblock = 'blocks/developers' %}
     {% setcontent frontendblock = 'blocks/frontend-designers' %}
     {% setcontent editorblock = 'blocks/content-editors' %}
-    
+
     {% set primaryblocks = [devblock,frontendblock,editorblock] %}
 
     {% for item in primaryblocks %}
@@ -47,31 +47,31 @@
         <h2>{{ item.title }}</h2>
         <h3 class="subheader">{{ item.subtitle }}</h3>
         {{ item.body }}
-        <!-- a href="{{item.sitelink}}" class="button">{{ item.calltoaction }}</a -->          
+        <!-- a href="{{item.sitelink}}" class="button">{{ item.calltoaction }}</a -->
     </article>
     {% endfor %}
-    
+
 </section>
-    
+
 <section class="features">
    <div class="maincolumn">
-       <h1>Features that make Bolt an awesome CMS</h1> 
+       <h1>Features that make Bolt an awesome CMS</h1>
        {% setcontent featureimages = 'features' where { 'id' : '7 || 1 || 32' } %}
        {% setcontent features = 'features' where {'frontpage':'1'} limit '6' orderby 'frontpageorder' %}
        <ul class="featurelist">
-            {# 
+            {#
             {% for item in featureimages %}
             <li class='image'>
                 <div class="imgcontainer"><img src="{{ thumbnail(item.image,606,400, r) }}" alt="{{ item.title }}" width="303" class="feature-img-{{ loop.index }}"/></div>
             </li>
             {% endfor %} #}
-            
+
             {% for item in features %}
             <li>
                  {% if loop.index < 4 %}
                  <div class="imgcontainer"><img src="{{ thumbnail(item.image,606,400, 'r') }}" alt="{{ item.title }}" width="303" class="feature-img-{{ loop.index }}"/></div>
                  {% endif %}
-                 <h3><i class="fa fa-bolt"></i>{{ item.title }}</h3> 
+                 <h3><i class="fa fa-bolt"></i>{{ item.title }}</h3>
                 {{ item.text }}
             </li>
             {% endfor %}
@@ -111,7 +111,7 @@
     {% setcontent supportblock = 'blocks/support' %}
     {% setcontent docblock = 'blocks/documentation' %}
     {% setcontent contributeblock = 'blocks/contribute' %}
-    
+
     {% set secblocks = [supportblock,docblock,contributeblock] %}
 
     {% for item in secblocks %}
@@ -119,27 +119,27 @@
         <h2>{{item.title}}</h2>
         <h3 class="subheader">{{item.subtitle}}</h3>
         {{item.body}}
-        <a href="{{item.sitelink}}" class="button">{{item.calltoaction}}</a>          
+        <a href="{{item.sitelink}}" class="button">{{item.calltoaction}}</a>
     </article>
     {% endfor %}
 </section>
 
 <section class="showcases">
-    <div class="maincolumn">   
-       <h1>Smaller or bigger sites, Bolt fits every one of them</h1> 
+    <div class="maincolumn">
+       <h1>Smaller or bigger sites, Bolt fits every one of them</h1>
        {% setcontent showcases = 'showcases' where {'frontpage':'1'} %}
        {% set showcases = showcases|shuffle %}
        <ul class="showcaselist">
             {% for item in showcases %}
             {% if loop.index <= 3 %}
             <li>
-                <h3>{{ item.title }}</h3> 
-                <a href="{{ item.sitelink }}"><img src="{{ thumbnail(item.image, 398, 270,"c") }}"></a>                
+                <h3>{{ item.title }}</h3>
+                <a href="{{ item.sitelink }}"><img src="{{ thumbnail(item.image, 398, 270,"c") }}"></a>
             </li>
             {% endif %}
             {% endfor %}
         </ul>
-    </div>    
+    </div>
 </section>
 
 <section class="logos">
@@ -188,7 +188,3 @@
 
 {% endblock content %}
 
-{% block footer_extra_scripts %}
-    <script src="{{ paths.theme }}scripts/cycle2.min.js"></script>
-    <script src="{{ paths.theme }}scripts/cycle2.swipe.min.js"></script>
-{% endblock %}
