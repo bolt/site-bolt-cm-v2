@@ -6,8 +6,9 @@
     "grunt-contrib-watch": "^0.6.1",
     "grunt-sass": "^1.0.0",
     "node-sass": "^3.2.0"
-  },
+\  },
   "dependencies": {
-    "imagemin-mozjpeg": "^4.0.0"
+    "imagemin-mozjpeg": "~5.1.0",
+    "grunt-contrib-imagemin": "~0.9.4"
   }
 }

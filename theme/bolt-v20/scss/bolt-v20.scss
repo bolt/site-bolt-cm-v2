@@ -410,7 +410,9 @@ section{   // was .maininfo, .secinfo
 .secinfo .column {
     margin-bottom: 1em;
     @media #{$large-up} {
-        @extend .large-4;
+        //@extend .large-4; NO more extends!
+         @include grid-column(4);
+
     }
     // XLARGE  //
     @media #{$xlarge-up} {
@@ -421,7 +423,9 @@ section{   // was .maininfo, .secinfo
 }
 
 .maincolumn {
-    @extend .column;
+    //@extend .column;
+    @include grid-column(12);
+
    // LARGE //
     @media #{$large-up} {
         padding-top: 1em;
@@ -685,12 +689,22 @@ footer {
     .credits {
         @extend .columns;
         @extend .medium-6;
+       
     }
     .socials {
         @extend .columns;
         @extend .medium-4;
         @extend .large-4;
         @extend .right;
+
+        //  @include grid-column($columns:12, $float:right);
+
+        //  @media #{$medium-up}{
+        //     @include grid-column(4);
+        // }
+
+
+
         a{
             color: $white;
             display: block;
@@ -893,6 +907,9 @@ section.showcases {
     margin-left:10px;
     margin-right:0;
 }
+
+/* --------------- Gallery ---------------*/
+
 
 
 /* -------------- TYPOGRAPHY --------------- */
