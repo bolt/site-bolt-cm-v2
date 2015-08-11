@@ -139,8 +139,8 @@ showcases:
             type: text
             class: large
     taxonomy: [ tags ]
-    record_template: showcase.twig
-    listing_template: showroom.twig
+    record_template: showcase_item.twig
+    listing_template: showcase.twig
 
 
 submitted_website:
