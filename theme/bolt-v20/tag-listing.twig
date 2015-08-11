@@ -19,7 +19,7 @@
 	<div class="sr_topbar">
 
 		<div class="columns medium-2 large-2">
-			<a href="/showroom"><i class="fa fa-lg fa-chevron-left"></i> Back</a>
+			<a href="/showcase"><i class="fa fa-lg fa-chevron-left"></i> Back</a>
 		</div>
 		<div class="columns medium-12 large-12">
 			<h3>
@@ -51,7 +51,7 @@
 
 		{% for record in records %}
 		<div class="grid-item">
-		    <a href="{{ record.link }}"><img class="hover-dark" alt="{{ record.title }}" src="{{ record.image|thumbnail(600,20000, "r") }}"></a>
+		    <a href="{{ record.link }}"><img class="hover-dark" alt="{{ record.title }}" width="100%" src="{{ record.image|thumbnail(380,20000, "r") }}"></a>
 		    <h3 class="website_title_sr">{{ record.title }}</h3>
 		</div>
 		{% endfor %}
