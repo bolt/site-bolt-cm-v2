@@ -73,6 +73,7 @@ pages:
         body:
             type: html
             height: 300px
+            allowtwig: true
         template:
             label: Choose a template..
             type: templateselect 
@@ -118,6 +119,7 @@ showcases:
         title:
             type: text
             class: large
+            group: basic
         slug:
             type: slug
             uses: title
@@ -126,7 +128,6 @@ showcases:
         description:
             type: html
             height: 300px
-            group: basic
         author:
             type: text
             class: large
@@ -138,8 +139,39 @@ showcases:
             type: text
             class: large
     taxonomy: [ tags ]
-    record_template: newsitem.twig
-    listing_template: showcase.twig
+    record_template: showcase.twig
+    listing_template: showroom.twig
+
+
+submitted_website:
+    name: Submitted Websites
+    singular_name: Submitted Website
+    fields:
+        title:
+            type: text
+            class: large
+            group: basic
+        slug:
+            type: slug
+            uses: title
+        sitelink:
+            type: text
+            class: large
+        description:
+            type: html
+            height: 300px
+        author:
+            type: text
+            class: large
+        email:
+            type: text
+            class: large
+    taxonomy: [ tags ]
+    default_status: draft
+    record_template: showcase.twig
+    listing_template: showroom.twig
+    viewless: true
+    searchable: false
 
 
 blocks:
