@@ -1,0 +1,76 @@
+{% extends "master.twig" %}
+
+{% block bodyclass %}body-showcase{% endblock %}
+
+{% block content %}
+
+<section class="maininfo">
+
+	<div class="sr_topbar">
+
+		<div class="columns medium-2 large-2">
+			<a href="/showcase"><i class="fa fa-lg fa-chevron-left"></i> Back</a>
+		</div>
+
+	</div>
+
+	<br>
+
+	<div class="columns large-6">
+		<a href="{{ record.image|image() }}" class="magnific">
+			<img src="{{ record.image|thumbnail(700,340, "c") }}" alt="{{ record.title }}">
+		</a>
+	</div>
+	<div class="columns large-6">
+		<h2>{{ record.title }}</h2>
+		{% if record.author is not empty %}
+		<h4 class="sr_author">by {{ record.author }}</h4>
+		{% endif %}
+		<br>
+
+		<ul class="button_bar_tags">
+			{% if record.taxonomy is defined %}
+				{% for type, values in record.taxonomy %}
+					{% for link, value in values %}
+						<li><a href="{{ link }}" class="button_tags">{{ value }}</a></li>
+					{% endfor %}
+					{% if not loop.last %} - {% endif %}
+				{% endfor %}
+			{% endif %}
+		</ul>
+
+		<a href="{{ record.sitelink }}" target="_blank" class="button expand">See the Website</a>
+	</div>
+
+	<br clear="all">
+
+	<div class="columns large-12">
+
+	<h4 class="sr_screenshoots">Screenshots :</h4>
+
+		<ul class="small-block-grid-3">
+			{% for image in record.slider %}
+			<li>
+				<a href="{{ image.filename|image() }}" class="magnific">
+					<img src="{{ image.filename|thumbnail(500,270, "c") }}" alt="{{ image.title }}">
+				</a>
+			</li>
+			{% endfor %}
+		</ul>
+
+	</div>
+
+</section>
+
+{% endblock content %}
+
+
+{% block logo %}
+<h1 id="logo"><a href="/showcase"><img src="{{paths.theme}}images/bolt_showroom.png" width='245' alt="{{ app.config.get('general/sitename') }}" /></a></h1>
+{% endblock logo %}
+
+
+{% block coverimage %}
+{% setcontent page = "page/showcase" returnsingle %}
+url({{ thumbnail(page.image, 1900, 800,"r") }})
+{% endblock %}

@@ -339,7 +339,7 @@ header {
          // LARGE  //
         @media #{$large-up} {
         margin: 0 auto;
-        width: 650px; //fixen: geen absolute waarde, maar liever een relatieve!
+        width: 740px; //fixen: geen absolute waarde, maar liever een relatieve!
         }
         &:after {
           content: "";
@@ -874,6 +874,7 @@ section.showcases {
 
 }
 
+/* --------------- ShowRoom ---------------*/
 .hover-dark {
     -webkit-filter: grayscale(100%);
     -moz-filter: grayscale(100%);
@@ -908,8 +909,78 @@ section.showcases {
     margin-right:0;
 }
 
-/* --------------- Gallery ---------------*/
+.website_title_sr{
+    text-align: center;
+}
 
+.sr_author{
+    text-align: center;
+    @media #{$large-up}{
+        text-align: left;
+    }
+}
+
+
+.button_bar_tags {
+  @include button-group-container();
+  text-align: center;
+  @media #{$large-up}{
+      text-align: left;
+  }
+  .button_tags {
+    @include button();
+    background-color: #83898C;
+    padding: 0.6rem 2rem 0.725rem 2rem;
+  }
+  .button_tags:hover{
+    background-color: #3F4243;
+  }
+  & > li { @include button-group-style($radius:true);  }
+}
+
+.sr_screenshoots {
+    margin-top: 20px;
+}
+
+.sr_topbar{
+    margin-bottom: 15px;
+}
+
+.sr_submit_button{
+    float: right!important;
+    border: solid #999 1px;
+    border-radius: 3px;
+}
+
+.grid{ margin: 0 auto; }
+.grid-item {
+    width: 100%;
+    -webkit-box-shadow: 0 1px 2px 0 rgba(0,0,0,0.22);
+    box-shadow: 0 1px 2px 0 rgba(0,0,0,0.22);
+    border-radius: 3px;
+    margin-bottom: 10px;
+    @media #{$medium-up}{
+    width: 48%;
+    }
+    @media #{$large-up}{
+    width: 24%;
+    }
+} 
+
+.grid-item h3{
+    font-size: 22px;
+}
+.grid-sizer {     
+    width: 100%;
+    @media #{$medium-up}{
+    width: 48%;
+    }
+    @media #{$large-up}{
+    width: 24%;
+    } 
+}
+
+.grid-item a img{border-radius: 3px 3px 0 0;}
 
 
 /* -------------- TYPOGRAPHY --------------- */

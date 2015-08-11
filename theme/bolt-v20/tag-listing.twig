@@ -1,0 +1,85 @@
+{% extends "master.twig" %}
+
+{%- block title %}
+{%- if app.request.get('_route') != "homepage" %} | {{ app.config.get('general/sitename') }}{% endif -%}
+{% endblock title -%}
+
+{% block seo_description %}
+{% endblock seo_description %}
+
+{% block seo_ogtitle %}
+{% endblock seo_ogtitle %}
+
+{% block bodyclass %}body-showcase{% endblock %}
+
+{% block content %}
+
+<section class="maininfo">
+
+	<div class="sr_topbar">
+
+		<div class="columns medium-2 large-2">
+			<a href="/showcase"><i class="fa fa-lg fa-chevron-left"></i> Back</a>
+		</div>
+		<div class="columns medium-12 large-12">
+			<h3>
+				{{ __('Overview for ') }}
+				{% if taxonomy.options[slug] is defined %}
+				{{ taxonomy.options[slug] }}
+				{% else %}
+				{{ slug }}
+				{% endif %}
+				:
+			</h3>
+		</div>
+
+	</div>
+
+	<br>
+
+	{% if taxonomytype is defined %}
+
+	{# taxonomies are fetched unordered by design. If we specified an order in config.yml, sort them here: #}
+	{% set records = records|order(app.config.get('general/listing_sort')) %}
+	{% endif %}
+
+	<br clear="all">
+
+	<div class="grid">
+
+	    <div class="grid-sizer"></div>
+
+		{% for record in records %}
+		<div class="grid-item">
+		    <a href="{{ record.link }}"><img class="hover-dark" alt="{{ record.title }}" width="100%" src="{{ record.image|thumbnail(380,20000, "r") }}"></a>
+		    <h3 class="website_title_sr">{{ record.title }}</h3>
+		</div>
+		{% endfor %}
+	</div>
+
+		{{ pager() }}
+
+
+	</section>
+
+{% endblock content %}
+
+{% block footer_extra_scripts %}
+{# Load Masonry Layout System#}
+<script src="{{ paths.theme }}scripts/layout_showroom.min.js"></script>
+{# Load Masonry Image Loader #}
+<script src="{{ paths.theme }}scripts/imagesloaded.pkgd.min.js"></script>
+<script type="text/javascript">
+    var $grid = $('.grid').masonry({
+      // options
+      itemSelector: '.grid-sizer',
+      itemSelector: '.grid-item',
+      percentPosition: true,
+      "gutter": 10
+    });
+    // layout Masonry after each image loads
+    $grid.imagesLoaded().progress( function() {
+      $grid.masonry('layout');
+    });
+</script>
+{% endblock %}

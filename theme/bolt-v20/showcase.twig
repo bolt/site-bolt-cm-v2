@@ -1,0 +1,78 @@
+{% extends "master.twig" %}
+
+{% block bodyclass %}body-showroom{% endblock %}
+
+{% block content %}
+
+
+{% set filter = 'featured' %}
+{% if app.request.get('filter') == 'recent' %}
+  {% set filter = 'recent' %}
+  {% setcontent items = "showcases/latest/20" allowpaging %}
+{% else %}
+  {% setcontent items = "showcases" limit 10 order '-datecreated' where {'featured': '1' } allowpaging %}
+{% endif %}
+
+
+
+<section class="maininfo">
+
+    <dl class="sub-nav">
+      <dt>Filter:</dt>
+      {# <dd class="active"><a href="#">All</a></dd> #}
+      <dd {% if filter == 'featured' %}class="active"{% endif %}><a href="?filter=featured">Featured</a></dd>
+      <dd {% if filter == 'recent' %}class="active"{% endif %}><a href="?filter=recent">Recently</a></dd>
+      <dd class="sr_submit_button"><a href="/submit-to-showcase">Submit a Website</a></dd>
+    </dl>
+
+    <div class="grid">
+
+        <div class="grid-sizer"></div>
+
+        {% for item in items %}
+        <div class="grid-item">
+            <a href="{{ item.link }}"><img class="hover-dark" alt="{{ item.title }}" width="100%" src="{{ item.image|thumbnail(380,20000, "r") }}"></a>
+            <h3 class="website_title_sr">{{ item.title }}</h3>
+        </div>
+        {% endfor %}
+
+
+    </div>
+
+{{ pager() }}
+
+</section>
+
+
+
+{% endblock content %}
+
+
+{% block logo %}
+<h1 id="logo">
+    <a href="/showcase"><img src="{{paths.theme}}images/bolt_showroom.png" width='245' alt="{{ app.config.get('general/sitename') }}" /></a>
+</h1>
+{% endblock logo %}
+
+
+{% block coverimage %}url({{ thumbnail(record.image, 1900, 800,"r") }}){% endblock %}
+
+{% block footer_extra_scripts %}
+{# Load Masonry Layout System#}
+<script src="{{ paths.theme }}scripts/layout_showroom.min.js"></script>
+{# Load Masonry Image Loader #}
+<script src="{{ paths.theme }}scripts/imagesloaded.pkgd.min.js"></script>
+<script type="text/javascript">
+    var $grid = $('.grid').masonry({
+      // options
+      itemSelector: '.grid-sizer',
+      itemSelector: '.grid-item',
+      percentPosition: true,
+      "gutter": 10
+    });
+    // layout Masonry after each image loads
+    $grid.imagesLoaded().progress( function() {
+      $grid.masonry('layout');
+    });
+</script>
+{% endblock %}

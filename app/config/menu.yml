@@ -12,6 +12,8 @@ main:
     link: http://docs.bolt.cm
   - label: News
     path: page/news
+  - label: Showcase
+    path: page/showcase
   - label: Community
     path: pages/community
   - label: Download
