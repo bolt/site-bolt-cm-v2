@@ -87,7 +87,7 @@ showroom_submit:
       required: true
       placeholder: Your message and website infos ..
   button_text: Submit
-  redirect_on_ok: page/showroom
+  redirect_on_ok: page/showcase
 
 
 # A simple contact form. Use as {{ simpleform('contact') }} in your templates.
