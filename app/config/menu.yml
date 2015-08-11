@@ -13,7 +13,7 @@ main:
   - label: News
     path: page/news
   - label: Showcase
-    path: page/showroom
+    path: page/showcase
   - label: Community
     path: pages/community
   - label: Download
