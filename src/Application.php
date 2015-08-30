@@ -32,7 +32,7 @@ class Application extends Silex\Application
      */
     public function __construct(array $values = array())
     {
-        $values['bolt_version'] = '2.2.8';
+        $values['bolt_version'] = '2.2.9';
         $values['bolt_name'] = '';
         $values['bolt_released'] = true; // `true` for stable releases, `false` for alpha, beta and RC.
 
@@ -124,7 +124,8 @@ class Application extends Silex\Application
         // Initialize enabled extensions before executing handlers.
         $this->initExtensions();
 
-        $this->initMailCheck();
+        // Mail config checks for extensions
+        $this->before(array($this, 'initMailCheck'));
 
         // Initialise the global 'before' handler.
         $this->before(array($this, 'beforeHandler'));
@@ -168,6 +169,24 @@ class Application extends Silex\Application
             )
         );
         $this->register(new Database\InitListener());
+
+        // Filter tables to only those bolt cares about (based on table name prefix).
+        // This prevents schema parsing errors from tables we don't need to worry about.
+        $app = $this;
+        // This key will make more since in version 2.3
+        $this['schema.tables_filter'] = function () use ($app) {
+            $prefix = $app['config']->get('general/database/prefix');
+            return "/^$prefix.+/";
+        };
+        $this['db.config'] = $this->share(
+            $this->extend('db.config',
+                function ($config) use ($app) {
+                    $config->setFilterSchemaAssetsExpression($app['schema.tables_filter']);
+
+                    return $config;
+                }
+            )
+        );
 
         $this->checkDatabaseConnection();
 

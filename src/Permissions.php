@@ -37,9 +37,18 @@ class Permissions
 
     /** @var \Silex\Application */
     private $app;
-
-    // per-request permission cache
+    /** @var array Per-request permission cache */
     private $rqcache;
+    /** @var array The list of ContentType permissions */
+    private $contentTypePermissions = array(
+        'create'           => false,
+        'change-ownership' => false,
+        'delete'           => false,
+        'edit'             => false,
+        'publish'          => false,
+        'depublish'        => false,
+        'view'             => false,
+    );
 
     public function __construct(\Silex\Application $app)
     {
@@ -354,6 +363,35 @@ class Permissions
     }
 
     /**
+     * Get the list of ContentType permissions available.
+     *
+     * @return boolean[]
+     */
+    public function getContentTypePermissions()
+    {
+        return $this->contentTypePermissions;
+    }
+
+    /**
+     * Return a list of ContentType permissions that a user has for the ContentType.
+     *
+     * @param string             $contentTypeSlug
+     * @param array|Entity\Users $user
+     *
+     * @return boolean[]
+     */
+    public function getContentTypeUserPermissions($contentTypeSlug, $user)
+    {
+        $permissions = array();
+        foreach (array_keys($this->contentTypePermissions) as $contentTypePermission) {
+            $permissions[$contentTypePermission] = $this->isAllowed($contentTypePermission, $user, $contentTypeSlug);
+        }
+
+        return $permissions;
+    }
+
+
+    /**
      * Lists the roles that would grant the specified global permission.
      *
      * @param string $permissionName
@@ -625,9 +663,10 @@ class Permissions
                     break;
                 }
 
-                // If $content was passed in as a string, fetch the Content object
-                if (is_string($content)) {
-                    $content = $this->app['storage']->getContent("$contenttypeSlug/$contentId", array('hydrate' => false));
+                // If content was not passed but our rule contains the content
+                // we need, lets fetch the Content object @see #3909
+                if (is_string($content) || ($contenttype && $contentId)) {
+                    $content = $this->app['storage']->getContent("$contenttype/$contentId", array('hydrate' => false, 'status' => '!undefined'));
                 }
 
                 if (intval($content['ownerid']) && (intval($content['ownerid']) === intval($user['id']))) {
