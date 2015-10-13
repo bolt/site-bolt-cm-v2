@@ -14,7 +14,7 @@ main:
     path: page/news
   - label: Showcase
     path: page/showcase
-  - label: Community [IRC/Slack]
+  - label: Community [IRC/Slack/Forum]
     path: pages/community
   - label: Download
     path: pages/download
