@@ -1,22 +1,65 @@
-Bolt 2.2.next
--------------
+Bolt 2.2.13
+-----------
 
-Not yet released. Notable changes:
+Released 2015-10-07. Notable changes:
+
+- Fixed: Taxonomies being wiped on status change using grouped taxonomy. (See #3868)
+- Fixed: Add edit permission to the `modifiable` property (See #4198)
+- Added: Allow height and autocomplete in categories taxonomies.
+- Added: Allow for 'type: hidden' fields in `contenttypes.yml`
+- Added: Allow the theme's `config.yml` to set add_jquery. Fixes #4098
+- Added: Optionally allow spaces in tags.
+- Updated: Updating UIkit(2.22), CodeMirror and Marked.js
+- Changed: Ignore theme directory except for base-* and default
+- Changed: Use tag names instead of slugs for autocomplete and tag cloud. #4125
+- Changed: Strip periods, commas, colons & semi-colons from prefill titles
+- Changed: date-time format uses a more i18n-friendly format (See #4053)
+- Changed: Moving 'Install new extension' to the top of the screen.
+- Fixed: Don't sort getContent in listing view, when the contenttype has a taxonomy that has a sortorder.
+- Fixed: Don't show (non working) drag'n'drop in list overviews.
+- Fixed: Fix the info text for imagelist fields (See #4051)
+- Fixed: Fix to #3991 – Geolocation snaps pin to matched address.
+- Fixed: No links for records that are 'viewless'. Fixes #3999 for [2.2]
+- Fixed: [2.2] Allow non-strings as query parameters with pager. issue #4109
+- Fixed: "Timed publish" fixed for SQLITE (Now using a `DateTime` object instead of `CURRENT_TIMESTAMP`)
+- Fixed: Fix: Don't show notice about `mailoptions` when not logged on.
+- Fixed: Alignment of #navpage-secondary menu item icons in FireFox. (See #4178)
+- Fixed: Strip tags from `<title>` in editcontent. Fixes: #3590.
+- Fixed: Fix secondary nav element's class not being output in certain cases.
+
+Bolt 2.2.10
+-----------
+
+Released 2015-09-01. Notable changes:
+
+- Updated: Updated Doctrine and it's components to the latest version. (version 2.5.1, see [here for details](http://www.doctrine-project.org/2015/08/31/doctrine_orm_2_5_1_and_2_4_8_released.html))
+
+Bolt 2.2.9
+----------
+
+Released 2015-08-30. Notable changes:
 
 - Added: Add a button for `<hr>` / horizontal ruler in CKeditor for (see #3539)
+- Added: Show "profile" button on users page, if not allowed to edit other users than themselves. (See #4008)
+- Fixed: Truly allow edit permission to be assigned to the owner role (Thanks @fabschurt, see #4019)
+- Fixed: Fix record retrieval for ownership checking (Thanks @fabschurt, see #4024)
 - Fixed: Don't allow extension tables that do not use the configured prefix (see #3968)
 - Fixed: Don't attempt to log array elements that aren't set. (see #3969)
-- Chaned: Provide UI feedback on extension site timeouts. (see #3972)
+- Fixed: Changelog 'next' & 'previous' buttons didn't work as expected in Bolt 2.2.x (See #4009)
+- Fixed: Move `initMailCheck()` call to a `before()` handler (See #3953)
+- Fixed: Allow edit permission to be assigned to the owner role. Fixes "Unable to edit entry with owner permission". (See #3938)
+- Fixed: Fix path to Nut for Composer installs (See #3959)
+- Changed: Provide UI feedback on extension site timeouts. (see #3972)
+- Changed: Move the Showcases template select to the Meta tab (See #4006)
+- Changed: Don't `Content::preParse()` return an error, log it and return a generic message (See #3990)
+- Changed: Lock Silex to version 1.2.* for PHP 5.3.3 support (See #4021)
 - Updated: CKeditor updated to version 4.5.2
 - Updated: Symfony updated to 2.6.11
-- Updated: Silex updated to 1.3.1
+- Updated: Silex updated to 1.2.5
 - Updated: Font Awesome to 4.4
-- Fixed: Fix path to Nut for Composer installs (See #3959)
-- Tests: Allow getStatementMock() to be passed a desired return value (See #3957)
-- Fixed: Move initMailCheck() call to a before() handler (See #3953)
-- Fixed: Allow edit permission to be assigned to the owner role. Fixes "Unable to edit entry with
-  owner permission". (See #3938)
 - Updated: Database integrity checker. Add foreign key checks to IntegrityChecker (See #3872)
+- Tests: Allow `getStatementMock()` to be passed a desired return value (See #3957)
+
 
 Bolt 2.2.8
 ----------

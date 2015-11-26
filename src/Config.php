@@ -308,6 +308,9 @@ class Config
             if (!isset($taxonomy['has_sortorder'])) {
                 $taxonomy['has_sortorder'] = false;
             }
+            if (!isset($taxonomy['allow_spaces'])) {
+                $taxonomy['allow_spaces'] = false;
+            }
 
             // Make sure the options are $key => $value pairs, and not have implied integers for keys.
             if (!empty($taxonomy['options']) && is_array($taxonomy['options'])) {
@@ -753,7 +756,7 @@ class Config
 
                 // Check 'uses'. If it's an array, split it up, and check the separate parts. We also need to check
                 // for the fields that are always present, like 'id'.
-                if (is_array($field) && !empty($field['uses'])) {
+                if (!empty($field['uses']) && is_array($field['uses'])) {
                     foreach ($field['uses'] as $useField) {
                         if (!empty($field['uses']) && empty($ct['fields'][$useField]) && !in_array($useField, $this->reservedFieldNames)) {
                             $error = Trans::__(

@@ -5,7 +5,8 @@
     label:     field.label|default(''),
     multiple:  (field.multiple is defined and field.multiple),
     values:    field.values|default([]),
-    info:      field.info|default('')
+    info:      field.info|default(''),
+    required:  field.required|default(false)
 } %}
 
 {#=== INIT ===========================================================================================================#}
@@ -42,6 +43,7 @@
     class:     option.class,
     id:        key,
     multiple:  option.multiple,
+    required:  option.required,
     name:      (option.multiple) ? name ~ '[]' : name,
 } %}
 
@@ -70,7 +72,7 @@
             {% endfor %}
         </select>
 
-        {% if option.multiple %}
+        {% if option.multiple and not field.autocomplete|default(false) %}
         <div>{# TODO: move onclick-events to JS #}
             <a href="#" class="btn btn-default btn-xs" onclick="jQuery('#{{ key }} option').prop('selected', true); return false;">
                 <i class="fa fa-fw fa-check-square-o"></i>{{ __("Select all") }}
