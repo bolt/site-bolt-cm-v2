@@ -364,7 +364,12 @@ class Config
      */
     protected function parseTheme($themePath, array $generalConfig)
     {
-        $themeConfig = $this->parseConfigYaml('config.yml', $themePath);
+        $themeConfig = $this->parseConfigYaml('theme.yml', $themePath);
+
+        /** @deprecated Since 2.2.16 and will be removed in Bolt v4.0 (config.yml was the old filename) */
+        if (empty($themeConfig)) {
+            $themeConfig = $this->parseConfigYaml('config.yml', $themePath);
+        }
 
         if ((isset($themeConfig['templatefields'])) && (is_array($themeConfig['templatefields']))) {
             $templateContentTypes = array();
@@ -410,6 +415,12 @@ class Config
         }
         if (!isset($contentType['singular_name']) && !isset($contentType['singular_slug'])) {
             $error = sprintf("In contenttype <code>%s</code>, neither 'singular_name' nor 'singular_slug' is set. Please edit <code>contenttypes.yml</code>, and correct this.", $key);
+            throw new LowlevelException($error);
+        }
+
+        // Contenttypes without fields make no sense.
+        if (!isset($contentType['fields'])) {
+            $error = sprintf("In contenttype <code>%s</code>, no 'fields' are set. Please edit <code>contenttypes.yml</code>, and correct this.", $key);
             throw new LowlevelException($error);
         }
 
@@ -1103,7 +1114,13 @@ class Config
     {
         // Check the timestamp for the theme's config.yml
         $paths = $this->app['resources']->getPaths();
-        $themeConfigFile = $paths['themepath'] . '/config.yml';
+        $themeConfigFile = $paths['themepath'] . '/theme.yml';
+
+        /** @deprecated Since 2.2.16 and will be removed in Bolt v4.0 (config.yml was the old filename) */
+        if (!file_exists($themeConfigFile)) {
+            $themeConfigFile = $paths['themepath'] . '/config.yml';
+        }
+
         // Note: we need to check if it exists, _and_ it's too old. Not _or_, hence the '0'
         $configTimestamp = file_exists($themeConfigFile) ? filemtime($themeConfigFile) : 0;
 

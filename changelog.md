@@ -1,7 +1,32 @@
+Bolt 2.2.17
+-----------
+
+Released 2016-01-27. Notable changes:
+
+ - Fix: No href around '…'-placeholdersin pagers. (See #4650)
+ - Fix: Templatefields in 'Viewless' records work correctly now (#4653)
+ - Change: Move `NutSP::addCommand` to `$app['nut.commands.add']`` so it's not "static" (#4662)
+ - Fix: Don't whitescreen on a response with a Twig exception (#4668)
+ - Fix: Don't try writing to vendor on composer installs (#4677)
+ - Added: Added capability to set an amount of requested records for specific kind of taxonomy. (#4691)
+ - Change: Generate preview route from url generator. (See #4697)
+ - Change: Add JS events to editfile/editcontent ajax saving. (#4720)
+ - Fix: Block access to .git folders in .htaccess (#4749)
+
+Bolt 2.2.16
+-----------
+
+Released 2016-01-01. Notable changes:
+
+ - Change: Updating .gitignore. Add PHPstorm cruft. (See #4621)
+ - Change: Themes use `theme.yml` now, fallback to old `config.yml` (See #4414)
+ - Fixed: Fixed a 'Catchable Error' in the `record.twig` template for the old 'default' theme (#4645)
+ - Updated: A few Bower / Grunt modules were updated, and all JS / CSS rebuilt (See #4647)
+
 Bolt 2.2.15
 -----------
 
-Released 2015-12-29. Notable changes: 
+Released 2015-12-29. Notable changes:
 
  - Fixed: Exception is no longer thrown when editing an empty config file or template. (See #4636)
  - Added: Add custom sidebar groups for contenttypes. (Backport of #3793)
@@ -29,10 +54,10 @@ Released 2015-11-27. Notable changes:
  - Fixed: Fixing reordering images in an ImageList. (See #3573)
  - Fixed: Retrieve existing relations before setting them from POST. Fixes "No related entries on preview" issue. (See #4340)
  - Fixed: Handle save status transition (See #4326)
- - Added: Allow the `notfound:` status to point to a static template, instead of a contenttype record. 
+ - Added: Allow the `notfound:` status to point to a static template, instead of a contenttype record.
  - Fixed: Don't insert Bolt meta tags on AJAX requests (See #4297)
  - Fixed: Put correct cannonical link into html head on paging content request
- - Fixed: Increase z-index, so popups cover `{{ dump() }}` output. 
+ - Fixed: Increase z-index, so popups cover `{{ dump() }}` output.
 
 Bolt 2.2.13
 -----------
