@@ -18,7 +18,7 @@ payoff: Sophisticated, Lightweight and Simple
 # The theme to use. Be sure to copy the {theme_path}/base-2014 folder, and
 # change the name here accordingly.
 #
-# Don't edit the templates int theme/base-2014, because they _will_ get updated
+# Don't edit the templates in theme/base-2014, because they _will_ get updated
 # in next releases
 theme: bolt-v20
 
