@@ -1,10 +1,12 @@
 {% extends "master.twig" %}
 
+{%- block title %}
+    {{ user.displayname }} | {{ app.config.get('general/sitename') }}
+{% endblock title -%}
+
 {% block bodyclass %}body-record{% endblock %}
 
 {% block content %}
-
-
 
 <section class="maininfo">
     <div class="maincolumn ">
