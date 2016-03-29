@@ -15,7 +15,7 @@
         <article class="row">
             <h1><a href="{{record.link}}">{{record.title}}</a></h1>
             {# <h2 class="subheader">{{record.subtitle}}</h2> #}
-            {% if news %}<p class="meta" title="{{ record.datepublish|date("j F Y - H:i") }}">Published: {{ record.datepublish|date("l j F Y") }} by <a class="username" href="{{ profile_link(record.user) }}">{{ record.user.displayname }}</a></p>{% endif %}
+            {% if news %}<p class="meta" title="{{ record.datepublish|date("j F Y - H:i") }}">Published: {{ record.datepublish|date("l j F Y") }} by <a href="{{ profile_link(record.user) }}">{{ record.user.displayname }}</a></p>{% endif %}
             <div class="articlebody">
                 {% if record.image %}
                 <a href="{{ record.image|image() }}" class="magnific">
