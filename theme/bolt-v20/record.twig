@@ -28,6 +28,45 @@
                 {{  record.body }}
 
                 {% if news %}
+
+                    {% if UserProfiles is defined %}
+                        <style>
+                            .articlebody .user-info {
+                                display: flex;
+                                padding: 20px 0px;
+                                border-top: 1px solid #aaa;
+                                border-bottom: 1px solid #aaa;
+                            }
+
+                            .articlebody .user-info .avatar{
+                                margin-right: 10px;
+                                width: 70px;
+                                height: 70px;
+                            }
+
+                            .articlebody .user-info .info .username {
+                                color: inherit;
+                                font-size: 23px;
+                                font-weight: 300;
+                            }
+
+                            .articlebody .user-info .info .username:hover {
+                                color: #d62c08;
+                            }
+
+                            .articlebody .user-info .info p {
+                                margin-bottom: 0px;
+                            }
+                        </style>
+                        <div class="user-info">
+                            <img class="avatar" src="{{ avatar(record.user, 75) }}">
+                            <div class="info">
+                                <a class="username" href="{{ profile_link(record.user) }}">{{ record.user.displayname }}</a>
+                                <p>{{ record.user.description|raw|nl2br }}</p>
+                            </div>
+                        </div>
+                    {% endif %}
+
                     <div class="disqus">
                     {{ disqus() }}
                     </div>
