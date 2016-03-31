@@ -1,0 +1,34 @@
+# Which fields do you need?
+# Currently supported types: text, textarea
+fields:
+  avatar:
+    type: text
+    placeholder: https://url.to/avatar.png
+  description:
+    type: textarea
+
+# Options for the `avatar()` twig function.
+avatars:
+  # If you add a text field for an avatar url, you can define it here so the `avatar()` function tries to use it.
+  # Also see `gravatar_fallback` and 'fallback_url' option.
+  # If you have no avatar column, please set the value to `false`.
+  field: avatar
+
+  # Use gravatar when there is no `field` set or the user has not saved an url.
+  gravatar_fallback: true
+
+  # Use this when `gravatar_fallback` is set to `false`.
+  # Please provide the full url. E.g.: https://domain.com/picture.jpg
+  # It will also be used as fallback for gravatar when the user has no gravatar account.
+  fallback_url: false
+
+profiles:
+  # Enable or disable public profiles for your users.
+  enabled: true
+
+  # Will result in `/profile/{username}`
+  prefix: profile
+
+  # Template to use for the profiles. You can build it in your normal theme folder.
+  template: profile.twig
+
