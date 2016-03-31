@@ -1,0 +1,80 @@
+{% extends "master.twig" %}
+
+{%- block title %}
+    {{ user.displayname }} | {{ app.config.get('general/sitename') }}
+{% endblock title -%}
+
+{% block bodyclass %}body-record{% endblock %}
+
+{% block content %}
+
+<section class="maininfo">
+    <div class="maincolumn ">
+        <article class="row user-profile">
+            <style>
+                article.user-profile h1 {
+                    margin-bottom: 2rem;
+                }
+
+                .user-profile .user-info {
+                    display: flex;
+                    margin-bottom: 40px;
+                }
+
+                @media only screen and (max-width: 50.063em) {
+                    .user-profile .user-info {
+                        flex-direction: column;
+                        align-items: center;
+                    }
+
+                    .user-profile .user-info .avatar{
+                        margin-right: 0px !important;
+                        margin-bottom: 10px !important;
+                    }
+                }
+
+                .user-profile .user-info .avatar{
+                    margin-right: 20px;
+                    margin-bottom: 0px;
+                    width: 100px;
+                    height: 100px;
+                    border-radius: 5px;
+                }
+
+                .user-profile .user-info .info p {
+                    margin-bottom: 0px;
+                    font-size: 16px;
+                }
+
+                .newsitems h2 {
+                    text-align: center;
+                }
+            </style>
+            <h1>{{ user.displayname }}</h1>
+            <div class="user-info articlebody">
+                <img class="avatar" src="{{ avatar(user, 100) }}">
+                <div class="info">
+                    <p>{{ user.description|raw|nl2br }}</p>
+                </div>
+            </div>
+
+            {% setcontent news = 'news' where {ownerid: user.id} orderby '-datepublish' %}
+
+            {% if news is not empty %}
+                <div class="newsitems articlebody">
+                <h2>Latest News</h2>
+                {% for item in news %}
+                    <div>
+                        <h3><a href="{{item.link}}">{{item.title}}</a></h3>
+                        <p class="meta" title="{{ item.datepublish|date("j F Y - H:i") }}">Published: {{ item.datepublish|date("l j F Y") }}</p>
+                    </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </article>
+
+    </div>
+</section>
+
+{% endblock content %}
+

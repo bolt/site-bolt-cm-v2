@@ -15,7 +15,7 @@
         <article class="row">
             <h1><a href="{{record.link}}">{{record.title}}</a></h1>
             {# <h2 class="subheader">{{record.subtitle}}</h2> #}
-            {% if news %}<p class="meta" title="{{ record.datepublish|date("j F Y - H:i") }}">Published: {{ record.datepublish|date("l j F Y") }} by {{ record.user.displayname }}</p>{% endif %}
+            {% if news %}<p class="meta" title="{{ record.datepublish|date("j F Y - H:i") }}">Published: {{ record.datepublish|date("l j F Y") }} by <a href="{{ profile_link(record.user) }}">{{ record.user.displayname }}</a></p>{% endif %}
             <div class="articlebody">
                 {% if record.image %}
                 <a href="{{ record.image|image() }}" class="magnific">
@@ -28,6 +28,65 @@
                 {{  record.body }}
 
                 {% if news %}
+
+                    {% if UserProfiles is defined %}
+                        <style>
+                            .articlebody .user-info {
+                                display: flex;
+                                padding: 20px 0px;
+                                border-top: 1px solid #aaa;
+                                border-bottom: 1px solid #aaa;
+                            }
+
+                            @media only screen and (max-width: 50.063em) {
+                                .articlebody .user-info {
+                                    flex-direction: column;
+                                    align-items: center;
+                                }
+
+                                .articlebody .user-info .avatar{
+                                    margin-right: 0px !important;
+                                    margin-bottom: 10px !important;
+                                }
+
+                                .articlebody .user-info .info .username {
+                                    display: block;
+                                    text-align: center;
+                                }
+                            }
+
+                            .articlebody .user-info .avatar{
+                                margin-right: 10px;
+                                margin-bottom: 0px;
+                                width: 70px;
+                                height: 70px;
+                                border-radius: 5px;
+                            }
+
+                            .articlebody .user-info .info .username {
+                                color: inherit;
+                                font-size: 20px;
+                                font-weight: 300;
+                            }
+
+                            .articlebody .user-info .info .username:hover {
+                                color: #d62c08;
+                            }
+
+                            .articlebody .user-info .info p {
+                                margin-bottom: 0px;
+                                font-size: 14px;
+                            }
+                        </style>
+                        <div class="user-info">
+                            <img class="avatar" src="{{ avatar(record.user, 100) }}">
+                            <div class="info">
+                                <a class="username" href="{{ profile_link(record.user) }}">{{ record.user.displayname }}</a>
+                                <p>{{ record.user.description|raw|nl2br }}</p>
+                            </div>
+                        </div>
+                    {% endif %}
+
                     <div class="disqus">
                     {{ disqus() }}
                     </div>
