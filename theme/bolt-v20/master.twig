@@ -8,22 +8,8 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>
-{%- block title %}
-{% set seotitle = record.seotitle|default(record.title) %}
-{{ seotitle }}
-{%- if app.request.get('_route') != "homepage" %} | {{ app.config.get('general/sitename') }}{% endif -%}
-{% endblock title -%}
-    </title>
-    {% block seo_description %}
-    {% spaceless %}
-    {% set description = record.metadescription|default(record.teaser|excerpt(250)) %}
-    {% if description is not empty %}
-    <meta name="description" content="{{ description|trim }}" />
-    {% endif %}
-
-    {% endspaceless %}
-    {% endblock seo_description %}
+    <title>{{ seo.title() }}</title>
+    {{ seo.metatags() }}
 
     <meta name="DCTERMS.title" content="Bolt CMS"/>
     <meta name="robots" content="noydir, noodp"/>
@@ -40,10 +26,11 @@
 
     <meta property="og:site_name" content="{{ app.config.get('general/sitename') }}" />
     <meta property="og:url" content="{{ paths.canonicalurl }}" />
-    {% block seo_ogtitle %}
-    <meta property="og:title" content="{{ record.title }}" />
-    {% endblock seo_ogtitle %}
-    <meta property="og:image" content="https://bolt.cm{{ paths.theme }}images/og_boltimg.png" />
+	{% if record.image is not empty %}
+    <meta property="og:image" content="https://bolt.cm/{{ record.image|thumbnail(1000, 1000) }}" />
+	{% elseif record.ogimage is not empty %}
+    <meta property="og:image" content="https://bolt.cm/{{ record.ogimage|thumbnail(1000, 1000) }}" />
+	{% endif %}
 
     <!--[if lt IE 9]>
     <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.6.2/html5shiv.js"></script>

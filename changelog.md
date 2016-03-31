@@ -1,9 +1,44 @@
+Bolt 2.2.19
+-----------
+
+Released 2016-03-11. Notable changes:
+
+ - Updated: Updating bundled Javascript modules and libraries
+ - Updating dependencies (most notable, Foundation 5.5.3) (See #4856)
+ - Fix: Locking some more Symfony packages to Symfony 2.6.x, for PHP 5.3.3 compatibility (See #4984)
+ - Fix: Imagehandler updates and bugfixes (See #4973)
+ - Fix: Prevent duplicate content for paging requests (See #4981)
+ - Updated: Spanish Translation (See #4958)
+ - Updated: Set the Composer requirement to ^1.0@beta (See #4955)
+ - Fix: Fix Config Setting for certain options in config.yml (See #4940)
+ - Change: Set default error reporting to ignore 'warnings' (See #4926)
+ - Fix for image/file list blur (See #4923)
+ - Added: Multiple file select when "picking from server" (See #4879)
+ - Added the search dialog to the standalone file editor interface (See #4890)
+ - Fix: Add a default value for checkboxes (See #4869)
+ - Fix: PackageManager ping 504 Gateway Time-out (See #4735)
+ - Fix: Dashboardnews 504 Gateway Time-out (See #4734)
+
+Bolt 2.2.18
+-----------
+
+Released 2016-02-08. Notable changes:
+
+ - Fix: Fix select fields in templatefields (See #4759)
+ - Fix: Now possible to set a page size for a taxonomy listing (see #4822)
+ - Fix: Viewing a preview of a record clears the unsaved record warning (See #4640)
+ - Fix: Don't use value on checkbox, and set with prop (See #4777)
+ - Change: Allow to set context for custom Twig functions and filters (See #4779)
+ - Change: Update `MenuBuilder.php`, don't do unneeded hydration on menu items. (See #4791)
+ - Fix: Fixes "non-interactive configuration" of composer-install by providing extra vars in composer.json (see #4750)
+ - Fix: Update form_div_layout.html.twig (see #4795)
+
 Bolt 2.2.17
 -----------
 
 Released 2016-01-27. Notable changes:
 
- - Fix: No href around '…'-placeholdersin pagers. (See #4650)
+ - Fix: No href around '…'-placeholders in pagers. (See #4650)
  - Fix: Templatefields in 'Viewless' records work correctly now (#4653)
  - Change: Move `NutSP::addCommand` to `$app['nut.commands.add']`` so it's not "static" (#4662)
  - Fix: Don't whitescreen on a response with a Twig exception (#4668)

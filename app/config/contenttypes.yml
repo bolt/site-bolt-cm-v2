@@ -12,6 +12,10 @@ news:
             uses: title
         image:
             type: image             
+        ogimage:
+            type: image             
+            label: "OG Image"
+            postfix: "<p>Use this to specify the image in the OG image tag.</p>"
         text_markdown:
             type: markdown
             height: 400px  
@@ -24,6 +28,9 @@ news:
             type: html
             height: 300px  
             allowtwig: true
+        seo:
+            type: seo
+            group: "SEO settings"
     record_template: newsitem.twig
     listing_template: news.twig
     sort: -id
@@ -78,6 +85,9 @@ pages:
             label: Choose a template..
             type: templateselect 
             filter: '*.twig'   
+        seo:
+            type: seo
+            group: "SEO settings"
     template: page.twig
     sort: title
     recordsperpage: 100
